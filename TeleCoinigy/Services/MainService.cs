@@ -32,10 +32,10 @@ namespace TeleCoinigy.Services
         public async Task SendSpecificAccountDetails()
         {
             Console.WriteLine("Getting authId for Gunbot");
-            string authID = _coinigyService.GetAuthIdFor(_coinigyConfig.SpecificAccountBalance);
-            Console.WriteLine("AuthId for Gunbot is " + authID);
+            string authId = _coinigyService.GetAuthIdFor(_coinigyConfig.SpecificAccountBalance);
+            Console.WriteLine("AuthId for Gunbot is " + authId);
             Console.WriteLine("Getting BTC balance for Gunbot");
-            var btcBalance = await _coinigyService.GetBtcBalance(authID);
+            var btcBalance = await _coinigyService.GetBtcBalance(authId);
             Console.WriteLine("Gunbot balance is " + btcBalance);
             Console.WriteLine("Getting previous Gunbot balance from DB");
             var previousGunbot = _databaseService.GetLastBalance(_coinigyConfig.SpecificAccountBalance);

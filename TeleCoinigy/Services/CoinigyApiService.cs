@@ -47,7 +47,7 @@ namespace TeleCoinigy.Services
 
         public async Task<double> GetBtcBalance(string authId)
         {
-            var jObject = await CommonApiQuery("balances", "{  \"show_nils\": 0,  \"auth_ids\":" + authId + "\"\"}");
+            var jObject = await CommonApiQuery("balances", "{  \"show_nils\": 0,  \"auth_ids\":" + authId + "}");
             var btcBalance = Helpers.Helpers.TotalBtcBalance(jObject);
             return Math.Round(btcBalance, 3);
         }

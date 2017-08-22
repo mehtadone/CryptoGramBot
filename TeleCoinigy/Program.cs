@@ -1,20 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
-using FluentScheduler;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using TeleCoinigy.Configuration;
 using TeleCoinigy.Services;
-using Telegram.Bot;
-using Telegram.Bot.Types.Enums;
 using TeleCoinigy.Database;
-using TeleCoinigy.Models;
 
 namespace TeleCoinigy
 {

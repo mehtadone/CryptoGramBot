@@ -30,7 +30,7 @@ namespace TeleCoinigy.Database
 
         public double GetLastBalance(string name)
         {
-            using (var db = new LiteDatabase("database\\coinigyBalances.db"))
+            using (var db = new LiteDatabase(Constants.DatabaseName))
             {
                 var balances = db.GetCollection<BalanceHistory>("balances");
                 var histories = balances.Find(Query.All(Query.Descending), limit: 1)
@@ -40,14 +40,16 @@ namespace TeleCoinigy.Database
 
                 var balanceHistories = histories as BalanceHistory[] ?? histories.ToArray();
 
-                return !balanceHistories.Any() ? 0 : balanceHistories[0].Balance;
+                double lastBalance = !balanceHistories.Any() ? 0 : balanceHistories[0].Balance;
+                _log.Information($"Last balance for {name} was {lastBalance}");
+                return lastBalance;
             }
         }
 
         private void SaveBalance(BalanceHistory balanceHistory, string name)
         {
             balanceHistory.Name = name;
-            using (var db = new LiteDatabase(@"coinigyBalances.db"))
+            using (var db = new LiteDatabase(Constants.DatabaseName))
             {
                 var balances = db.GetCollection<BalanceHistory>("balances");
                 balances.Insert(balanceHistory);

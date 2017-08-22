@@ -30,7 +30,7 @@ namespace TeleCoinigy
 
             var log = new LoggerConfiguration()
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                .WriteTo.RollingFile("logs\\TeleCoinigy-{date}.log")
+                .WriteTo.RollingFile("logs\\TeleCoinigy.log")
                 .CreateLogger();
 
             var coinigyConfig = new CoinigyConfig();

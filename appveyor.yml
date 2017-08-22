@@ -15,11 +15,11 @@ before_build:
   - cmd: dotnet restore ./TeleCoinigy/TeleCoinigy.csproj --verbosity m
 build_script:
   # output will be in ./src/bin/debug/netcoreapp1.1/publish
-  - cmd: dotnet publish ./TeleCoinigy/TeleCoinigy.csproj
+  - cmd: dotnet publish --configuration release ./TeleCoinigy/TeleCoinigy.csproj
 after_build:
   # For once the build has completed
 artifacts:
- - path: '\TeleCoinigy\bin\Release\PublishOutput'
+ - path: '\TeleCoinigy\bin\Release\netcoreapp2.0\publish'
    name: TeleCoinigy
    type: FolderProfile
 clone_depth: 1

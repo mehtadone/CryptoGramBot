@@ -14,7 +14,7 @@ namespace TeleCoinigy.Helpers
                 var balanceCcy = token["balance_curr_code"].ToString();
                 if (balanceCcy == "BTC")
                 {
-                    var btcBalance = token["btc_balance"].ToString();
+                    var btcBalance = token["balance_amount_total"].ToString();
                     return double.Parse(btcBalance);
                 }
             }

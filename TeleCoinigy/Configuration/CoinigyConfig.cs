@@ -11,6 +11,5 @@ namespace TeleCoinigy.Configuration
         public string Endpoint { get; set; }
         public string Key { get; set; }
         public string Secret { get; set; }
-        public string SpecificAccountBalance { get; set; }
     }
 }

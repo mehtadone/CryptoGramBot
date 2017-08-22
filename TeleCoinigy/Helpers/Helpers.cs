@@ -5,6 +5,23 @@ namespace TeleCoinigy.Helpers
 {
     public static class Helpers
     {
+        public static double BalanceForAuthId(JObject jObject)
+        {
+            var data = jObject["data"];
+
+            foreach (var token in data)
+            {
+                var balanceCcy = token["balance_curr_code"].ToString();
+                if (balanceCcy == "BTC")
+                {
+                    var btcBalance = token["btc_balance"].ToString();
+                    return double.Parse(btcBalance);
+                }
+            }
+
+            return 0;
+        }
+
         public static double TotalBtcBalance(JObject jObject)
         {
             double btcBalance = 0;

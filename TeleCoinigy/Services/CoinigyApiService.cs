@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using Serilog.Core;
 using TeleCoinigy.Configuration;
 using TeleCoinigy.Database;
 using TeleCoinigy.Models;
@@ -13,59 +14,66 @@ namespace TeleCoinigy.Services
 {
     public class CoinigyApiService
     {
-        private readonly List<Account> _coinigyAccounts = new List<Account>();
+        private readonly Dictionary<int, Account> _coinigyAccounts = new Dictionary<int, Account>();
         private readonly CoinigyConfig _config;
+        private readonly Logger _log;
 
-        public CoinigyApiService(CoinigyConfig config)
+        public CoinigyApiService(CoinigyConfig config, Logger log)
         {
             _config = config;
+            _log = log;
         }
 
-        public async Task<List<Account>> GetAccounts()
+        public async Task<Dictionary<int, Account>> GetAccounts()
         {
-            var jObject = await CommonApiQuery("accounts", "");
-            var token = jObject["data"];
-
-            foreach (var t in token)
+            _log.Information($"Getting account list from Coinigy");
+            if (_coinigyAccounts.Count == 0)
             {
-                var account = new Account
-                {
-                    AuthId = t["auth_id"].ToString(),
-                    Name = t["auth_nickname"].ToString()
-                };
+                var jObject = await CommonApiQuery("accounts", "");
+                var token = jObject["data"];
 
-                _coinigyAccounts.Add(account);
+                int count = 1;
+                foreach (var t in token)
+                {
+                    var account = new Account
+                    {
+                        AuthId = t["auth_id"].ToString(),
+                        Name = t["auth_nickname"].ToString()
+                    };
+
+                    _coinigyAccounts[count] = account;
+                    count++;
+                }
             }
             return _coinigyAccounts;
         }
 
         public string GetAuthIdFor(string name)
         {
-            var singleOrDefault = _coinigyAccounts.SingleOrDefault(x => x.Name == name);
+            _log.Information($"Getting authId for {name}");
+            var singleOrDefault = _coinigyAccounts.Values.SingleOrDefault(x => x.Name == name);
             return singleOrDefault.AuthId;
         }
 
         public async Task<double> GetBtcBalance(string authId)
         {
-            var jObject = await CommonApiQuery("balances", "{  \"show_nils\": 0,  \"auth_ids\":" + authId + "}");
-            var btcBalance = Helpers.Helpers.TotalBtcBalance(jObject);
-            return Math.Round(btcBalance, 3);
+            _log.Information($"Getting BTC balance for {authId}");
+            var jObject = await CommonApiQuery("refreshBalance", "{  \"auth_id\":" + authId + "}");
+
+            if (jObject != null)
+            {
+                var btcBalance = Helpers.Helpers.BalanceForAuthId(jObject);
+                return Math.Round(btcBalance, 3);
+            }
+            return 0;
         }
 
         public async Task<double> GetBtcBalance()
         {
+            _log.Information($"Getting total BTC balance");
             var jObject = await CommonApiQuery("balances", "{  \"show_nils\": 0,  \"auth_ids\": \"\"}");
             var btcBalance = Helpers.Helpers.TotalBtcBalance(jObject);
             return Math.Round(btcBalance, 3);
-        }
-
-        public async Task SaveBalancesForEachAccount(DatabaseService db)
-        {
-            foreach (var coinigyAccount in _coinigyAccounts)
-            {
-                var balance = await this.GetBtcBalance(coinigyAccount.AuthId);
-                db.AddBalance(balance, coinigyAccount.Name);
-            }
         }
 
         private async Task<JObject> CommonApiQuery(string apiCall, string stringContent)
@@ -79,10 +87,21 @@ namespace TeleCoinigy.Services
 
                 using (var content = new StringContent(stringContent, Encoding.Default, "application/json"))
                 {
+                    _log.Information($"Querying coinigy api: {baseAddress}/{apiCall} and content is {stringContent}");
                     using (var response = await httpClient.PostAsync(apiCall, content))
                     {
-                        var responseData = await response.Content.ReadAsStringAsync();
-                        return JObject.Parse(responseData);
+                        try
+                        {
+                            var responseData = await response.Content.ReadAsStringAsync();
+                            return JObject.Parse(responseData);
+                        }
+                        catch (Exception exception)
+                        {
+                            var ex = exception.Message;
+                            _log.Error(ex, "Exception when parsing response from Coinigy");
+                            // coinigy sometimes returns an odd object here when trying refresh balance
+                            return null;
+                        }
                     }
                 }
             }

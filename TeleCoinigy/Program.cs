@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using FluentScheduler;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
+using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 using TeleCoinigy.Configuration;
 using TeleCoinigy.Services;
 using Telegram.Bot;
@@ -18,8 +20,6 @@ namespace TeleCoinigy
 {
     internal class Program
     {
-        private static MainService _mainService;
-
         private static void Main(string[] args)
         {
             var builder = new ConfigurationBuilder()
@@ -28,25 +28,22 @@ namespace TeleCoinigy
 
             IConfigurationRoot configuration = builder.Build();
 
+            var log = new LoggerConfiguration()
+                .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+                .WriteTo.RollingFile("logs\\TeleCoinigy-{date}.log")
+                .CreateLogger();
+
             var coinigyConfig = new CoinigyConfig();
             configuration.GetSection("Coinigy").Bind(coinigyConfig);
+            log.Information("Created Coinigy Config");
 
             var telegramConfig = new TelegramConfig();
             configuration.GetSection("Telegram").Bind(telegramConfig);
+            log.Information("Created Telegram Config");
 
-            var frequencyConfig = new FrequencyConfig();
-            configuration.GetSection("Frequency").Bind(frequencyConfig);
-
-            _mainService = new MainService(coinigyConfig, telegramConfig);
-
-            var registry = new Registry();
-
-            registry.Schedule(() => _mainService.SendAccountInfo().Wait()).ToRunOnceIn(5).Seconds();
-            registry.Schedule(() => _mainService.SendTotalBalanceUpdate().Wait()).ToRunOnceIn(10).Seconds();
-            registry.Schedule(() => _mainService.SendTotalBalanceUpdate().Wait()).ToRunEvery(frequencyConfig.HoursForTotalBalance).Hours();
-            registry.Schedule(() => _mainService.SendSpecificAccountDetails().Wait()).ToRunEvery(frequencyConfig.HoursForSpecificBalance).Hours();
-
-            JobManager.Initialize(registry);
+            var coinigyService = new CoinigyApiService(coinigyConfig, log);
+            var databaseService = new DatabaseService(log);
+            var telegramService = new TelegramService(telegramConfig, coinigyService, databaseService, log);
 
             while (true)
             {

@@ -82,7 +82,7 @@ namespace TeleCoinigy.Services
                     _log.Information($"Don't know what the user wants to do with the /acc. The message was {message.Text}");
                 }
             }
-            else if (message.Text.StartsWith("/all"))
+            else if (message.Text.StartsWith("/list"))
             {
                 _log.Information($"User asked for the account list");
                 await SendAccountInfo();
@@ -121,7 +121,7 @@ namespace TeleCoinigy.Services
 
         private static async Task SendHelpMessage(Message message)
         {
-            var usage = "Usage:/acc - send account list\n/all - all account names\n/total - total balance";
+            var usage = "Usage:/acc n - balance for account number\n/list - all account names\n/total - total balance";
             _log.Information($"Sending help message");
             await _bot.SendTextMessageAsync(message.Chat.Id, usage,
                 replyMarkup: new ReplyKeyboardRemove());

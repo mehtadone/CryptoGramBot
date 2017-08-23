@@ -8,14 +8,7 @@ namespace TeleCoinigy.Helpers
         public static double BalanceForAuthId(JObject jObject)
         {
             var data = jObject["data"];
-            double totalBalance = 0;
-            foreach (var token in data)
-            {
-                var btcBalance = token["btc_balance"].ToString();
-                totalBalance = totalBalance + double.Parse(btcBalance);
-            }
-
-            return totalBalance;
+            return data.Select(token => token["btc_balance"].ToString()).Aggregate<string, double>(0, (current, btcBalance) => current + double.Parse(btcBalance));
         }
 
         public static double TotalBtcBalance(JObject jObject)

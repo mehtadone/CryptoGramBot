@@ -157,9 +157,9 @@ namespace TeleCoinigy.Services
 
         private static async Task SendBalanceUpdate(BalanceHistory current, BalanceHistory lastBalance, string accountName, long chatId)
         {
-            var percentage = Math.Round((current.Balance - lastBalance.Balance) / lastBalance.Balance * 100, 3);
+            var percentage = Math.Round((current.Balance - lastBalance.Balance) / lastBalance.Balance * 100, 2);
             var dollarPercentage = Math.Round(
-                (current.DollarAmount - lastBalance.DollarAmount) / lastBalance.DollarAmount * 100, 3);
+                (current.DollarAmount - lastBalance.DollarAmount) / lastBalance.DollarAmount * 100, 2);
             var textMessage = $"{DateTime.Now:R}\n" +
                               $"<strong>Account</strong>: {accountName}\n" +
                               $"<strong>Current</strong>: {current.Balance} BTC (${current.DollarAmount})\n" +
@@ -203,7 +203,7 @@ namespace TeleCoinigy.Services
 
         private void BotOnReceiveError(object sender, ReceiveErrorEventArgs e)
         {
-            Debugger.Break();
+            _log.Error($"Error received {e.ApiRequestException.Message}");
         }
     }
 }

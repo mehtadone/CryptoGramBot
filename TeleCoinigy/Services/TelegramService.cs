@@ -170,7 +170,10 @@ namespace TeleCoinigy.Services
 
         private static async Task SendHelpMessage(string message)
         {
-            var usage = "Usage:/acc n - balance for account number\n/list - all account names\n/total - total balance";
+            var usage = $"Usage:/acc n - balance for account number\n" +
+                        "/list - all account names\n" +
+                        "/total - total balance\n" +
+                        "/keyboard = show inline keyboard";
             _log.Information($"Sending help message");
             await _bot.SendTextMessageAsync(_config.ChatId, usage,
                 replyMarkup: new ReplyKeyboardRemove());

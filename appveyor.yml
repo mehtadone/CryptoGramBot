@@ -25,4 +25,15 @@ artifacts:
 clone_depth: 1
 on_finish :
   # any cleanup in here
-deploy: off
+deploy:
+  release: telecoinigy-v$(appveyor_build_version)
+  description: 'Next release'
+  provider: GitHub
+  auth_token:
+    secure: esN+SKR3Mla7CRA3bD9NBK1WFuuMc7W0/MyIX8kUC9q8BXELNvSZaBQcEt7S7oTj # your encrypted token from GitHub
+  artifact: /.*\.zip/            # upload all zip packages to release assets
+  draft: false
+  prerelease: true
+  on:
+    branch: master                 # release from master branch only
+    appveyor_repo_tag: false  

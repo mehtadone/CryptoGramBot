@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Serilog.Core;
 using TeleCoinigy.Configuration;
 using TeleCoinigy.Database;
+using TeleCoinigy.Models;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
@@ -99,23 +100,37 @@ namespace TeleCoinigy.Services
             }
         }
 
+        private static async Task<double> GetDollarAmount(double balance)
+        {
+            var lastBid = await _coinigyApiService.GetTicker("BTC/USD");
+            return Math.Round(lastBid * balance, 2);
+        }
+
         private static async void SendAccountUpdate(int accountName)
         {
             var accounts = await _coinigyApiService.GetAccounts();
             var selectedAccount = accounts[accountName];
             var balance = await _coinigyApiService.GetBtcBalance(selectedAccount.AuthId);
 
+            var dollarAmount = await GetDollarAmount(balance);
+
             var lastBalance = _databaseService.GetLastBalance(selectedAccount.Name);
-            _databaseService.AddBalance(balance, selectedAccount.Name);
+            var currentBalance = _databaseService.AddBalance(balance, dollarAmount, selectedAccount.Name);
 
             _log.Information($"Sending balance update for account {selectedAccount.Name}");
-            await SendBalanceUpdate(balance, lastBalance, selectedAccount.Name);
+            await SendBalanceUpdate(currentBalance, lastBalance, selectedAccount.Name);
         }
 
-        private static async Task SendBalanceUpdate(double balance, double lastBalance, string accountName)
+        private static async Task SendBalanceUpdate(BalanceHistory current, BalanceHistory lastBalance, string accountName)
         {
-            var percentage = Math.Round((balance - lastBalance) / lastBalance * 100, 3);
-            var textMessage = "Account: " + accountName + "\n" + DateTime.Now.ToString("g") + "\nCurrent balance is           " + balance + " BTC\nPrevious balance was    " + lastBalance + " BTC\nPercentage change is " + percentage + "%";
+            var percentage = Math.Round((current.Balance - lastBalance.Balance) / lastBalance.Balance * 100, 3);
+            var dollarPercentage = Math.Round(
+                (current.DollarAmount - lastBalance.DollarAmount) / lastBalance.DollarAmount * 100, 3);
+            var textMessage = $"{DateTime.Now:R}\n" +
+                              $"<strong>Account</strong>: {accountName}\n" +
+                              $"<strong>Current</strong>: {current.Balance} BTC (${current.DollarAmount})\n" +
+                              $"<strong>Previous</strong>: {lastBalance.Balance} BTC (${lastBalance.DollarAmount})\n" +
+                              $"<strong>Change</strong>: {percentage}% BTC ({dollarPercentage}% USD)";
             await SendMessage(textMessage);
         }
 
@@ -129,7 +144,7 @@ namespace TeleCoinigy.Services
 
         private static async Task SendMessage(string textMessage)
         {
-            await _bot.SendTextMessageAsync(_config.ChatId, textMessage);
+            await _bot.SendTextMessageAsync(_config.ChatId, textMessage, ParseMode.Html);
             _log.Information($"Message sent. Waiting for next command ...");
         }
 
@@ -137,10 +152,11 @@ namespace TeleCoinigy.Services
         {
             double balance = await _coinigyApiService.GetBtcBalance();
             var lastBalance = _databaseService.GetLastBalance(Constants.CoinigyBalance);
-            _databaseService.AddBalance(balance, Constants.CoinigyBalance);
+            var dollarAmount = await GetDollarAmount(balance);
+            var currentBalance = _databaseService.AddBalance(balance, dollarAmount, Constants.CoinigyBalance);
 
             _log.Information($"Sending total balance");
-            await SendBalanceUpdate(balance, lastBalance, "Total Balance");
+            await SendBalanceUpdate(currentBalance, lastBalance, "Total Balance");
         }
 
         private void BotOnChosenInlineResultReceived(object sender, ChosenInlineResultEventArgs e)

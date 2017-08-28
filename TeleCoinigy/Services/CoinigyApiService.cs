@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Newtonsoft.Json.Linq;
 using Serilog.Core;
 using TeleCoinigy.Configuration;
@@ -74,6 +75,14 @@ namespace TeleCoinigy.Services
             var jObject = await CommonApiQuery("balances", "{  \"show_nils\": 0,  \"auth_ids\": \"\"}");
             var btcBalance = Helpers.Helpers.TotalBtcBalance(jObject);
             return Math.Round(btcBalance, 3);
+        }
+
+        public async Task<double> GetTicker(string ticker)
+        {
+            _log.Information($"Getting ticker data for {ticker}");
+            var jObject = await CommonApiQuery("ticker", "{  \"exchange_code\": \"GDAX\",  \"exchange_market\": \"" + ticker + "\"}");
+            var bid = Helpers.Helpers.GetLastBid(jObject);
+            return bid;
         }
 
         private async Task<JObject> CommonApiQuery(string apiCall, string stringContent)

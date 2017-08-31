@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Serilog.Core;
 using TeleCoinigy.Configuration;
 using TeleCoinigy.Database;
 using TeleCoinigy.Models;
 using Telegram.Bot;
 using Telegram.Bot.Args;
-using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InlineKeyboardButtons;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -21,9 +20,9 @@ namespace TeleCoinigy.Services
         private static CoinigyApiService _coinigyApiService;
         private static TelegramConfig _config;
         private static DatabaseService _databaseService;
-        private static Logger _log;
+        private static ILogger<TelegramService> _log;
 
-        public TelegramService(TelegramConfig config, CoinigyApiService coinigyApiService, DatabaseService databaseService, Logger log)
+        public TelegramService(TelegramConfig config, CoinigyApiService coinigyApiService, DatabaseService databaseService, ILogger<TelegramService> log)
         {
             _config = config;
             _coinigyApiService = coinigyApiService;
@@ -37,23 +36,16 @@ namespace TeleCoinigy.Services
             _bot.OnMessageEdited += BotOnMessageReceivedAsync;
             _bot.OnInlineResultChosen += BotOnChosenInlineResultReceived;
             _bot.OnReceiveError += BotOnReceiveError;
+        }
 
+        public void StartBot()
+        {
             var me = _bot.GetMeAsync().Result;
-
             Console.Title = me.Username;
-
             _bot.StartReceiving();
         }
 
-        public static async Task SendAccountInfo(long chatId)
-        {
-            var accountList = await _coinigyApiService.GetAccounts();
-            var message = accountList.Aggregate("Connected accounts on Coinigy are: \n", (current, acc) => current + acc.Key + " - " + acc.Value.Name + "\n");
-            _log.Information($"Sending the account list");
-            await SendMessage(message, chatId);
-        }
-
-        private static async void BotOnCallbackQueryReceived(object sender, CallbackQueryEventArgs e)
+        private async void BotOnCallbackQueryReceived(object sender, CallbackQueryEventArgs e)
         {
             await _bot.AnswerCallbackQueryAsync(e.CallbackQuery.Id,
                 $"Received" + e.CallbackQuery.Data);
@@ -61,7 +53,12 @@ namespace TeleCoinigy.Services
             await CheckMessage(e.CallbackQuery.Data, e.CallbackQuery.Message.Chat.Id);
         }
 
-        private static async void BotOnMessageReceivedAsync(object sender, MessageEventArgs e)
+        private void BotOnChosenInlineResultReceived(object sender, ChosenInlineResultEventArgs e)
+        {
+            Console.WriteLine($"Received choosen inline result: {e.ChosenInlineResult.ResultId}");
+        }
+
+        private async void BotOnMessageReceivedAsync(object sender, MessageEventArgs e)
         {
             var message = e.Message;
 
@@ -72,33 +69,38 @@ namespace TeleCoinigy.Services
             await CheckMessage(message.Text, e.Message.Chat.Id);
         }
 
-        private static async Task CheckMessage(string message, long chatId)
+        private void BotOnReceiveError(object sender, ReceiveErrorEventArgs e)
+        {
+            _log.LogError($"Error received {e.ApiRequestException.Message}");
+        }
+
+        private async Task CheckMessage(string message, long chatId)
         {
             if (message.StartsWith("/acc"))
             {
-                _log.Information($"Message begins with /acc. Going to split string");
+                _log.LogInformation($"Message begins with /acc. Going to split string");
                 var splitString = message.Split(" ");
 
                 try
                 {
                     var accountNumber = splitString[1];
-                    _log.Information($"User wants to check for account number{accountNumber}");
+                    _log.LogInformation($"User wants to check for account number{accountNumber}");
                     SendAccountUpdate(int.Parse(accountNumber), chatId);
                 }
                 catch (Exception ex)
                 {
-                    await SendHelpMessage(message);
-                    _log.Information($"Don't know what the user wants to do with the /acc. The message was {message}");
+                    await SendHelpMessage();
+                    _log.LogInformation($"Don't know what the user wants to do with the /acc. The message was {message}");
                 }
             }
             else if (message.StartsWith("/list"))
             {
-                _log.Information($"User asked for the account list");
+                _log.LogInformation($"User asked for the account list");
                 await SendAccountInfo(chatId);
             }
             else if (message.StartsWith("/total"))
             {
-                _log.Information($"User asked for the total balance");
+                _log.LogInformation($"User asked for the total balance");
                 await SendTotalBalance(chatId);
             }
             else if (message.StartsWith("/keyboard")) // send inline keyboard
@@ -114,12 +116,12 @@ namespace TeleCoinigy.Services
             }
             else
             {
-                _log.Information($"Don't know what the user wants to do. The message was {message}");
-                await SendHelpMessage(message);
+                _log.LogInformation($"Don't know what the user wants to do. The message was {message}");
+                await SendHelpMessage();
             }
         }
 
-        private static async Task<InlineKeyboardCallbackButton[]> CreateInlineKeyboardArray()
+        private async Task<InlineKeyboardCallbackButton[]> CreateInlineKeyboardArray()
         {
             var dictionary = await _coinigyApiService.GetAccounts();
             var a = new InlineKeyboardCallbackButton[dictionary.Count];
@@ -134,13 +136,21 @@ namespace TeleCoinigy.Services
             return a;
         }
 
-        private static async Task<double> GetDollarAmount(double balance)
+        private async Task<double> GetDollarAmount(double balance)
         {
             var lastBid = await _coinigyApiService.GetTicker("BTC/USD");
             return Math.Round(lastBid * balance, 2);
         }
 
-        private static async void SendAccountUpdate(int accountName, long chatId)
+        private async Task SendAccountInfo(long chatId)
+        {
+            var accountList = await _coinigyApiService.GetAccounts();
+            var message = accountList.Aggregate("Connected accounts on Coinigy are: \n", (current, acc) => current + acc.Key + " - " + acc.Value.Name + "\n");
+            _log.LogInformation($"Sending the account list");
+            await SendMessage(message, chatId);
+        }
+
+        private async void SendAccountUpdate(int accountName, long chatId)
         {
             var accounts = await _coinigyApiService.GetAccounts();
             var selectedAccount = accounts[accountName];
@@ -151,15 +161,26 @@ namespace TeleCoinigy.Services
             var lastBalance = _databaseService.GetLastBalance(selectedAccount.Name);
             var currentBalance = _databaseService.AddBalance(balance, dollarAmount, selectedAccount.Name);
 
-            _log.Information($"Sending balance update for account {selectedAccount.Name}");
+            _log.LogInformation($"Sending balance update for account {selectedAccount.Name}");
             await SendBalanceUpdate(currentBalance, lastBalance, selectedAccount.Name, chatId);
         }
 
-        private static async Task SendBalanceUpdate(BalanceHistory current, BalanceHistory lastBalance, string accountName, long chatId)
+        private async Task SendBalanceUpdate(BalanceHistory current, BalanceHistory lastBalance, string accountName, long chatId)
         {
             var percentage = Math.Round((current.Balance - lastBalance.Balance) / lastBalance.Balance * 100, 2);
             var dollarPercentage = Math.Round(
                 (current.DollarAmount - lastBalance.DollarAmount) / lastBalance.DollarAmount * 100, 2);
+
+            if (double.IsNaN(percentage))
+            {
+                percentage = 0;
+            }
+
+            if (double.IsNaN(dollarPercentage))
+            {
+                dollarPercentage = 0;
+            }
+
             var textMessage = $"{DateTime.Now:R}\n" +
                               $"<strong>Account</strong>: {accountName}\n" +
                               $"<strong>Current</strong>: {current.Balance} BTC (${current.DollarAmount})\n" +
@@ -168,42 +189,32 @@ namespace TeleCoinigy.Services
             await SendMessage(textMessage, chatId);
         }
 
-        private static async Task SendHelpMessage(string message)
+        private async Task SendHelpMessage()
         {
             var usage = $"Usage:/acc n - balance for account number\n" +
                         "/list - all account names\n" +
                         "/total - total balance\n" +
                         "/keyboard = show inline keyboard";
-            _log.Information($"Sending help message");
+            _log.LogInformation($"Sending help message");
             await _bot.SendTextMessageAsync(_config.ChatId, usage,
                 replyMarkup: new ReplyKeyboardRemove());
         }
 
-        private static async Task SendMessage(string textMessage, long chatId)
+        private async Task SendMessage(string textMessage, long chatId)
         {
             await _bot.SendTextMessageAsync(chatId, textMessage, ParseMode.Html);
-            _log.Information($"Message sent. Waiting for next command ...");
+            _log.LogInformation($"Message sent. Waiting for next command ...");
         }
 
-        private static async Task SendTotalBalance(long chatId)
+        private async Task SendTotalBalance(long chatId)
         {
             double balance = await _coinigyApiService.GetBtcBalance();
             var lastBalance = _databaseService.GetLastBalance(Constants.CoinigyBalance);
             var dollarAmount = await GetDollarAmount(balance);
             var currentBalance = _databaseService.AddBalance(balance, dollarAmount, Constants.CoinigyBalance);
 
-            _log.Information($"Sending total balance");
+            _log.LogInformation($"Sending total balance");
             await SendBalanceUpdate(currentBalance, lastBalance, "Total Balance", chatId);
-        }
-
-        private void BotOnChosenInlineResultReceived(object sender, ChosenInlineResultEventArgs e)
-        {
-            Console.WriteLine($"Received choosen inline result: {e.ChosenInlineResult.ResultId}");
-        }
-
-        private void BotOnReceiveError(object sender, ReceiveErrorEventArgs e)
-        {
-            _log.Error($"Error received {e.ApiRequestException.Message}");
         }
     }
 }

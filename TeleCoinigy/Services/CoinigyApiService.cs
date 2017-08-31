@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Serilog.Core;
 using TeleCoinigy.Configuration;
@@ -17,9 +18,9 @@ namespace TeleCoinigy.Services
     {
         private readonly Dictionary<int, Account> _coinigyAccounts = new Dictionary<int, Account>();
         private readonly CoinigyConfig _config;
-        private readonly Logger _log;
+        private readonly ILogger<CoinigyApiService> _log;
 
-        public CoinigyApiService(CoinigyConfig config, Logger log)
+        public CoinigyApiService(CoinigyConfig config, ILogger<CoinigyApiService> log)
         {
             _config = config;
             _log = log;
@@ -27,7 +28,7 @@ namespace TeleCoinigy.Services
 
         public async Task<Dictionary<int, Account>> GetAccounts()
         {
-            _log.Information($"Getting account list from Coinigy");
+            _log.LogInformation($"Getting account list from Coinigy");
             if (_coinigyAccounts.Count == 0)
             {
                 var jObject = await CommonApiQuery("accounts", "");
@@ -51,14 +52,14 @@ namespace TeleCoinigy.Services
 
         public string GetAuthIdFor(string name)
         {
-            _log.Information($"Getting authId for {name}");
+            _log.LogInformation($"Getting authId for {name}");
             var singleOrDefault = _coinigyAccounts.Values.SingleOrDefault(x => x.Name == name);
             return singleOrDefault.AuthId;
         }
 
         public async Task<double> GetBtcBalance(string authId)
         {
-            _log.Information($"Getting BTC balance for {authId}");
+            _log.LogInformation($"Getting BTC balance for {authId}");
             var jObject = await CommonApiQuery("refreshBalance", "{  \"auth_id\":" + authId + "}");
 
             if (jObject != null)
@@ -71,7 +72,7 @@ namespace TeleCoinigy.Services
 
         public async Task<double> GetBtcBalance()
         {
-            _log.Information($"Getting total BTC balance");
+            _log.LogInformation($"Getting total BTC balance");
             var jObject = await CommonApiQuery("balances", "{  \"show_nils\": 0,  \"auth_ids\": \"\"}");
             var btcBalance = Helpers.Helpers.TotalBtcBalance(jObject);
             return Math.Round(btcBalance, 3);
@@ -79,7 +80,7 @@ namespace TeleCoinigy.Services
 
         public async Task<double> GetTicker(string ticker)
         {
-            _log.Information($"Getting ticker data for {ticker}");
+            _log.LogInformation($"Getting ticker data for {ticker}");
             var jObject = await CommonApiQuery("ticker", "{  \"exchange_code\": \"GDAX\",  \"exchange_market\": \"" + ticker + "\"}");
             var bid = Helpers.Helpers.GetLastBid(jObject);
             return bid;
@@ -96,7 +97,7 @@ namespace TeleCoinigy.Services
 
                 using (var content = new StringContent(stringContent, Encoding.Default, "application/json"))
                 {
-                    _log.Information($"Querying coinigy api: {baseAddress}/{apiCall} and content is {stringContent}");
+                    _log.LogInformation($"Querying coinigy api: {baseAddress}/{apiCall} and content is {stringContent}");
                     using (var response = await httpClient.PostAsync(apiCall, content))
                     {
                         try
@@ -107,7 +108,7 @@ namespace TeleCoinigy.Services
                         catch (Exception exception)
                         {
                             var ex = exception.Message;
-                            _log.Error(ex, "Exception when parsing response from Coinigy");
+                            _log.LogError(ex, "Exception when parsing response from Coinigy");
                             // coinigy sometimes returns an odd object here when trying refresh balance
                             return null;
                         }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using LiteDB;
+using Microsoft.Extensions.Logging;
 using TeleCoinigy.Models;
 using Logger = Serilog.Core.Logger;
 
@@ -11,9 +12,9 @@ namespace TeleCoinigy.Database
     {
         private readonly LiteDatabase _db;
         private readonly Dictionary<string, BalanceHistory> _lastBalances = new Dictionary<string, BalanceHistory>();
-        private readonly Logger _log;
+        private readonly ILogger<DatabaseService> _log;
 
-        public DatabaseService(Logger log)
+        public DatabaseService(ILogger<DatabaseService> log)
         {
             _log = log;
             _db = new LiteDatabase(Constants.DatabaseName);
@@ -28,7 +29,7 @@ namespace TeleCoinigy.Database
                 DollarAmount = dollarAmount
             };
 
-            _log.Information($"Adding balance to database: {name} - {balance}");
+            _log.LogInformation($"Adding balance to database: {name} - {balance}");
 
             SaveBalance(balanceHistory, name);
 
@@ -45,16 +46,16 @@ namespace TeleCoinigy.Database
             var balances = _db.GetCollection<BalanceHistory>("balances");
             var histories = balances.Find(x => x.Name == name).OrderByDescending(x => x.DateTime);
 
-            _log.Information($"Retrieving previous balance from database for: {name}");
+            _log.LogInformation($"Retrieving previous balance from database for: {name}");
 
-            var lastBalance = histories.First(x => x.Name == name);
+            var lastBalance = histories.FirstOrDefault(x => x.Name == name);
 
             if (lastBalance == null)
             {
                 return new BalanceHistory();
             }
 
-            _log.Information($"Last balance for {name} was {lastBalance.Balance}");
+            _log.LogInformation($"Last balance for {name} was {lastBalance.Balance}");
             return lastBalance;
         }
 
@@ -63,8 +64,8 @@ namespace TeleCoinigy.Database
             balanceHistory.Name = name;
             var balances = _db.GetCollection<BalanceHistory>("balances");
             balances.Insert(balanceHistory);
-            _log.Information($"Saved new balance in database for: {name}");
-            _log.Information("Adding balance to cache");
+            _log.LogInformation($"Saved new balance in database for: {name}");
+            _log.LogInformation("Adding balance to cache");
             _lastBalances[name] = balanceHistory;
         }
     }

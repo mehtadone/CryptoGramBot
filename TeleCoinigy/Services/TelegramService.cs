@@ -42,7 +42,8 @@ namespace TeleCoinigy.Services
 
         public async Task SendTradeNotification(Trade newTrade)
         {
-            var message = $"<strong>New {newTrade.Base}-{newTrade.Terms} {newTrade.Side} order on {newTrade.Exchange}:</strong> (in BTC)\n" +
+            var message = $"{ DateTime.Now:R}\n" +
+                             $"<strong>New {newTrade.Base}-{newTrade.Terms} {newTrade.Side} order on {newTrade.Exchange}:</strong> (in BTC)\n" +
                              $"{newTrade.Cost} at {newTrade.Limit} each\n" +
                              $"For a total of <strong>{newTrade.Cost}</strong>";
 
@@ -179,7 +180,7 @@ namespace TeleCoinigy.Services
         private async Task SendAccountInfo(long chatId)
         {
             var accountList = await _balanceService.GetAccounts();
-            var message = accountList.Aggregate("Connected accounts on Coinigy are: \n", (current, acc) => current + "/acc_" + acc.Key + " - " + acc.Value.Name + "\n");
+            var message = accountList.Aggregate($"{DateTime.Now:R}\n" + "Connected accounts on Coinigy are: \n", (current, acc) => current + "/acc_" + acc.Key + " - " + acc.Value.Name + "\n");
             _log.LogInformation($"Sending the account list");
             await SendMessage(message, chatId);
         }
@@ -229,7 +230,9 @@ namespace TeleCoinigy.Services
         {
             var profitAndLoss = await _balanceService.GetPnLInfo(ccy1, ccy2);
 
-            var message = $"Profit information for <strong>{ccy1 + "-" + ccy2}</strong>\n" +
+            var message =
+                $"{DateTime.Now:R}\n" +
+                $"Profit information for <strong>{ccy1 + "-" + ccy2}</strong>\n" +
                              $"<strong>Average buy price</strong>: {profitAndLoss.AverageBuyPrice:#0.###########}\n" +
                              $"<strong>Total PnL</strong>: {profitAndLoss.Profit} BTC\n";
 

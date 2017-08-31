@@ -19,6 +19,7 @@ namespace TeleCoinigy.Database
         {
             _log = log;
             _db = new LiteRepository(Constants.DatabaseName);
+            EnsureIndex();
         }
 
         public BalanceHistory AddBalance(decimal balance, decimal dollarAmount, string name)
@@ -44,9 +45,15 @@ namespace TeleCoinigy.Database
 
             foreach (var trade in trades)
             {
-                newTrades.Add(trade);
-                _db.Upsert(trade);
+                var singleOrDefault = _db.Fetch<Trade>().SingleOrDefault(x => x.Id == trade.Id);
+                if (singleOrDefault == null)
+                {
+                    _db.Insert(trade);
+                    newTrades.Add(trade);
+                }
             }
+
+            _log.LogInformation($"Added {newTrades.Count} new trades to database");
         }
 
         public BalanceHistory GetLastBalance(string name)

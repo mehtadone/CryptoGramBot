@@ -28,6 +28,7 @@ namespace TeleCoinigy.Services
             ILogger<TelegramService> log)
         {
             _config = config;
+
             _balanceService = balanceService;
             _log = log;
 
@@ -40,15 +41,25 @@ namespace TeleCoinigy.Services
             _bot.OnReceiveError += BotOnReceiveError;
         }
 
+        public async Task SendMessage(string textMessage, long chatId)
+        {
+            await _bot.SendTextMessageAsync(chatId, textMessage, ParseMode.Html);
+            _log.LogInformation($"Message sent. Waiting for next command ...");
+        }
+
+        public async Task SendMessage(string textMessage)
+        {
+            await SendMessage(textMessage, _config.ChatId);
+        }
+
         public async Task SendTradeNotification(Trade newTrade)
         {
             var message = $"{ DateTime.Now:R}\n" +
                              $"<strong>New {newTrade.Base}-{newTrade.Terms} {newTrade.Side} order on {newTrade.Exchange}:</strong> (in BTC)\n" +
-                             $"{newTrade.Cost} at {newTrade.Limit} each\n" +
+                             $"{newTrade.Cost} BTC of {newTrade.Terms} at {newTrade.Limit} each\n" +
                              $"For a total of <strong>{newTrade.Cost}</strong>";
 
             await SendMessage(message, _config.ChatId);
-
             await SendProfitInfomation(_config.ChatId, newTrade.Base, newTrade.Terms);
         }
 
@@ -104,7 +115,7 @@ namespace TeleCoinigy.Services
                 try
                 {
                     var accountNumber = splitString[1];
-                    _log.LogInformation($"User wants to check for account number {accountNumber}");
+                    _log.LogInformation($"Balance check for {accountNumber}");
                     SendAccountUpdate(int.Parse(accountNumber), chatId);
                 }
                 catch (Exception)
@@ -133,12 +144,12 @@ namespace TeleCoinigy.Services
             }
             else if (message.StartsWith("/list"))
             {
-                _log.LogInformation($"User asked for the account list");
+                _log.LogInformation($"Account list request");
                 await SendAccountInfo(chatId);
             }
             else if (message.StartsWith("/total"))
             {
-                _log.LogInformation($"User asked for the total balance");
+                _log.LogInformation($"Total balance request");
                 await SendTotalBalance(chatId);
             }
             else if (message.StartsWith("/upload_bittrex_orders"))
@@ -218,12 +229,6 @@ namespace TeleCoinigy.Services
             _log.LogInformation($"Sending help message");
             await _bot.SendTextMessageAsync(_config.ChatId, usage,
                 replyMarkup: new ReplyKeyboardRemove());
-        }
-
-        private async Task SendMessage(string textMessage, long chatId)
-        {
-            await _bot.SendTextMessageAsync(chatId, textMessage, ParseMode.Html);
-            _log.LogInformation($"Message sent. Waiting for next command ...");
         }
 
         private async Task SendProfitInfomation(long chatId, string ccy1, string ccy2)

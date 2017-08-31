@@ -36,27 +36,49 @@ namespace TeleCoinigy.Services
 
         public async Task GetNewOrders()
         {
-            var orderHistory = _bittrexService.GetOrderHistory();
-            _databaseService.AddTrades(orderHistory, out List<Trade> newTrades);
+            var newTrades = GetNewOrdersFromBittrex();
 
             foreach (var newTrade in newTrades)
             {
-                if (newTrade.TimeStamp > DateTime.Now.Subtract(TimeSpan.FromHours(1)))
-                {
-                    await _telegramService.SendTradeNotification(newTrade);
-                }
+                await _telegramService.SendTradeNotification(newTrade);
+            }
+        }
+
+        public async Task GetNewOrdersOnStartup()
+        {
+            var newTrades = GetNewOrdersFromBittrex();
+
+            var i = 0;
+
+            var message = "<strong>Checking new orders on startup. Will only send top 5</strong>\n";
+            await _telegramService.SendMessage(message);
+
+            foreach (var newTrade in newTrades)
+            {
+                if (i >= 4) break;
+
+                await _telegramService.SendTradeNotification(newTrade);
+                i++;
             }
         }
 
         public void Start()
         {
             var registry = new Registry();
-            registry.Schedule(() => GetNewOrders().Wait()).ToRunNow().AndEvery(5).Minutes();
+            registry.Schedule(() => GetNewOrdersOnStartup().Wait()).ToRunNow();
+            registry.Schedule(() => GetNewOrders().Wait()).ToRunEvery(5).Minutes();
             registry.Schedule(() => CheckCoinigyBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
 
             JobManager.Initialize(registry);
 
             _telegramService.StartBot();
+        }
+
+        private IEnumerable<Trade> GetNewOrdersFromBittrex()
+        {
+            var orderHistory = _bittrexService.GetOrderHistory();
+            _databaseService.AddTrades(orderHistory, out List<Trade> newTrades);
+            return newTrades;
         }
     }
 }

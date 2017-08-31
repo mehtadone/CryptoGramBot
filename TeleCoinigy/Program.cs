@@ -21,7 +21,7 @@ namespace TeleCoinigy
         {
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                .WriteTo.RollingFile(".\\logs\\TeleCoinigy.log")
+                .WriteTo.RollingFile("\\logs\\TeleCoinigy.log")
                 .MinimumLevel.Debug()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                 .Enrich.FromLogContext()

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using TeleCoinigy.Models;
 
 namespace TeleCoinigy.Helpers
@@ -30,10 +31,22 @@ namespace TeleCoinigy.Helpers
                 commisssion = commisssion + trade.Commission;
             }
 
+            decimal averageBuy = 0;
+            decimal averageSell = 0;
+            try
+            {
+                averageBuy = totalBuyCost / totalBought;
+                averageSell = totalSellCost / totalSold;
+            }
+            catch (Exception ex)
+            {
+                // TODO: Should log a could not divide by 0;
+            }
+
             var profitAndLoss = new ProfitAndLoss
             {
-                AverageBuyPrice = totalBuyCost / totalBought,
-                AverageSellPrice = totalBuyCost / totalSold,
+                AverageBuyPrice = averageBuy,
+                AverageSellPrice = averageSell,
                 Profit = totalBuyCost - totalSellCost,
                 Base = ccy1,
                 Terms = ccy2,

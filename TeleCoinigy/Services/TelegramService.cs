@@ -205,17 +205,29 @@ namespace TeleCoinigy.Services
 
         private async Task SendBalanceUpdate(BalanceHistory current, BalanceHistory lastBalance, string accountName, long chatId)
         {
-            var percentage = Math.Round((current.Balance - lastBalance.Balance) / lastBalance.Balance * 100, 2);
-            var dollarPercentage = Math.Round(
-                (current.DollarAmount - lastBalance.DollarAmount) / lastBalance.DollarAmount * 100, 2);
+            string message = string.Empty;
 
-            var textMessage = $"{DateTime.Now:R}\n" +
-                              $"<strong>Account</strong>: {accountName}\n" +
-                              $"<strong>Current</strong>: {current.Balance} BTC (${current.DollarAmount})\n" +
-                              $"<strong>Previous</strong>: {lastBalance.Balance} BTC (${lastBalance.DollarAmount})\n" +
-                              $"<strong>Difference</strong>: {(current.Balance - lastBalance.Balance):##0.###########} BTC (${Math.Round(current.DollarAmount - lastBalance.DollarAmount, 2)})\n" +
-                              $"<strong>Change</strong>: {percentage}% BTC ({dollarPercentage}% USD)";
-            await SendMessage(textMessage, chatId);
+            message = $"{DateTime.Now:R}\n" +
+                      $"<strong>Account</strong>: {accountName}\n" +
+                      $"<strong>Current</strong>: {current.Balance} BTC (${current.DollarAmount})\n" +
+                      $"<strong>Previous</strong>: {lastBalance.Balance} BTC (${lastBalance.DollarAmount})\n" +
+                      $"<strong>Difference</strong>: {(current.Balance - lastBalance.Balance):##0.###########} BTC (${Math.Round(current.DollarAmount - lastBalance.DollarAmount, 2)})\n";
+
+            try
+            {
+                var percentage = Math.Round((current.Balance - lastBalance.Balance) / lastBalance.Balance * 100, 2);
+
+                var dollarPercentage = Math.Round(
+                    (current.DollarAmount - lastBalance.DollarAmount) / lastBalance.DollarAmount * 100, 2);
+
+                message = message + $"<strong>Change</strong>: {percentage}% BTC ({dollarPercentage}% USD)";
+            }
+            catch (Exception e)
+            {
+                await SendMessage("Could not calculate percentages");
+                await SendMessage(message, chatId);
+            }
+            await SendMessage(message, chatId);
         }
 
         private async Task SendHelpMessage()

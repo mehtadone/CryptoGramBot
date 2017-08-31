@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using AutoMapper;
+using Bittrex;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,6 +11,7 @@ using Serilog.Sinks.SystemConsole.Themes;
 using TeleCoinigy.Configuration;
 using TeleCoinigy.Services;
 using TeleCoinigy.Database;
+using TeleCoinigy.Extensions;
 
 namespace TeleCoinigy
 {
@@ -30,20 +33,26 @@ namespace TeleCoinigy
 
             IConfigurationRoot configuration = builder.Build();
 
+            Mapper.Initialize(config => config.MapEntities());
+
             var serviceCollection = new ServiceCollection()
                 .AddLogging()
-                .AddSingleton<CoinigyConfig>()
-                .AddSingleton<TelegramConfig>()
-                .AddSingleton<CoinigyApiService>()
-                .AddSingleton<DatabaseService>()
+                .AddScoped<CoinigyConfig>()
+                .AddScoped<TelegramConfig>()
+                .AddScoped<BittrexConfig>()
+                .AddScoped<CoinigyApiService>()
+                .AddScoped<BittrexService>()
+                .AddScoped<DatabaseService>()
                 .AddSingleton<TelegramService>()
+                .AddSingleton<StartupService>()
+                .AddSingleton<BalanceService>()
+                .AddScoped<IExchange, Exchange>()
                 .BuildServiceProvider();
 
             serviceCollection.GetService<ILoggerFactory>()
                 .AddSerilog();
 
             var logger = serviceCollection.GetService<ILoggerFactory>();
-
             var log = logger.CreateLogger<Program>();
 
             var coinigyConfig = serviceCollection.GetService<CoinigyConfig>();
@@ -54,8 +63,12 @@ namespace TeleCoinigy
             configuration.GetSection("Telegram").Bind(telegramConfig);
             log.LogInformation("Created Telegram Config");
 
-            var telegramService = serviceCollection.GetService<TelegramService>();
-            telegramService.StartBot();
+            var bittrexConfig = serviceCollection.GetService<BittrexConfig>();
+            configuration.GetSection("Bittrex").Bind(bittrexConfig);
+            log.LogInformation("Created bittrex Config");
+
+            var startupService = serviceCollection.GetService<StartupService>();
+            startupService.Start();
 
             while (true)
             {

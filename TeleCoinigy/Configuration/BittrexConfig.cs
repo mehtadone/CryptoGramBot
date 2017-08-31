@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace TeleCoinigy.Configuration
 {
-    public class TelegramConfig
+    public class BittrexConfig
     {
-        public string BotToken { get; set; }
-        public long ChatId { get; set; }
+        public string Key { get; set; }
+        public string Secret { get; set; }
     }
 }

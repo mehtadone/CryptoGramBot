@@ -4,12 +4,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using Serilog.Core;
 using TeleCoinigy.Configuration;
-using TeleCoinigy.Database;
 using TeleCoinigy.Models;
 
 namespace TeleCoinigy.Services
@@ -57,7 +54,7 @@ namespace TeleCoinigy.Services
             return singleOrDefault.AuthId;
         }
 
-        public async Task<double> GetBtcBalance(string authId)
+        public async Task<decimal> GetBtcBalance(string authId)
         {
             _log.LogInformation($"Getting BTC balance for {authId}");
             var jObject = await CommonApiQuery("refreshBalance", "{  \"auth_id\":" + authId + "}");
@@ -70,7 +67,7 @@ namespace TeleCoinigy.Services
             return 0;
         }
 
-        public async Task<double> GetBtcBalance()
+        public async Task<decimal> GetBtcBalance()
         {
             _log.LogInformation($"Getting total BTC balance");
             var jObject = await CommonApiQuery("balances", "{  \"show_nils\": 0,  \"auth_ids\": \"\"}");
@@ -78,7 +75,7 @@ namespace TeleCoinigy.Services
             return Math.Round(btcBalance, 3);
         }
 
-        public async Task<double> GetTicker(string ticker)
+        public async Task<decimal> GetTicker(string ticker)
         {
             _log.LogInformation($"Getting ticker data for {ticker}");
             var jObject = await CommonApiQuery("ticker", "{  \"exchange_code\": \"GDAX\",  \"exchange_market\": \"" + ticker + "\"}");

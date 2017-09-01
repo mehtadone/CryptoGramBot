@@ -35,6 +35,10 @@ namespace CryptoGramBot
             var bittrexConfig = container.Resolve<BittrexConfig>();
             configuration.GetSection("Bittrex").Bind(bittrexConfig);
             log.LogInformation("Created bittrex Config");
+
+            var poloniexConfig = container.Resolve<PoloniexConfig>();
+            configuration.GetSection("Poloniex").Bind(poloniexConfig);
+            log.LogInformation("Created Poloniex Config");
         }
 
         private static void ConfigureLogger()
@@ -59,8 +63,10 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<CoinigyConfig>().SingleInstance();
             containerBuilder.RegisterType<TelegramConfig>().SingleInstance();
             containerBuilder.RegisterType<BittrexConfig>().SingleInstance();
+            containerBuilder.RegisterType<PoloniexConfig>().SingleInstance();
             containerBuilder.RegisterType<CoinigyApiService>();
             containerBuilder.RegisterType<BittrexService>();
+            containerBuilder.RegisterType<PoloniexService>();
             containerBuilder.RegisterType<DatabaseService>().SingleInstance();
             containerBuilder.RegisterType<TelegramService>().SingleInstance();
             containerBuilder.RegisterType<StartupService>().SingleInstance();

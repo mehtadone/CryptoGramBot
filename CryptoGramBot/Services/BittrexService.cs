@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
 using Bittrex;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
@@ -11,7 +7,7 @@ using CryptoGramBot.Models;
 
 namespace CryptoGramBot.Services
 {
-    public class BittrexService
+    public class BittrexService : IExchangeService
     {
         private readonly IExchange _exchange;
 
@@ -29,7 +25,7 @@ namespace CryptoGramBot.Services
             exchange.Initialise(context);
         }
 
-        public List<Trade> GetOrderHistory()
+        public List<Trade> GetOrderHistory(DateTime lastChecked)
         {
             var response = _exchange.GetOrderHistory();
             var bittrexToTrades = TradeConverter.BittrexToTrades(response);

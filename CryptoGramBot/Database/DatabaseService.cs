@@ -38,6 +38,26 @@ namespace CryptoGramBot.Database
             return balanceHistory;
         }
 
+        public void AddLastChecked(string exchange, DateTime timestamp)
+        {
+            var lastChecked = _db.SingleOrDefault<LastChecked>(x => x.Exchange == exchange);
+
+            if (lastChecked == null)
+            {
+                _db.Insert(new LastChecked
+                {
+                    Exchange = exchange,
+                    Timestamp = timestamp
+                });
+            }
+            else
+            {
+                lastChecked.Timestamp = timestamp;
+                var liteCollection = _db.Database.GetCollection<LastChecked>();
+                liteCollection.Update(lastChecked);
+            }
+        }
+
         public void AddTrades(IEnumerable<Trade> trades, out List<Trade> newTrades)
         {
             newTrades = new List<Trade>();
@@ -59,6 +79,15 @@ namespace CryptoGramBot.Database
         public BalanceHistory GetLastBalance(string name)
         {
             return !_lastBalances.ContainsKey(name) ? GetLastBalanceFromDatabase(name) : _lastBalances[name];
+        }
+
+        public DateTime GetLastChecked(string exchange)
+        {
+            var lastChecked = _db.Query<LastChecked>()
+                .Where(x => x.Exchange == exchange)
+                .SingleOrDefault();
+
+            return lastChecked?.Timestamp ?? Constants.DateTimeUnixEpochStart;
         }
 
         public IEnumerable<Trade> GetTradesForPair(string ccy1, string ccy2)
@@ -83,6 +112,9 @@ namespace CryptoGramBot.Database
 
             var profitCollection = _db.Database.GetCollection<ProfitAndLoss>();
             profitCollection.EnsureIndex(x => x.Pair);
+
+            var lastCheckedCollection = _db.Database.GetCollection<LastChecked>();
+            lastCheckedCollection.EnsureIndex(x => x.Exchange);
         }
 
         private BalanceHistory GetLastBalanceFromDatabase(string name)
@@ -109,7 +141,7 @@ namespace CryptoGramBot.Database
         private void SaveBalance(BalanceHistory balanceHistory, string name)
         {
             balanceHistory.Name = name;
-            var balances = _db.Insert(balanceHistory);
+            _db.Insert(balanceHistory);
             _log.LogInformation($"Saved new balance in database for: {name}");
             _log.LogInformation("Adding balance to cache");
             _lastBalances[name] = balanceHistory;

@@ -43,6 +43,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Bittrex\Bittrex.csproj" />
+		<ProjectReference Include="..\Poloniex\Poloniex.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -47,10 +47,10 @@ namespace CryptoGramBot.Services
         public async Task SendTradeNotification(Trade newTrade)
         {
             var message = $"{newTrade.TimeStamp:R}\n" +
-                          $"<strong>New {newTrade.Exchange} order</strong>" +
-                          $"<strong>{newTrade.Base}-{newTrade.Terms} {newTrade.Side}</strong>\n" +
-                          $"{newTrade.Cost} BTC of {newTrade.Terms}\n" +
-                          $"At a rate of {newTrade.Limit} BTC";
+                          $"New {newTrade.Exchange} order\n" +
+                          $"<strong>{newTrade.Side} {newTrade.Base}-{newTrade.Terms}</strong>\n" +
+                          $"Total: {newTrade.Cost:##0.###########} BTC\n" +
+                          $"Rate: {newTrade.Limit:##0.##############} BTC";
 
             await SendMessage(message, _config.ChatId);
         }

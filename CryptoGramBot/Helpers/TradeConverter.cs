@@ -10,6 +10,9 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using CsvHelper.TypeConversion;
 using CryptoGramBot.Models;
+using Jojatekok.PoloniexAPI.TradingTools;
+using OrderType = Jojatekok.PoloniexAPI.OrderType;
+using Trade = CryptoGramBot.Models.Trade;
 
 namespace CryptoGramBot.Helpers
 {
@@ -53,7 +56,30 @@ namespace CryptoGramBot.Helpers
             return tradeList;
         }
 
-        private static CompletedOrder ConvertBittrexCsvToCompletedOrder(string[] csvCurrentRecord)
+        public static List<Trade> PoloniexToTrades(IList<ITrade> trades)
+        {
+            var tradeList = new List<Trade>();
+
+            foreach (var completedOrder in trades)
+            {
+                var trade = Mapper.Map<Trade>(completedOrder);
+                trade.Exchange = Constants.Poloniex;
+                trade.Side = completedOrder.Type == OrderType.Buy ? TradeSide.Buy : TradeSide.Sell;
+
+                var ccy = completedOrder.Pair.Split('_');
+                trade.Base = ccy[0];
+                trade.Terms = ccy[1];
+
+                trade.Cost = Convert.ToDecimal(completedOrder.AmountBase);
+                trade.Quantity = Convert.ToDecimal(completedOrder.AmountQuote);
+
+                tradeList.Add(trade);
+            }
+
+            return tradeList;
+        }
+
+        private static CompletedOrder ConvertBittrexCsvToCompletedOrder(IReadOnlyList<string> csvCurrentRecord)
         {
             var newOrder = new CompletedOrder
             {
@@ -65,8 +91,7 @@ namespace CryptoGramBot.Helpers
                 Price = decimal.Parse(csvCurrentRecord[6]),
                 TimeStamp = DateTime.Parse(csvCurrentRecord[8], CultureInfo.CreateSpecificCulture("en-US"))
             };
-            OpenOrderType orderSide;
-            Enum.TryParse(csvCurrentRecord[2], true, out orderSide);
+            Enum.TryParse(csvCurrentRecord[2], true, out OpenOrderType orderSide);
             newOrder.OrderType = orderSide;
 
             return newOrder;

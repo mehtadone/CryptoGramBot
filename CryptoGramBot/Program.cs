@@ -22,17 +22,17 @@ namespace CryptoGramBot
 {
     internal class Program
     {
-        private static void ConfigureConfig(AutofacServiceProvider serviceCollection, IConfigurationRoot configuration, ILogger<Program> log)
+        private static void ConfigureConfig(IContainer container, IConfigurationRoot configuration, ILogger<Program> log)
         {
-            var coinigyConfig = serviceCollection.GetService<CoinigyConfig>();
+            var coinigyConfig = container.Resolve<CoinigyConfig>();
             configuration.GetSection("Coinigy").Bind(coinigyConfig);
             log.LogInformation("Created Coinigy Config");
 
-            var telegramConfig = serviceCollection.GetService<TelegramConfig>();
+            var telegramConfig = container.Resolve<TelegramConfig>();
             configuration.GetSection("Telegram").Bind(telegramConfig);
             log.LogInformation("Created Telegram Config");
 
-            var bittrexConfig = serviceCollection.GetService<BittrexConfig>();
+            var bittrexConfig = container.Resolve<BittrexConfig>();
             configuration.GetSection("Bittrex").Bind(bittrexConfig);
             log.LogInformation("Created bittrex Config");
         }
@@ -41,7 +41,7 @@ namespace CryptoGramBot
         {
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                .WriteTo.RollingFile(Directory.GetCurrentDirectory() + "\\logs\\CryptoGramBot.log")
+                .WriteTo.RollingFile(Directory.GetCurrentDirectory() + "/logs/CryptoGramBot.log")
                 .MinimumLevel.Debug()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                 .Enrich.FromLogContext()
@@ -51,20 +51,21 @@ namespace CryptoGramBot
         private static ContainerBuilder ConfigureServices()
         {
             var serviceCollection = new ServiceCollection()
-                .AddLogging()
-                .AddScoped<CoinigyConfig>()
-                .AddScoped<TelegramConfig>()
-                .AddScoped<BittrexConfig>()
-                .AddScoped<CoinigyApiService>()
-                .AddScoped<BittrexService>()
-                .AddScoped<DatabaseService>()
-                .AddSingleton<TelegramService>()
-                .AddSingleton<StartupService>()
-                .AddSingleton<BalanceService>()
-                .AddScoped<IExchange, Exchange>();
+                .AddLogging();
 
             var containerBuilder = new ContainerBuilder();
             containerBuilder.Populate(serviceCollection);
+
+            containerBuilder.RegisterType<CoinigyConfig>().SingleInstance();
+            containerBuilder.RegisterType<TelegramConfig>().SingleInstance();
+            containerBuilder.RegisterType<BittrexConfig>().SingleInstance();
+            containerBuilder.RegisterType<CoinigyApiService>();
+            containerBuilder.RegisterType<BittrexService>();
+            containerBuilder.RegisterType<DatabaseService>().SingleInstance();
+            containerBuilder.RegisterType<TelegramService>().SingleInstance();
+            containerBuilder.RegisterType<StartupService>().SingleInstance();
+            containerBuilder.RegisterType<BalanceService>();
+            containerBuilder.RegisterType<Exchange>().As<IExchange>();
 
             return containerBuilder;
         }
@@ -82,24 +83,20 @@ namespace CryptoGramBot
             Mapper.Initialize(config => config.MapEntities());
 
             var containerBuilder = ConfigureServices();
-            var container = containerBuilder.Build();
 
             var busBuilder = new BusBuilder();
             busBuilder.ConfigureCore();
 
             containerBuilder.RegisterMicroBus(busBuilder);
 
-            var serviceCollection = new AutofacServiceProvider(container);
+            var container = containerBuilder.Build();
 
-            serviceCollection.GetService<ILoggerFactory>()
-                .AddSerilog();
+            var loggerFactory = container.Resolve<ILoggerFactory>().AddSerilog();
+            var log = loggerFactory.CreateLogger<Program>();
 
-            var logger = serviceCollection.GetService<ILoggerFactory>();
-            var log = logger.CreateLogger<Program>();
+            ConfigureConfig(container, configuration, log);
 
-            ConfigureConfig(serviceCollection, configuration, log);
-
-            var startupService = serviceCollection.GetService<StartupService>();
+            var startupService = container.Resolve<StartupService>();
             startupService.Start();
 
             while (true)

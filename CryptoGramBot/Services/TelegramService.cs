@@ -31,14 +31,6 @@ namespace CryptoGramBot.Services
 
             _balanceService = balanceService;
             _log = log;
-
-            _bot = new TelegramBotClient(_config.BotToken);
-
-            _bot.OnCallbackQuery += BotOnCallbackQueryReceived;
-            _bot.OnMessage += BotOnMessageReceivedAsync;
-            _bot.OnMessageEdited += BotOnMessageReceivedAsync;
-            _bot.OnInlineResultChosen += BotOnChosenInlineResultReceived;
-            _bot.OnReceiveError += BotOnReceiveError;
         }
 
         public async Task SendMessage(string textMessage, long chatId)
@@ -64,6 +56,14 @@ namespace CryptoGramBot.Services
 
         public void StartBot()
         {
+            _bot = new TelegramBotClient(_config.BotToken);
+
+            _bot.OnCallbackQuery += BotOnCallbackQueryReceived;
+            _bot.OnMessage += BotOnMessageReceivedAsync;
+            _bot.OnMessageEdited += BotOnMessageReceivedAsync;
+            _bot.OnInlineResultChosen += BotOnChosenInlineResultReceived;
+            _bot.OnReceiveError += BotOnReceiveError;
+
             var me = _bot.GetMeAsync().Result;
             Console.Title = me.Username;
             _bot.StartReceiving();

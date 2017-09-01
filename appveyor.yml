@@ -12,10 +12,10 @@ before_build:
   # Display .NET Core version
   - cmd: dotnet --version
   # Display minimal restore text
-  - cmd: dotnet restore ./TeleCoinigy/TeleCoinigy.csproj --verbosity m
+  - cmd: dotnet restore ./CryptoGramBot/CryptoGramBot.csproj --verbosity m
 build_script:
   # output will be in ./src/bin/debug/netcoreapp1.1/publish
-  - cmd: dotnet publish --configuration release ./TeleCoinigy/TeleCoinigy.csproj
+  - cmd: dotnet publish --configuration release ./CryptoGramBot/CryptoGramBot.csproj
 after_build:
   # For once the build has completed
 artifacts:

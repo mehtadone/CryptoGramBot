@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using FluentScheduler;
 using CryptoGramBot.Database;
@@ -84,7 +85,7 @@ namespace CryptoGramBot.Services
         private IEnumerable<Trade> FindNewTrades(IEnumerable<Trade> orderHistory)
         {
             _databaseService.AddTrades(orderHistory, out List<Trade> newTrades);
-            return newTrades;
+            return newTrades.OrderByDescending(x => x.TimeStamp);
         }
 
         private DateTime GetLastChecked(string exchange)

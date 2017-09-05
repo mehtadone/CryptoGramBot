@@ -76,6 +76,20 @@ namespace CryptoGramBot.Database
             _log.LogInformation($"Added {newTrades.Count} new trades to database");
         }
 
+        public IEnumerable<string> GetAllPairs()
+        {
+            var liteCollection = _db.Database.GetCollection<Trade>();
+            var distinct = liteCollection.FindAll().ToList().Select(x => x.Terms).Distinct().OrderBy(x => x);
+            return distinct;
+        }
+
+        public IEnumerable<Trade> GetAllTradesFor(string term)
+        {
+            var liteCollection = _db.Database.GetCollection<Trade>();
+            var trades = liteCollection.Find(x => x.Terms == term);
+            return trades;
+        }
+
         public BalanceHistory GetBalance24HoursAgo(string name)
         {
             var dateTime = DateTime.Now - TimeSpan.FromHours(24);

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using CryptoGramBot.Configuration;
@@ -114,9 +115,18 @@ namespace CryptoGramBot.Services
 
                 try
                 {
-                    var accountNumber = splitString[1];
-                    _log.LogInformation($"Balance check for {accountNumber}");
-                    SendAccountUpdate(int.Parse(accountNumber), chatId);
+                    if (splitString.Length == 2)
+                    {
+                        var accountNumber = splitString[1];
+                        _log.LogInformation($"Balance check for {accountNumber}");
+                        SendAccountUpdate(int.Parse(accountNumber), chatId);
+                    }
+                    else if (splitString.Length == 3 && splitString[2] == "pnl")
+                    {
+                        var accountNumber = splitString[1];
+                        _log.LogInformation($"pPnL check for {accountNumber}");
+                        await SendPnlUpdateForAccountNumber(int.Parse(accountNumber), chatId);
+                    }
                 }
                 catch (Exception)
                 {
@@ -144,13 +154,49 @@ namespace CryptoGramBot.Services
             }
             else if (message.StartsWith("/list"))
             {
-                _log.LogInformation($"Account list request");
+                _log.LogInformation($"Message begins with /acc. Going to split string");
+                var splitString = message.Split("_");
+
+                try
+                {
+                    if (splitString.Length == 1)
+                    {
+                        _log.LogInformation($"Account list request");
+                        await SendAccountInfo(chatId);
+                    }
+                    else if (splitString.Length == 2 && splitString[1] == "pnl")
+                    {
+                        _log.LogInformation($"PnL Account List request");
+                        await SendPnLAccountInfo(chatId);
+                    }
+                }
+                catch (Exception)
+                {
+                    await SendHelpMessage();
+                    _log.LogInformation($"Don't know what the user wants to do with the /acc. The message was {message}");
+                }
+            }
+            else if (message.StartsWith("/excel"))
+            {
+                _log.LogInformation($"Excel sheet");
                 await SendAccountInfo(chatId);
             }
             else if (message.StartsWith("/total"))
             {
-                _log.LogInformation($"Total balance request");
-                await SendTotalBalance(chatId);
+                var strings = message.Split('_');
+                if (strings.Length == 1)
+                {
+                    _log.LogInformation($"Total balance request");
+                    await SendTotalBalance(chatId);
+                }
+                else if (strings.Length == 2 && strings[1] == "pnl")
+                {
+                    _log.LogInformation($"24 Hour pnl difference");
+                    await SendTotalPnL(chatId);
+                }
+            }
+            else if (message.StartsWith("/total_pnl"))
+            {
             }
             else if (message.StartsWith("/upload_bittrex_orders"))
             {
@@ -200,18 +246,17 @@ namespace CryptoGramBot.Services
         {
             var balance = await _balanceService.GetAccountBalance(accountId);
             _log.LogInformation($"Sending balance update for account {accountId}");
-            await SendBalanceUpdate(balance.CurrentBalance, balance.PreviousBalance, balance.AccountName, chatId);
+            await SendBalanceUpdate($"Since {balance.PreviousBalance.DateTime:R}", balance.CurrentBalance, balance.PreviousBalance, balance.AccountName, chatId);
         }
 
-        private async Task SendBalanceUpdate(BalanceHistory current, BalanceHistory lastBalance, string accountName, long chatId)
+        private async Task SendBalanceUpdate(string preMessage, BalanceHistory current, BalanceHistory lastBalance, string accountName, long chatId)
         {
-            string message = string.Empty;
-
-            message = $"{DateTime.Now:R}\n" +
-                      $"<strong>Account</strong>: {accountName}\n" +
-                      $"<strong>Current</strong>: {current.Balance} BTC (${current.DollarAmount})\n" +
-                      $"<strong>Previous</strong>: {lastBalance.Balance} BTC (${lastBalance.DollarAmount})\n" +
-                      $"<strong>Difference</strong>: {(current.Balance - lastBalance.Balance):##0.###########} BTC (${Math.Round(current.DollarAmount - lastBalance.DollarAmount, 2)})\n";
+            var message = preMessage + "\n" +
+                             $"{DateTime.Now:R}\n" +
+                             $"<strong>Account</strong>: {accountName}\n" +
+                             $"<strong>Current</strong>: {current.Balance} BTC (${current.DollarAmount})\n" +
+                             $"<strong>Previous</strong>: {lastBalance.Balance} BTC (${lastBalance.DollarAmount})\n" +
+                             $"<strong>Difference</strong>: {(current.Balance - lastBalance.Balance):##0.###########} BTC (${Math.Round(current.DollarAmount - lastBalance.DollarAmount, 2)})\n";
 
             try
             {
@@ -232,14 +277,33 @@ namespace CryptoGramBot.Services
         private async Task SendHelpMessage()
         {
             var usage = $"Usage:\n" +
-                        "/acc n - balance for account number n\n" +
+                        "/acc_n - balance for account number n.\n" +
+                        "/acc_n_pnl - 24 hour pnl for account number n.\n" +
                         "/list - all account names\n" +
+                        "/list_pnl - all account names for pnl\n" +
                         "/total - total balance\n" +
+                        "/total_pnl - 24 hour PnL for the total balance\n" +
+                        "/excel - an excel export of all trades\n" +
                         "/profit BTC-XXX - profit information for pair\n" +
                         "/upload_bittrex_orders - upload bittrex order export";
             _log.LogInformation($"Sending help message");
             await _bot.SendTextMessageAsync(_config.ChatId, usage,
                 replyMarkup: new ReplyKeyboardRemove());
+        }
+
+        private async Task SendPnLAccountInfo(long chatId)
+        {
+            var accountList = await _balanceService.GetAccounts();
+            var message = accountList.Aggregate($"{DateTime.Now:R}\n" + "Connected accounts on Coinigy are: \n", (current, acc) => current + "/acc_" + acc.Key + "_pnl " + " - " + acc.Value.Name + "\n");
+            _log.LogInformation($"Sending the account list with pnl");
+            await SendMessage(message, chatId);
+        }
+
+        private async Task SendPnlUpdateForAccountNumber(int accountId, long chatId)
+        {
+            var accountBalance24HoursAgo = await _balanceService.GetAccountBalance24HoursAgo(accountId);
+            await SendBalanceUpdate("24 Hour Summary", accountBalance24HoursAgo.CurrentBalance, accountBalance24HoursAgo.PreviousBalance,
+                accountBalance24HoursAgo.AccountName, chatId);
         }
 
         private async Task SendProfitInfomation(long chatId, string ccy1, string ccy2)
@@ -259,7 +323,14 @@ namespace CryptoGramBot.Services
         {
             var balance = await _balanceService.GetTotalBalance();
             _log.LogInformation($"Sending total balance");
-            await SendBalanceUpdate(balance.CurrentBalance, balance.PreviousBalance, "Total Balance", chatId);
+            await SendBalanceUpdate($"Since {balance.PreviousBalance.DateTime:R}", balance.CurrentBalance, balance.PreviousBalance, "Total Balance", chatId);
+        }
+
+        private async Task SendTotalPnL(long chatId)
+        {
+            var balance = await _balanceService.Get24HourTotalBalance();
+            _log.LogInformation($"Sending total pnl");
+            await SendBalanceUpdate($"24 hour summary", balance.CurrentBalance, balance.PreviousBalance, "Total Balance", chatId);
         }
     }
 }

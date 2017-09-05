@@ -294,3 +294,5 @@ __pycache__/
 # End of https://www.gitignore.io/api/visualstudio
 /TeleCoinigy/coinigyBalances.db
 /TeleCoinigy/Database/coinigyBalances.db
+/CryptoGramBot/Database/cryptogrambot-journal.db
+/CryptoGramBot/Database/cryptogrambot.db

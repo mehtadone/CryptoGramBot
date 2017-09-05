@@ -39,6 +39,7 @@ namespace CryptoGramBot.Services
         public async Task CheckCoinigyBalances()
         {
             await _balanceService.GetAllBalances();
+            await _balanceService.GetTotalBalance();
         }
 
         public async Task GetNewOrders()

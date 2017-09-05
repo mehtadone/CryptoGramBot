@@ -76,6 +76,50 @@ namespace CryptoGramBot.Database
             _log.LogInformation($"Added {newTrades.Count} new trades to database");
         }
 
+        public BalanceHistory GetBalance24HoursAgo(string name)
+        {
+            var dateTime = DateTime.Now - TimeSpan.FromHours(24);
+            BalanceHistory hour24Balance;
+
+            var histories = _lastBalances.Values.Where(x => x.DateTime.Hour == dateTime.Hour &&
+                                                            x.DateTime.Day == dateTime.Day &&
+                                                             x.DateTime.Month == dateTime.Month &&
+                                                             x.DateTime.Year == dateTime.Year &&
+                                                             x.Name == name)
+                                                             .ToList();
+
+            if (histories.Count == 0)
+            {
+                _log.LogInformation($"Retrieving 24 hour balance from database for: {name}");
+
+                var liteCollection = _db.Database.GetCollection<BalanceHistory>();
+                var balanceHistories = liteCollection.Find(x => x.Name == name).OrderByDescending(x => x.DateTime).ToList();
+
+                histories = balanceHistories.FindAll(x => x.DateTime.Hour == dateTime.Hour &&
+                                x.DateTime.Day == dateTime.Day &&
+                                x.DateTime.Month == dateTime.Month &&
+                                x.DateTime.Year == dateTime.Year)
+                                .ToList();
+
+                if (!histories.Any())
+                {
+                    _log.LogWarning($"Could not find a 24 hour balance for: {name}");
+                    hour24Balance = new BalanceHistory
+                    {
+                        Balance = 0,
+                        DollarAmount = 0,
+                        Name = name
+                    };
+                    return hour24Balance;
+                }
+            }
+
+            var orderByDescending = histories.OrderByDescending(x => x.DateTime);
+            hour24Balance = orderByDescending.FirstOrDefault();
+
+            return hour24Balance;
+        }
+
         public BalanceHistory GetLastBalance(string name)
         {
             return !_lastBalances.ContainsKey(name) ? GetLastBalanceFromDatabase(name) : _lastBalances[name];

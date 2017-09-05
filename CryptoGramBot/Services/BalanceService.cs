@@ -25,6 +25,16 @@ namespace CryptoGramBot.Services
             _databaseService.AddTrades(trades, out newTrades);
         }
 
+        public async Task<BalanceInformation> Get24HourTotalBalance()
+        {
+            var hour24Balance = _databaseService.GetBalance24HoursAgo(Constants.CoinigyBalance);
+            var balanceCurrent = await _coinigyApiService.GetBtcBalance();
+
+            var dollarAmount = await GetDollarAmount(balanceCurrent);
+            var currentBalance = _databaseService.AddBalance(balanceCurrent, dollarAmount, Constants.CoinigyBalance);
+            return new BalanceInformation(currentBalance, hour24Balance, Constants.CoinigyBalance);
+        }
+
         public async Task<BalanceInformation> GetAccountBalance(int accountId)
         {
             var accounts = await _coinigyApiService.GetAccounts();
@@ -37,6 +47,18 @@ namespace CryptoGramBot.Services
             var currentBalance = _databaseService.AddBalance(balance, dollarAmount, selectedAccount.Name);
 
             return new BalanceInformation(currentBalance, lastBalance, selectedAccount.Name);
+        }
+
+        public async Task<BalanceInformation> GetAccountBalance24HoursAgo(int accountId)
+        {
+            var accounts = await _coinigyApiService.GetAccounts();
+            var selectedAccount = accounts[accountId];
+            var balance24HoursAgo = _databaseService.GetBalance24HoursAgo(selectedAccount.Name);
+            var balanceCurrent = await _coinigyApiService.GetBtcBalance(selectedAccount.AuthId);
+
+            var dollarAmount = await GetDollarAmount(balanceCurrent);
+            var currentBalance = _databaseService.AddBalance(balanceCurrent, dollarAmount, selectedAccount.Name);
+            return new BalanceInformation(currentBalance, balance24HoursAgo, selectedAccount.Name);
         }
 
         public async Task<Dictionary<int, Account>> GetAccounts()
@@ -66,6 +88,8 @@ namespace CryptoGramBot.Services
             var dollarAmount = await GetDollarAmount(profitAndLoss.Profit);
 
             profitAndLoss.DollarProfit = dollarAmount;
+
+            _databaseService.SaveProfitAndLoss(profitAndLoss);
 
             return profitAndLoss;
         }

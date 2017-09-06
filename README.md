@@ -1,7 +1,7 @@
-# TeleCoinigy
+# CryptoGramBot
 
 
-A simple telegram bot that sends your balance updates from coinigy, send trade notifications from Poloniex and Bittrex and 
+A simple telegram bot that sends your balance updates from coinigy, send trade notifications from Poloniex and Bittrex and creates you a trade export for your own spreadsheet magicary. 
 
 
 **Installation:**
@@ -25,11 +25,18 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Poloniex Trade notifications
 * Bittrex csv order export upload
 * Excel trade history export
+* Bag notifications when a balance drops more than 30%
 * Pair profit - TODO - Calculations are wrong. 
 
 **Todo**
 * Will only work if you have a poloniex, bittrex and coinigy account configured. Add functionality to have a combination of the above. 
 * Multiple exchange accounts. 
 * Price drop notifications
+* Exception handling
+
+**Screenshots**
+
+
+![Screenshot 1](https://github.com/mehtadone/CryptoGramBot/blob/master/CryptoGramBot/images/screenshot.png?raw=true)
 
 

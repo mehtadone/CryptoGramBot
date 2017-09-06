@@ -1,10 +1,7 @@
 # TeleCoinigy
 
 
-A simple telegram bot that sends your balance updates from coinigy
-
-
-Will add releases soon.
+A simple telegram bot that sends your balance updates from coinigy, send trade notifications from Poloniex and Bittrex and 
 
 
 **Installation:**
@@ -18,9 +15,20 @@ Will add releases soon.
 
 
 **Usage:**
+/help when the bot is running
+
+**Done:**
+* Coinigy balance notification
+* Coinigy 24 hour PnL
+* Bittrex Trade notifications
+* Poloniex Trade notifications
+* Bittrex csv order export upload
+* Excel trade history export
+* Pair profit - TODO - Calculations are wrong. 
+
+**Todo**
+* Will only work if you have a poloniex, bittrex and coinigy account configured. Add functionality to have a combination of the above. 
+* Multiple exchange accounts. 
+* Price drop notifications
 
 
-* Commands are: 
-* /acc {number of account from /all} - balance for specific account
-* /all - all account names
-* /total - total balance

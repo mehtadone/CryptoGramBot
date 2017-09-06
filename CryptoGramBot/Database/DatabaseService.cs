@@ -148,6 +148,18 @@ namespace CryptoGramBot.Database
             return lastChecked?.Timestamp ?? Constants.DateTimeUnixEpochStart;
         }
 
+        public Trade GetLastTradeForPair(string walletBalanceCurrency)
+        {
+            var liteQueryable = _db.Query<Trade>()
+                .Where(x => x.Terms == walletBalanceCurrency)
+                .ToEnumerable();
+
+            var orderByDescending = liteQueryable.OrderByDescending(x => x.TimeStamp);
+            var lastTrade = orderByDescending.FirstOrDefault();
+
+            return lastTrade;
+        }
+
         public IEnumerable<Trade> GetTradesForPair(string ccy1, string ccy2)
         {
             var enumerable = _db.Query<Trade>()

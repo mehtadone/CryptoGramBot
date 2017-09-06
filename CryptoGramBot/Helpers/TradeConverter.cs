@@ -56,6 +56,23 @@ namespace CryptoGramBot.Helpers
             return tradeList;
         }
 
+        public static List<WalletBalance> BittrexToWalletBalances(GetBalancesResponse response)
+        {
+            var walletBalances = new List<WalletBalance>();
+
+            foreach (var wallet in response)
+            {
+                if (wallet.Balance > 0)
+                {
+                    var walletBalance = Mapper.Map<WalletBalance>(wallet);
+                    walletBalance.Exchange = Constants.Bittrex;
+                    walletBalances.Add(walletBalance);
+                }
+            }
+
+            return walletBalances;
+        }
+
         public static List<Trade> PoloniexToTrades(IList<ITrade> trades)
         {
             var tradeList = new List<Trade>();

@@ -20,6 +20,7 @@ namespace CryptoGramBot.Extensions
                 .ForMember(x => x.Limit, d => d.MapFrom(src => src.PricePerCoin));
 
             config.CreateMap<GetBalancesResponse, WalletBalance>();
+            config.CreateMap<AccountBalance, WalletBalance>();
         }
     }
 }

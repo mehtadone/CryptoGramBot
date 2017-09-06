@@ -79,8 +79,27 @@ namespace CryptoGramBot.Services
             registry.Schedule(() => GetNewOrdersOnStartup().Wait()).ToRunNow();
             registry.Schedule(() => GetNewOrders().Wait()).ToRunEvery(5).Minutes();
             registry.Schedule(() => CheckCoinigyBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
+            registry.Schedule(() => CheckForBags().Wait()).ToRunNow().AndEvery(6).Hours();
 
             JobManager.Initialize(registry);
+        }
+
+        private async Task CheckForBags()
+        {
+            var walletBalances = _bittrexService.GetWalletBalances();
+
+            foreach (var walletBalance in walletBalances)
+            {
+                var lastTradeForPair = _databaseService.GetLastTradeForPair(walletBalance.Currency);
+                if (lastTradeForPair == null) continue;
+                var currentPrice = _bittrexService.GetPrice(lastTradeForPair.Terms);
+                var percentage = PriceDifference(currentPrice, lastTradeForPair.Limit);
+
+                if (percentage > 30)
+                {
+                    await _telegramService.SendBagNotification(walletBalance, lastTradeForPair, currentPrice, percentage);
+                }
+            }
         }
 
         private IEnumerable<Trade> FindNewTrades(IEnumerable<Trade> orderHistory)
@@ -110,6 +129,12 @@ namespace CryptoGramBot.Services
             var newTrades = FindNewTrades(orderHistory);
             _databaseService.AddLastChecked(Constants.Poloniex, DateTime.Now);
             return newTrades;
+        }
+
+        private decimal PriceDifference(decimal currentPrice, decimal limit)
+        {
+            var percentage = (currentPrice - limit) / limit * 100;
+            return Math.Round(percentage, 0);
         }
 
         private async Task SendNewTradeNotificationsOnStartup(IEnumerable<Trade> newTrades)

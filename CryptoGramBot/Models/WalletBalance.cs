@@ -12,6 +12,7 @@ namespace CryptoGramBot.Models
         public decimal Available { get; set; }
         public decimal Balance { get; set; }
         public string Currency { get; set; }
+        public string Exchange { get; set; }
         public decimal Pending { get; set; }
         public decimal Requested { get; set; }
         public DateTime Timestamp { get; set; }

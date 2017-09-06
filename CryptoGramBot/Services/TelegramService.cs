@@ -33,6 +33,20 @@ namespace CryptoGramBot.Services
             _log = log;
         }
 
+        public async Task SendBagNotification(WalletBalance walletBalance, Trade lastTradeForPair, decimal currentPrice, decimal percentage)
+        {
+            var message =
+                $"{DateTime.Now:g}\n" +
+                $"<strong>Bag detected for {walletBalance.Currency}</strong>\n" +
+                $"Bought price: {lastTradeForPair.Limit:#0.#############}\n" +
+                $"Current price: {currentPrice:#0.#############}\n" +
+                $"Percentage drop: {percentage}%\n" +
+                $"Bought on: {lastTradeForPair.TimeStamp:g}\n" +
+                $"Value: {(walletBalance.Balance * currentPrice):#0.#############}";
+
+            await SendMessage(message, _config.ChatId);
+        }
+
         public async Task SendMessage(string textMessage, long chatId)
         {
             await _bot.SendTextMessageAsync(chatId, textMessage, ParseMode.Html);

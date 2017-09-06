@@ -31,6 +31,7 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Will only work if you have a poloniex, bittrex and coinigy account configured. Add functionality to have a combination of the above. 
 * Multiple exchange accounts. 
 * Price drop notifications
+* Exception handling
 
 **Screenshots**
 

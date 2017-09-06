@@ -1,4 +1,4 @@
-# TeleCoinigy
+# CryptoGramBot
 
 
 A simple telegram bot that sends your balance updates from coinigy, send trade notifications from Poloniex and Bittrex and 

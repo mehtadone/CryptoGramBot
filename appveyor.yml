@@ -12,21 +12,21 @@ before_build:
   # Display .NET Core version
   - cmd: dotnet --version
   # Display minimal restore text
-  - cmd: dotnet restore ./TeleCoinigy/TeleCoinigy.csproj --verbosity m
+  - cmd: dotnet restore ./CryptoGramBot/CryptoGramBot.csproj --verbosity m
 build_script:
   # output will be in ./src/bin/debug/netcoreapp1.1/publish
-  - cmd: dotnet publish --configuration release ./TeleCoinigy/TeleCoinigy.csproj
+  - cmd: dotnet publish --configuration release ./CryptoGramBot/CryptoGramBot.csproj
 after_build:
   # For once the build has completed
 artifacts:
- - path: '\TeleCoinigy\bin\Release\netcoreapp2.0\publish'
-   name: TeleCoinigy
+ - path: '\CryptoGramBot\bin\Release\netcoreapp2.0\publish'
+   name: CryptoGramBot
    type: FolderProfile
 clone_depth: 1
 on_finish :
   # any cleanup in here
 deploy:
-  release: telecoinigy-v$(appveyor_build_version)
+  release: CryptoGramBot-v$(appveyor_build_version)
   description: 'Next release'
   provider: GitHub
   auth_token:

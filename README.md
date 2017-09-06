@@ -33,6 +33,8 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Price drop notifications
 
 **Screenshots**
+
+
 ![Screenshot 1](https://github.com/mehtadone/CryptoGramBot/blob/master/CryptoGramBot/images/screenshot.png?raw=true)
 
 

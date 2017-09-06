@@ -86,7 +86,7 @@ namespace CryptoGramBot.Services
         private IEnumerable<Trade> FindNewTrades(IEnumerable<Trade> orderHistory)
         {
             _databaseService.AddTrades(orderHistory, out List<Trade> newTrades);
-            return newTrades.OrderByDescending(x => x.TimeStamp);
+            return newTrades.OrderBy(x => x.TimeStamp);
         }
 
         private DateTime GetLastChecked(string exchange)

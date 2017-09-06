@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Bittrex;
+using CryptoGramBot.Models;
 using Jojatekok.PoloniexAPI.TradingTools;
 using Trade = CryptoGramBot.Models.Trade;
 
@@ -17,6 +18,8 @@ namespace CryptoGramBot.Extensions
                 .ForMember(x => x.Id, d => d.MapFrom(src => src.IdOrder))
                 .ForMember(x => x.TimeStamp, d => d.MapFrom(src => src.Time))
                 .ForMember(x => x.Limit, d => d.MapFrom(src => src.PricePerCoin));
+
+            config.CreateMap<GetBalancesResponse, WalletBalance>();
         }
     }
 }

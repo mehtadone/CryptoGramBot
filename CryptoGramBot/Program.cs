@@ -73,10 +73,6 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
             containerBuilder.RegisterType<StartupService>().SingleInstance();
             containerBuilder.RegisterType<BalanceService>();
-            containerBuilder.RegisterType<BagNotificationHandler>();
-            containerBuilder.RegisterType<TradeNotificationHandler>();
-            containerBuilder.RegisterType<BalanceUpdateHandler>();
-            containerBuilder.RegisterType<ExcelExportHandler>();
             containerBuilder.RegisterType<TelegramBot>().SingleInstance();
             containerBuilder.RegisterType<Exchange>().As<IExchange>();
 

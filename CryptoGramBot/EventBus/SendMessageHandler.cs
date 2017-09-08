@@ -1,27 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using CryptoGramBot.Services;
 using Enexure.MicroBus;
+using Telegram.Bot.Types.Enums;
 
 namespace CryptoGramBot.EventBus
 {
     public class SendMessageCommand : ICommand
     {
-        private readonly string _message;
-
         public SendMessageCommand(string message)
         {
-            _message = message;
+            Message = message;
         }
+
+        public string Message { get; }
     }
 
     public class SendMessageHandler : ICommandHandler<SendMessageCommand>
     {
-        public Task Handle(SendMessageCommand command)
+        private readonly TelegramBot _bot;
+
+        public SendMessageHandler(TelegramBot bot)
         {
-            return Task.FromResult(0);
+            _bot = bot;
+        }
+
+        public async Task Handle(SendMessageCommand command)
+        {
+            await _bot.Bot.SendTextMessageAsync(_bot.ChatId, command.Message, ParseMode.Html);
         }
     }
 }

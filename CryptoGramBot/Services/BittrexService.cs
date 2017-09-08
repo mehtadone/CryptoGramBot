@@ -5,16 +5,19 @@ using Bittrex;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
+using Enexure.MicroBus;
 
 namespace CryptoGramBot.Services
 {
     public class BittrexService : IExchangeService
     {
+        private readonly IMicroBus _bus;
         private readonly IExchange _exchange;
 
-        public BittrexService(BittrexConfig config, IExchange exchange)
+        public BittrexService(BittrexConfig config, IExchange exchange, IMicroBus bus)
         {
             _exchange = exchange;
+            _bus = bus;
             var context = new ExchangeContext
             {
                 QuoteCurrency = "BTC",

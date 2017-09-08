@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CryptoGramBot.Configuration;
 using FluentScheduler;
 using CryptoGramBot.Database;
+using CryptoGramBot.EventBus;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using Enexure.MicroBus;
@@ -14,26 +16,32 @@ namespace CryptoGramBot.Services
     {
         private readonly BalanceService _balanceService;
         private readonly BittrexService _bittrexService;
+        private readonly TelegramBot _bot;
         private readonly IMicroBus _bus;
         private readonly DatabaseService _databaseService;
         private readonly PoloniexService _poloniexService;
-        private readonly TelegramService _telegramService;
+        private readonly TelegramConfig _telegramConfig;
+        private readonly TelegramMessageRecieveService _telegramMessageRecieveService;
 
         public StartupService(
             IMicroBus bus,
+            TelegramConfig telegramConfig,
+            TelegramMessageRecieveService telegramMessageRecieveService,
             BittrexService bittrexService,
             PoloniexService poloniexService,
             DatabaseService databaseService,
             BalanceService balanceService,
-            TelegramService telegramService
+            TelegramBot bot
             )
         {
             _bus = bus;
+            _telegramConfig = telegramConfig;
+            _telegramMessageRecieveService = telegramMessageRecieveService;
             _bittrexService = bittrexService;
             _poloniexService = poloniexService;
             _databaseService = databaseService;
             _balanceService = balanceService;
-            _telegramService = telegramService;
+            _bot = bot;
         }
 
         public async Task CheckCoinigyBalances()
@@ -48,21 +56,21 @@ namespace CryptoGramBot.Services
 
             foreach (var newTrade in newOrdersFromBittrex)
             {
-                await _telegramService.SendTradeNotification(newTrade);
+                await _bus.SendAsync(new TradeNotificationCommand(newTrade));
             }
 
             var newOrdersFromPolo = GetNewOrdersFromPolo();
 
             foreach (var newTrade in newOrdersFromPolo)
             {
-                await _telegramService.SendTradeNotification(newTrade);
+                await _bus.SendAsync(new TradeNotificationCommand(newTrade));
             }
         }
 
         public async Task GetNewOrdersOnStartup()
         {
             var message = "<strong>Checking new orders on startup. Will only send top 5</strong>\n";
-            await _telegramService.SendMessage(message);
+            await _bus.SendAsync(new SendMessageCommand(message));
 
             var newTradesBittrex = GetNewOrdersFromBittrex();
             await SendNewTradeNotificationsOnStartup(newTradesBittrex);
@@ -73,7 +81,8 @@ namespace CryptoGramBot.Services
 
         public void Start()
         {
-            _telegramService.StartBot();
+            _bot.StartBot(_telegramConfig);
+            _telegramMessageRecieveService.StartBot(_bot.Bot);
 
             var registry = new Registry();
             registry.Schedule(() => GetNewOrdersOnStartup().Wait()).ToRunNow();
@@ -90,6 +99,8 @@ namespace CryptoGramBot.Services
 
             foreach (var walletBalance in walletBalances)
             {
+                if (walletBalance.Currency == "BTC") continue;
+
                 var lastTradeForPair = _databaseService.GetLastTradeForPair(walletBalance.Currency);
                 if (lastTradeForPair == null) continue;
                 var currentPrice = _bittrexService.GetPrice(lastTradeForPair.Terms);
@@ -97,7 +108,8 @@ namespace CryptoGramBot.Services
 
                 if (percentage > 30)
                 {
-                    await _telegramService.SendBagNotification(walletBalance, lastTradeForPair, currentPrice, percentage);
+                    await _bus.SendAsync(new SendBagNotificationCommand(walletBalance, lastTradeForPair, currentPrice,
+                        percentage));
                 }
             }
         }
@@ -118,7 +130,7 @@ namespace CryptoGramBot.Services
             var lastChecked = GetLastChecked(Constants.Bittrex);
             var orderHistory = _bittrexService.GetOrderHistory(lastChecked);
             var newTrades = FindNewTrades(orderHistory);
-            _databaseService.AddLastChecked(Constants.Poloniex, DateTime.Now);
+            _databaseService.AddLastChecked(Constants.Bittrex, DateTime.Now);
             return newTrades;
         }
 
@@ -145,7 +157,7 @@ namespace CryptoGramBot.Services
             {
                 if (i >= 4) break;
 
-                await _telegramService.SendTradeNotification(newTrade);
+                await _bus.SendAsync(new TradeNotificationCommand(newTrade));
                 i++;
             }
         }

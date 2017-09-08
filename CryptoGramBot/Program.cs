@@ -17,6 +17,7 @@ using CryptoGramBot.Database;
 using CryptoGramBot.Extensions;
 using Enexure.MicroBus;
 using Autofac.Extensions.DependencyInjection;
+using CryptoGramBot.EventBus;
 using Enexure.MicroBus.Autofac;
 
 namespace CryptoGramBot
@@ -69,9 +70,14 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<BittrexService>();
             containerBuilder.RegisterType<PoloniexService>();
             containerBuilder.RegisterType<DatabaseService>().SingleInstance();
-            containerBuilder.RegisterType<TelegramService>().SingleInstance();
+            containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
             containerBuilder.RegisterType<StartupService>().SingleInstance();
             containerBuilder.RegisterType<BalanceService>();
+            containerBuilder.RegisterType<BagNotificationHandler>();
+            containerBuilder.RegisterType<TradeNotificationHandler>();
+            containerBuilder.RegisterType<BalanceUpdateHandler>();
+            containerBuilder.RegisterType<ExcelExportHandler>();
+            containerBuilder.RegisterType<TelegramBot>().SingleInstance();
             containerBuilder.RegisterType<Exchange>().As<IExchange>();
 
             return containerBuilder;

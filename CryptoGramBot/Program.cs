@@ -41,6 +41,10 @@ namespace CryptoGramBot
             var poloniexConfig = container.Resolve<PoloniexConfig>();
             configuration.GetSection("Poloniex").Bind(poloniexConfig);
             log.LogInformation("Created Poloniex Config");
+
+            var bagConfig = container.Resolve<BagConfig>();
+            configuration.GetSection("BagManagement").Bind(bagConfig);
+            log.LogInformation("Created Bag Management Config");
         }
 
         private static void ConfigureLogger()
@@ -66,12 +70,13 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<TelegramConfig>().SingleInstance();
             containerBuilder.RegisterType<BittrexConfig>().SingleInstance();
             containerBuilder.RegisterType<PoloniexConfig>().SingleInstance();
+            containerBuilder.RegisterType<BagConfig>().SingleInstance();
             containerBuilder.RegisterType<CoinigyApiService>();
             containerBuilder.RegisterType<BittrexService>();
             containerBuilder.RegisterType<PoloniexService>();
             containerBuilder.RegisterType<DatabaseService>().SingleInstance();
             containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
-            containerBuilder.RegisterType<StartupService>().SingleInstance();
+            containerBuilder.RegisterType<CheckingService>().SingleInstance();
             containerBuilder.RegisterType<BalanceService>();
             containerBuilder.RegisterType<TelegramBot>().SingleInstance();
             containerBuilder.RegisterType<Exchange>().As<IExchange>();
@@ -105,7 +110,7 @@ namespace CryptoGramBot
 
             ConfigureConfig(container, configuration, log);
 
-            var startupService = container.Resolve<StartupService>();
+            var startupService = container.Resolve<CheckingService>();
             startupService.Start();
 
             while (true)

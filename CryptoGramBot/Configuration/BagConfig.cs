@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace CryptoGramBot.Configuration
 {
-    public class BittrexConfig
+    public class BagConfig
     {
         public bool Enabled { get; set; }
-        public string Key { get; set; }
-        public string Secret { get; set; }
+        public decimal PercentageDrop { get; set; }
     }
 }

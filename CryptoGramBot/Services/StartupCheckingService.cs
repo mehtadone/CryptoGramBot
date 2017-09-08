@@ -3,37 +3,32 @@ using CryptoGramBot.Configuration;
 using FluentScheduler;
 using CryptoGramBot.EventBus;
 using CryptoGramBot.EventBus.Events;
+using CryptoGramBot.EventBus.Handlers;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.Services
 {
-    public class CheckingService
+    public class StartupCheckingService
     {
-        private readonly BalanceService _balanceService;
         private readonly TelegramBot _bot;
         private readonly IMicroBus _bus;
         private readonly TelegramConfig _telegramConfig;
-        private readonly TelegramMessageRecieveService _telegramMessageRecieveService;
 
-        public CheckingService(
+        public StartupCheckingService(
             IMicroBus bus,
             TelegramConfig telegramConfig,
-            TelegramMessageRecieveService telegramMessageRecieveService,
-            BalanceService balanceService,
             TelegramBot bot
             )
         {
             _bus = bus;
             _telegramConfig = telegramConfig;
-            _telegramMessageRecieveService = telegramMessageRecieveService;
-            _balanceService = balanceService;
             _bot = bot;
         }
 
         public async Task CheckCoinigyBalances()
         {
-            await _balanceService.GetAllBalances();
-            await _balanceService.GetTotalBalance();
+            await _bus.SendAsync(new CheckCoinigyAccountBalancesCommand());
+            await _bus.SendAsync(new CheckCoinigyTotalBalanceCommand());
         }
 
         public async Task GetNewOrders()
@@ -41,26 +36,33 @@ namespace CryptoGramBot.Services
             await _bus.PublishAsync(new NewTradesCheckEvent(false));
         }
 
+        // Need to do this or we end may end up with 500 + messages on first run
         public async Task GetNewOrdersOnStartup()
         {
             const string message = "<strong>Checking new orders on startup. Will only send top 5</strong>\n";
             await _bus.SendAsync(new SendMessageCommand(message));
+
             await _bus.PublishAsync(new NewTradesCheckEvent(true));
         }
 
-        public void Start()
+        public void Start(bool coinigyEnabled, bool bittrexEnabled, bool poloEnabled, bool bagManagementEnabled)
         {
-            // Start the bot so we can start sending messages.
+            // Needs to be called here as if we use DI, the config has not been binded yet
             _bot.StartBot(_telegramConfig);
-
-            // Start the bot so we can start receiving messages
-            _telegramMessageRecieveService.StartBot(_bot.Bot);
 
             var registry = new Registry();
             registry.Schedule(() => GetNewOrdersOnStartup().Wait()).ToRunNow();
             registry.Schedule(() => GetNewOrders().Wait()).ToRunEvery(5).Minutes();
-            registry.Schedule(() => CheckCoinigyBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
-            registry.Schedule(() => CheckForBags().Wait()).ToRunNow().AndEvery(6).Hours();
+
+            if (coinigyEnabled)
+            {
+                registry.Schedule(() => CheckCoinigyBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
+            }
+
+            if (bagManagementEnabled)
+            {
+                registry.Schedule(() => CheckForBags().Wait()).ToRunNow().AndEvery(6).Hours();
+            }
 
             JobManager.Initialize(registry);
         }

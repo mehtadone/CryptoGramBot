@@ -2,6 +2,8 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using CryptoGramBot.EventBus;
+using CryptoGramBot.EventBus.Handlers;
+using CryptoGramBot.Helpers;
 using Enexure.MicroBus;
 using Telegram.Bot;
 using Telegram.Bot.Args;
@@ -25,7 +27,7 @@ namespace CryptoGramBot.Services
             _log = log;
         }
 
-        public void StartBot(TelegramBotClient bot)
+        public void StartReceivingMessages(TelegramBotClient bot)
         {
             _bot = bot;
             _bot.OnCallbackQuery += BotOnCallbackQueryReceived;
@@ -74,7 +76,14 @@ namespace CryptoGramBot.Services
 
             if (message.Type != MessageType.TextMessage) return;
 
-            await CheckMessage(message.Text);
+            try
+            {
+                await CheckMessage(message.Text);
+            }
+            catch (Exception ex)
+            {
+                await _bus.SendAsync(new SendMessageCommand("Could not process your command"));
+            }
         }
 
         private void BotOnReceiveError(object sender, ReceiveErrorEventArgs e)
@@ -92,8 +101,8 @@ namespace CryptoGramBot.Services
                 try
                 {
                     var accountNumber = splitString[1];
-                    _log.LogInformation($"pPnL check for {accountNumber}");
-                    await _bus.SendAsync(new PnLForAccountCommand(int.Parse(accountNumber)));
+                    _log.LogInformation($"PnL check for {accountNumber}");
+                    await _bus.SendAsync(new CoinigyPnLForAccountCommand(int.Parse(accountNumber)));
                 }
                 catch (Exception)
                 {
@@ -115,10 +124,10 @@ namespace CryptoGramBot.Services
                 catch (Exception)
                 {
                     await SendHelpMessage();
-                    _log.LogInformation($"Don't know what the user wants to do with the /profit. The message was {message}");
+                    _log.LogInformation($"Don't know what the you want to do with the /profit. The message was {message}");
                 }
             }
-            else if (message.StartsWith("/list_coinigy_accounts"))
+            else if (message.StartsWith(TelegramCommands.CoinigyAccountList))
             {
                 try
                 {
@@ -131,17 +140,17 @@ namespace CryptoGramBot.Services
                     _log.LogInformation($"Don't know what the user wants to do with the /acc. The message was {message}");
                 }
             }
-            else if (message.StartsWith("/excel"))
+            else if (message.StartsWith(TelegramCommands.CommonPairProfit))
             {
                 _log.LogInformation("Excel sheet");
                 await _bus.SendAsync(new ExcelExportCommand());
             }
-            else if (message.StartsWith("/total"))
+            else if (message.StartsWith(TelegramCommands.CoinigyTotalBalance))
             {
                 _log.LogInformation("24 Hour pnl difference");
-                await _bus.SendAsync(new TotalPnLCommand());
+                await _bus.SendAsync(new CoinigyTotalPnLCommand());
             }
-            else if (message.StartsWith("/upload_bittrex_orders"))
+            else if (message.StartsWith(TelegramCommands.BittrexTradeExportUpload))
             {
                 await _bus.SendAsync(new SendMessageCommand("Please upload bittrex trade export"));
                 _waitingForFile = true;

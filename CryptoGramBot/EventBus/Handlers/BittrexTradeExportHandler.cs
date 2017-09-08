@@ -22,14 +22,14 @@ namespace CryptoGramBot.EventBus
 
     public class BittrexTradeExportHandler : ICommandHandler<BittrexTradeExportCommand>
     {
-        private readonly BalanceService _balanceService;
+        private readonly CoinigyBalanceService _coinigyBalanceService;
         private readonly TelegramBot _bot;
         private readonly IMicroBus _bus;
 
-        public BittrexTradeExportHandler(TelegramBot bot, BalanceService balanceService, IMicroBus bus)
+        public BittrexTradeExportHandler(TelegramBot bot, CoinigyBalanceService coinigyBalanceService, IMicroBus bus)
         {
             _bot = bot;
-            _balanceService = balanceService;
+            _coinigyBalanceService = coinigyBalanceService;
             _bus = bus;
         }
 
@@ -39,7 +39,7 @@ namespace CryptoGramBot.EventBus
             {
                 var file = await _bot.Bot.GetFileAsync(command.FileId);
                 var trades = TradeConverter.BittrexFileToTrades(file.FileStream);
-                _balanceService.AddTrades(trades, out List<Trade> newTrades);
+                _coinigyBalanceService.AddTrades(trades, out List<Trade> newTrades);
                 await _bus.SendAsync(new SendMessageCommand($"{newTrades.Count} new bittrex trades added."));
             }
             catch (Exception)

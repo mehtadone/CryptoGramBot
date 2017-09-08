@@ -9,8 +9,8 @@
 		<AssemblyName>CryptoGramBot</AssemblyName>
 		<RootNamespace>CryptoGramBot</RootNamespace>
 		<Authors>mehtadone@gmail.com</Authors>
-		<PackageProjectUrl>https://github.com/mehtadone/TeleCoinigy</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/mehtadone/TeleCoinigy</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/mehtadone/CryptoGramBot</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/mehtadone/CryptoGramBot</RepositoryUrl>
 		<RepositoryType>Github</RepositoryType>
 	</PropertyGroup>
 

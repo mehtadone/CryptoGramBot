@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Autofac;
 using AutoMapper;
@@ -19,11 +20,27 @@ using Enexure.MicroBus;
 using Autofac.Extensions.DependencyInjection;
 using CryptoGramBot.EventBus;
 using Enexure.MicroBus.Autofac;
+using Microsoft.Extensions.Configuration.Json;
+using IConfigurationProvider = Microsoft.Extensions.Configuration.IConfigurationProvider;
 
 namespace CryptoGramBot
 {
     internal class Program
     {
+        private static void CheckWhatIsEnabled(IConfigurationProvider provider, out bool coinigyEnabled, out bool bittrexEnabled,
+            out bool poloniexEnabled, out bool bagEnabled)
+        {
+            provider.TryGet("Coinigy:Enabled", out string coinigyEnabledString);
+            provider.TryGet("Bittrex:Enabled", out string bittrexEnabledString);
+            provider.TryGet("Poloniex:Enabled", out string poloniexEnabledString);
+            provider.TryGet("BagManagement:Enabled", out string bagManagementEnabledString);
+
+            coinigyEnabled = bool.Parse(coinigyEnabledString);
+            bittrexEnabled = bool.Parse(bittrexEnabledString);
+            poloniexEnabled = bool.Parse(poloniexEnabledString);
+            bagEnabled = bool.Parse(bagManagementEnabledString);
+        }
+
         private static void ConfigureConfig(IContainer container, IConfigurationRoot configuration, ILogger<Program> log)
         {
             var coinigyConfig = container.Resolve<CoinigyConfig>();
@@ -76,8 +93,8 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<PoloniexService>();
             containerBuilder.RegisterType<DatabaseService>().SingleInstance();
             containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
-            containerBuilder.RegisterType<CheckingService>().SingleInstance();
-            containerBuilder.RegisterType<BalanceService>();
+            containerBuilder.RegisterType<StartupCheckingService>().SingleInstance();
+            containerBuilder.RegisterType<CoinigyBalanceService>();
             containerBuilder.RegisterType<TelegramBot>().SingleInstance();
             containerBuilder.RegisterType<Exchange>().As<IExchange>();
 
@@ -98,20 +115,26 @@ namespace CryptoGramBot
 
             var containerBuilder = ConfigureServices();
 
+            // We only have one settings provider so this works for the moment
+            var provider = configuration.Providers.First();
+
+            CheckWhatIsEnabled(provider, out bool coinigyEnabled, out bool bittrexEnabled, out bool poloniexEnabled, out bool bagEnabled);
+
             var busBuilder = new BusBuilder();
-            busBuilder.ConfigureCore();
+
+            busBuilder.ConfigureCore(coinigyEnabled, bittrexEnabled, poloniexEnabled, bagEnabled);
 
             containerBuilder.RegisterMicroBus(busBuilder);
-
             var container = containerBuilder.Build();
 
             var loggerFactory = container.Resolve<ILoggerFactory>().AddSerilog();
             var log = loggerFactory.CreateLogger<Program>();
 
+            log.LogInformation($"Services: Coinigy:{coinigyEnabled} Bittrex:{bittrexEnabled}: Poloniex:{poloniexEnabled} Bag Management: {bagEnabled}");
             ConfigureConfig(container, configuration, log);
 
-            var startupService = container.Resolve<CheckingService>();
-            startupService.Start();
+            var startupService = container.Resolve<StartupCheckingService>();
+            startupService.Start(coinigyEnabled, bittrexEnabled, poloniexEnabled, bagEnabled);
 
             while (true)
             {

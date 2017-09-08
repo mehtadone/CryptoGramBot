@@ -10,6 +10,13 @@ namespace CryptoGramBot.Services
 {
     public class TelegramBot
     {
+        private readonly TelegramMessageRecieveService _telegramMessageRecieveService;
+
+        public TelegramBot(TelegramMessageRecieveService telegramMessageRecieveService)
+        {
+            _telegramMessageRecieveService = telegramMessageRecieveService;
+        }
+
         public TelegramBotClient Bot { get; set; }
 
         public long ChatId { get; set; }
@@ -18,6 +25,9 @@ namespace CryptoGramBot.Services
         {
             Bot = new TelegramBotClient(config.BotToken);
             ChatId = config.ChatId;
+
+            // Start the bot so we can start receiving messages
+            _telegramMessageRecieveService.StartReceivingMessages(Bot);
         }
     }
 }

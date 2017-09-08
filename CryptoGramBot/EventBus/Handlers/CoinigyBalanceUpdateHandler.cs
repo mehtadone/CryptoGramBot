@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
-using CryptoGramBot.EventBus;
 using CryptoGramBot.Models;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.Services
+namespace CryptoGramBot.EventBus.Handlers
 {
-    public class BalanceUpdateCommand : ICommand
+    public class CoinigyBalanceUpdateCommand : ICommand
     {
-        public BalanceUpdateCommand(BalanceHistory current, BalanceHistory lastBalance, string accountName)
+        public CoinigyBalanceUpdateCommand(BalanceHistory current, BalanceHistory lastBalance, string accountName)
         {
             Current = current;
             LastBalance = lastBalance;
@@ -20,22 +19,22 @@ namespace CryptoGramBot.Services
         public BalanceHistory LastBalance { get; }
     }
 
-    public class BalanceUpdateHandler : ICommandHandler<BalanceUpdateCommand>
+    public class CoinigyBalanceUpdateHandler : ICommandHandler<CoinigyBalanceUpdateCommand>
     {
         private readonly IMicroBus _bus;
 
-        public BalanceUpdateHandler(IMicroBus bus)
+        public CoinigyBalanceUpdateHandler(IMicroBus bus)
         {
             _bus = bus;
         }
 
-        public async Task Handle(BalanceUpdateCommand command)
+        public async Task Handle(CoinigyBalanceUpdateCommand command)
         {
             var accountName = command.AccountName;
             var current = command.Current;
             var lastBalance = command.LastBalance;
 
-            var message = $"<strong>24 Hour Summary</strong> for \n<strong>{accountName}</strong>\n\n" +
+            var message = $"<strong>24 Hour Summary</strong> for <strong>{accountName}</strong>\n\n" +
                           $"{DateTime.Now:g}\n" +
                           $"<strong>Current</strong>: {current.Balance} BTC (${current.DollarAmount})\n" +
                           $"<strong>Previous</strong>: {lastBalance.Balance} BTC (${lastBalance.DollarAmount})\n" +

@@ -11,12 +11,12 @@ using OfficeOpenXml;
 
 namespace CryptoGramBot.Services
 {
-    public class BalanceService
+    public class CoinigyBalanceService
     {
         private readonly CoinigyApiService _coinigyApiService;
         private readonly DatabaseService _databaseService;
 
-        public BalanceService(CoinigyApiService coinigyApiService, DatabaseService databaseService)
+        public CoinigyBalanceService(CoinigyApiService coinigyApiService, DatabaseService databaseService)
         {
             _coinigyApiService = coinigyApiService;
             _databaseService = databaseService;

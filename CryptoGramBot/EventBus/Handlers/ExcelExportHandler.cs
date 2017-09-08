@@ -14,18 +14,18 @@ namespace CryptoGramBot.Services
 
     public class ExcelExportHandler : ICommandHandler<ExcelExportCommand>
     {
-        private readonly BalanceService _balanceService;
+        private readonly CoinigyBalanceService _coinigyBalanceService;
         private readonly IMicroBus _bus;
 
-        public ExcelExportHandler(BalanceService balanceService, IMicroBus bus)
+        public ExcelExportHandler(CoinigyBalanceService coinigyBalanceService, IMicroBus bus)
         {
-            _balanceService = balanceService;
+            _coinigyBalanceService = coinigyBalanceService;
             _bus = bus;
         }
 
         public async Task Handle(ExcelExportCommand command)
         {
-            var tradeExport = _balanceService.GetTradeExport();
+            var tradeExport = _coinigyBalanceService.GetTradeExport();
             await _bus.SendAsync(new SendFileCommand("TradeExport.xlsx", tradeExport.OpenRead()));
             tradeExport.Delete();
         }

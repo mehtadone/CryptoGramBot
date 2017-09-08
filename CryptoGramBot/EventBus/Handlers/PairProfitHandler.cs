@@ -22,13 +22,13 @@ namespace CryptoGramBot.Services
 
     public class PairProfitHandler : ICommandHandler<PairProfitCommand>
     {
-        private readonly BalanceService _balanceService;
+        private readonly CoinigyBalanceService _coinigyBalanceService;
         private readonly IMicroBus _bus;
         private readonly ILogger<PairProfitHandler> _log;
 
-        public PairProfitHandler(BalanceService balanceService, ILogger<PairProfitHandler> log, IMicroBus bus)
+        public PairProfitHandler(CoinigyBalanceService coinigyBalanceService, ILogger<PairProfitHandler> log, IMicroBus bus)
         {
-            _balanceService = balanceService;
+            _coinigyBalanceService = coinigyBalanceService;
             _log = log;
             _bus = bus;
         }
@@ -40,7 +40,7 @@ namespace CryptoGramBot.Services
             try
             {
                 var pairsArray = command.Pair.Split("-");
-                var profitAndLoss = await _balanceService.GetPnLInfo(pairsArray[0], pairsArray[1]);
+                var profitAndLoss = await _coinigyBalanceService.GetPnLInfo(pairsArray[0], pairsArray[1]);
 
                 var message =
                     $"{DateTime.Now:g}\n" +

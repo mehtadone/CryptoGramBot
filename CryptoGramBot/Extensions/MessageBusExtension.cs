@@ -20,6 +20,7 @@ namespace CryptoGramBot.Extensions
             busBuilder.RegisterCommandHandler<TradeNotificationCommand, TradeNotificationHandler>();
             busBuilder.RegisterQueryHandler<LastCheckedQuery, LastCheckedResponse, LastCheckedHandler>();
             busBuilder.RegisterQueryHandler<FindNewTradeQuery, FindNewTradesResponse, SaveAndFindNewTradesHandler>();
+            busBuilder.RegisterQueryHandler<TradeProfitQuery, TradesProfitResponse, TradeProfitHandler>();
             busBuilder.RegisterCommandHandler<AddLastCheckedCommand, AddLastCheckedHandler>();
 
             if (coinigyEnabled)

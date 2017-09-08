@@ -6,7 +6,7 @@ namespace CryptoGramBot.Helpers
 {
     public static class ProfitCalculator
     {
-        public static ProfitAndLoss GetProfitAndLoss(IEnumerable<Trade> trades, string ccy1, string ccy2)
+        public static ProfitAndLoss GetProfitAndLossForPair(IEnumerable<Trade> trades, string ccy1, string ccy2)
         {
             decimal totalBought = 0;
             decimal totalSold = 0;
@@ -56,6 +56,32 @@ namespace CryptoGramBot.Helpers
             };
 
             return profitAndLoss;
+        }
+
+        public static decimal? GetProfitForTrade(List<Trade> trades, decimal sellReturns, decimal quantity)
+        {
+            var quantityChecked = 0m;
+            var totalcost = 0m;
+            foreach (var trade in trades)
+            {
+                if (quantityChecked >= quantity) break;
+                if (quantityChecked + trade.Quantity > quantity)
+                {
+                    var quantityLeft = quantity - quantityChecked;
+                    var cost = trade.Limit * quantityLeft;
+                    totalcost = totalcost + cost;
+                    quantityChecked = quantityChecked + quantityLeft;
+                }
+                else if (trade.Quantity < quantity)
+                {
+                    totalcost = totalcost + trade.Cost;
+                    quantityChecked = quantityChecked + trade.Quantity;
+                }
+            }
+
+            if (quantityChecked == 0m) return null;
+
+            return Math.Round((sellReturns - totalcost) / totalcost * 100, 3, MidpointRounding.ToEven);
         }
     }
 }

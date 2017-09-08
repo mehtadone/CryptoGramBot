@@ -134,6 +134,29 @@ namespace CryptoGramBot.Database
             return hour24Balance;
         }
 
+        public List<Trade> GetBuysForPairAndQuantity(decimal sellPrice, decimal quantity, string baseCcy, string terms)
+        {
+            var enumerable = _db.Query<Trade>()
+                .Where(x => x.Base == baseCcy && x.Terms == terms)
+                .ToEnumerable();
+
+            var onlyBuys = enumerable.Where(x => x.Side == TradeSide.Buy);
+
+            var tradesForPair = onlyBuys.OrderByDescending(x => x.TimeStamp);
+
+            var trades = new List<Trade>();
+
+            var quanityChecked = 0m;
+            foreach (var trade in tradesForPair)
+            {
+                if (quanityChecked >= quantity) continue;
+
+                trades.Add(trade);
+                quanityChecked = quanityChecked + (trade.Quantity - trade.QuantityRemaining);
+            }
+            return trades;
+        }
+
         public BalanceHistory GetLastBalance(string name)
         {
             return !_lastBalances.ContainsKey(name) ? GetLastBalanceFromDatabase(name) : _lastBalances[name];

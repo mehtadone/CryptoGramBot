@@ -85,7 +85,7 @@ namespace CryptoGramBot.Services
         public async Task<ProfitAndLoss> GetPnLInfo(string ccy1, string ccy2)
         {
             var tradesForPair = _databaseService.GetTradesForPair(ccy1, ccy2);
-            var profitAndLoss = ProfitCalculator.GetProfitAndLoss(tradesForPair, ccy1, ccy2);
+            var profitAndLoss = ProfitCalculator.GetProfitAndLossForPair(tradesForPair, ccy1, ccy2);
 
             var dollarAmount = await GetDollarAmount(profitAndLoss.Profit);
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CryptoGramBot.Database;
+using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.EventBus.Handlers

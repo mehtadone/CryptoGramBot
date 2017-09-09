@@ -25,5 +25,11 @@ namespace CryptoGramBot.Services
             var poloniexToTrades = TradeConverter.PoloniexToTrades(tradesAsyncResult);
             return poloniexToTrades;
         }
+
+        public async Task<BalanceInformation> GetBalance(string accountName)
+        {
+            // TODO Polo Api is returning a bum result
+            return null;
+        }
     }
 }

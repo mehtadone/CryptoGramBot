@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CryptoGramBot.EventBus;
+﻿using System.Threading.Tasks;
+using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.Services
+namespace CryptoGramBot.EventBus.Handlers
 {
     public class ExcelExportCommand : ICommand
     {
@@ -14,18 +10,18 @@ namespace CryptoGramBot.Services
 
     public class ExcelExportHandler : ICommandHandler<ExcelExportCommand>
     {
-        private readonly CoinigyBalanceService _coinigyBalanceService;
         private readonly IMicroBus _bus;
+        private readonly TradeExportService _tradeExportService;
 
-        public ExcelExportHandler(CoinigyBalanceService coinigyBalanceService, IMicroBus bus)
+        public ExcelExportHandler(TradeExportService tradeExportService, IMicroBus bus)
         {
-            _coinigyBalanceService = coinigyBalanceService;
+            _tradeExportService = tradeExportService;
             _bus = bus;
         }
 
         public async Task Handle(ExcelExportCommand command)
         {
-            var tradeExport = _coinigyBalanceService.GetTradeExport();
+            var tradeExport = _tradeExportService.GetTradeExport();
             await _bus.SendAsync(new SendFileCommand("TradeExport.xlsx", tradeExport.OpenRead()));
             tradeExport.Delete();
         }

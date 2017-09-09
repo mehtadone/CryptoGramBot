@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using LiteDB;
-using Microsoft.Extensions.Logging;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
-using Logger = Serilog.Core.Logger;
+using LiteDB;
+using Microsoft.Extensions.Logging;
 
-namespace CryptoGramBot.Database
+namespace CryptoGramBot.Services
 {
     public class DatabaseService
     {
@@ -22,13 +21,14 @@ namespace CryptoGramBot.Database
             EnsureIndex();
         }
 
-        public BalanceHistory AddBalance(decimal balance, decimal dollarAmount, string name)
+        public BalanceHistory AddBalance(decimal balance, decimal dollarAmount, string name, string source)
         {
             var balanceHistory = new BalanceHistory
             {
                 DateTime = DateTime.Now,
                 Balance = balance,
-                DollarAmount = dollarAmount
+                DollarAmount = dollarAmount,
+                Source = source
             };
 
             _log.LogInformation($"Adding balance to database: {name} - {balance}");
@@ -76,6 +76,11 @@ namespace CryptoGramBot.Database
             _log.LogInformation($"Added {newTrades.Count} new trades to database");
         }
 
+        public void AddWalletBalances(List<WalletBalance> walletBalances)
+        {
+            _db.Insert(walletBalances);
+        }
+
         public IEnumerable<string> GetAllPairs()
         {
             var liteCollection = _db.Database.GetCollection<Trade>();
@@ -90,7 +95,7 @@ namespace CryptoGramBot.Database
             return trades;
         }
 
-        public BalanceHistory GetBalance24HoursAgo(string name)
+        public BalanceHistory GetBalance24HoursAgo(string name, string source)
         {
             var dateTime = DateTime.Now - TimeSpan.FromHours(24);
             BalanceHistory hour24Balance;
@@ -99,7 +104,8 @@ namespace CryptoGramBot.Database
                                                             x.DateTime.Day == dateTime.Day &&
                                                              x.DateTime.Month == dateTime.Month &&
                                                              x.DateTime.Year == dateTime.Year &&
-                                                             x.Name == name)
+                                                             x.Name == name &&
+                                                             x.Source == source)
                                                              .ToList();
 
             if (histories.Count == 0)
@@ -157,11 +163,6 @@ namespace CryptoGramBot.Database
             return trades;
         }
 
-        public BalanceHistory GetLastBalance(string name)
-        {
-            return !_lastBalances.ContainsKey(name) ? GetLastBalanceFromDatabase(name) : _lastBalances[name];
-        }
-
         public DateTime GetLastChecked(string exchange)
         {
             var lastChecked = _db.Query<LastChecked>()
@@ -171,10 +172,10 @@ namespace CryptoGramBot.Database
             return lastChecked?.Timestamp ?? Constants.DateTimeUnixEpochStart;
         }
 
-        public Trade GetLastTradeForPair(string walletBalanceCurrency)
+        public Trade GetLastTradeForPair(string currency, string exchange, TradeSide side)
         {
             var liteQueryable = _db.Query<Trade>()
-                .Where(x => x.Terms == walletBalanceCurrency)
+                .Where(x => x.Terms == currency && x.Exchange == exchange && x.Side == side)
                 .ToEnumerable();
 
             var orderByDescending = liteQueryable.OrderByDescending(x => x.TimeStamp);
@@ -208,27 +209,6 @@ namespace CryptoGramBot.Database
 
             var lastCheckedCollection = _db.Database.GetCollection<LastChecked>();
             lastCheckedCollection.EnsureIndex(x => x.Exchange);
-        }
-
-        private BalanceHistory GetLastBalanceFromDatabase(string name)
-        {
-            var balanceHistories = _db.Query<BalanceHistory>()
-                .Where(x => x.Name == name)
-                .ToEnumerable();
-
-            var orderByDescending = balanceHistories.OrderByDescending(x => x.DateTime);
-
-            _log.LogInformation($"Retrieving previous balance from database for: {name}");
-
-            var lastBalance = orderByDescending.FirstOrDefault();
-
-            if (lastBalance == null)
-            {
-                return new BalanceHistory();
-            }
-
-            _log.LogInformation($"Last balance for {name} was {lastBalance.Balance}");
-            return lastBalance;
         }
 
         private void SaveBalance(BalanceHistory balanceHistory, string name)

@@ -5,7 +5,7 @@ using CryptoGramBot.Models;
 
 namespace CryptoGramBot.Services
 {
-    public interface IExchangeService
+    public interface IExchangeService : IBalanceService
     {
         List<Trade> GetOrderHistory(DateTime lastChecked);
     }

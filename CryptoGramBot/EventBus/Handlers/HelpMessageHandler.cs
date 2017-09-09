@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
+using CryptoGramBot.EventBus.Handlers;
 using CryptoGramBot.Helpers;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
@@ -38,15 +39,16 @@ namespace CryptoGramBot.EventBus
             if (_coinigyConfig.Enabled)
             {
                 usage = usage + "\n<strong>Coinigy commands</strong>\n" +
-                        $"{TelegramCommands.CoinigyAccountBalance} - 24 hour pnl for account number n.\n" +
-                        $"{TelegramCommands.CoinigyAccountList} - all coinigy account names\n" +
-                        $"{TelegramCommands.CoinigyTotalBalance} - 24 hour PnL for the total balance\n";
+                        $"{TelegramCommands.CoinigyAccountBalance} - summary for account number n.\n" +
+                        $"{TelegramCommands.CoinigyAccountList} - list coinigy account names\n" +
+                        $"{TelegramCommands.CoinigyTotalBalance} - total balance from all acounts\n";
             }
 
             if (_bittrexConfig.Enabled)
             {
                 usage = usage + "\n<strong>Bittrex commands</strong>\n" +
-                        $"{TelegramCommands.BittrexTradeExportUpload} - upload bittrex order export";
+                        $"{TelegramCommands.BittrexTradeExportUpload} - upload bittrex order export\n" +
+                        $"{TelegramCommands.BittrexBalanceInfo} - bittrex account summary\n";
             }
 
             _log.LogInformation("Sending help message");

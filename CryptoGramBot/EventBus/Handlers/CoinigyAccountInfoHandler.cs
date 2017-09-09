@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using CryptoGramBot.EventBus;
+using CryptoGramBot.EventBus.Handlers;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
 
@@ -9,8 +10,8 @@ namespace CryptoGramBot.Services
 {
     public class CoinigyAccountInfoHandler : ICommandHandler<SendCoinigyAccountInfoCommand>
     {
-        private readonly CoinigyBalanceService _coinigyBalanceService;
         private readonly IMicroBus _bus;
+        private readonly CoinigyBalanceService _coinigyBalanceService;
         private readonly ILogger<CoinigyAccountInfoHandler> _log;
 
         public CoinigyAccountInfoHandler(CoinigyBalanceService coinigyBalanceService, ILogger<CoinigyAccountInfoHandler> log, IMicroBus bus)

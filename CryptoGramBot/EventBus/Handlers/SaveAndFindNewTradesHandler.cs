@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using CryptoGramBot.Database;
 using CryptoGramBot.Models;
+using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.EventBus.Handlers

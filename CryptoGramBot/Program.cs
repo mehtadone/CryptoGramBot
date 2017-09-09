@@ -14,7 +14,6 @@ using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Services;
-using CryptoGramBot.Database;
 using CryptoGramBot.Extensions;
 using Enexure.MicroBus;
 using Autofac.Extensions.DependencyInjection;
@@ -97,6 +96,9 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<CoinigyBalanceService>();
             containerBuilder.RegisterType<TelegramBot>().SingleInstance();
             containerBuilder.RegisterType<Exchange>().As<IExchange>();
+            containerBuilder.RegisterType<PriceService>().SingleInstance();
+            containerBuilder.RegisterType<ProfitAndLossService>();
+            containerBuilder.RegisterType<TradeExportService>();
 
             return containerBuilder;
         }

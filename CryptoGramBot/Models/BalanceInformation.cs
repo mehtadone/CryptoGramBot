@@ -14,11 +14,14 @@ namespace CryptoGramBot.Models
 
         public BalanceHistory PreviousBalance;
 
-        public BalanceInformation(BalanceHistory currentBalance, BalanceHistory previousBalance, string accountName)
+        public IEnumerable<WalletBalance> WalletBalances;
+
+        public BalanceInformation(BalanceHistory currentBalance, BalanceHistory previousBalance, string accountName, IEnumerable<WalletBalance> walletBalances = null)
         {
             CurrentBalance = currentBalance;
             PreviousBalance = previousBalance;
             AccountName = accountName;
+            WalletBalances = walletBalances;
         }
     }
 }

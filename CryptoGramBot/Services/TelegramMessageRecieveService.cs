@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using CryptoGramBot.EventBus;
 using CryptoGramBot.EventBus.Handlers;
+using CryptoGramBot.EventBus.Handlers.BalanceInfo;
 using CryptoGramBot.Helpers;
 using Enexure.MicroBus;
 using Telegram.Bot;
@@ -147,8 +148,13 @@ namespace CryptoGramBot.Services
             }
             else if (message.StartsWith(TelegramCommands.CoinigyTotalBalance))
             {
-                _log.LogInformation("24 Hour pnl difference");
+                _log.LogInformation("24 Hour pnl difference for coinigy");
                 await _bus.SendAsync(new CoinigyTotalPnLCommand());
+            }
+            else if (message.StartsWith(TelegramCommands.BittrexBalanceInfo))
+            {
+                _log.LogInformation("24 Hour pnl difference for bittrex");
+                await _bus.SendAsync(new BittrexBalanceInfoRequestedCommand());
             }
             else if (message.StartsWith(TelegramCommands.BittrexTradeExportUpload))
             {

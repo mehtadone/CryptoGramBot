@@ -1,8 +1,9 @@
 ﻿using System.Threading.Tasks;
+using CryptoGramBot.EventBus.Commands;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus.Handlers
+namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
 {
     public class CoinigyPnLForAccountCommand : ICommand
     {
@@ -27,9 +28,10 @@ namespace CryptoGramBot.EventBus.Handlers
 
         public async Task Handle(CoinigyPnLForAccountCommand command)
         {
-            var accountBalance24HoursAgo = await _coinigyBalanceService.GetAccountBalance24HoursAgo(command.AccountId);
-            await _bus.SendAsync(new CoinigyBalanceUpdateCommand(accountBalance24HoursAgo.CurrentBalance,
+            var accountBalance24HoursAgo = await _coinigyBalanceService.GetAccountBalance(command.AccountId);
+            await _bus.SendAsync(new SendBalanceInfoCommand(accountBalance24HoursAgo.CurrentBalance,
                 accountBalance24HoursAgo.PreviousBalance,
+                accountBalance24HoursAgo.WalletBalances,
                 accountBalance24HoursAgo.AccountName));
         }
     }

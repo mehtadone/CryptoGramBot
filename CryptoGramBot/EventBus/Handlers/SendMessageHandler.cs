@@ -1,9 +1,11 @@
 ﻿using System.Threading.Tasks;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using Telegram.Bot.Types.Enums;
 
-namespace CryptoGramBot.EventBus
+namespace CryptoGramBot.EventBus.Handlers
 {
     public class SendMessageCommand : ICommand
     {
@@ -18,15 +20,18 @@ namespace CryptoGramBot.EventBus
     public class SendMessageHandler : ICommandHandler<SendMessageCommand>
     {
         private readonly TelegramBot _bot;
+        private readonly ILogger<SendMessageHandler> _log;
 
-        public SendMessageHandler(TelegramBot bot)
+        public SendMessageHandler(TelegramBot bot, ILogger<SendMessageHandler> log)
         {
             _bot = bot;
+            _log = log;
         }
 
         public async Task Handle(SendMessageCommand command)
         {
             await _bot.Bot.SendTextMessageAsync(_bot.ChatId, command.Message, ParseMode.Html);
+            _log.LogInformation($"Send Message:\n" + command.Message);
         }
     }
 }

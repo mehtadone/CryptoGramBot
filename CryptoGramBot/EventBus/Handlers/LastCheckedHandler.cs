@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using CryptoGramBot.Database;
+using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus.Queries
+namespace CryptoGramBot.EventBus.Handlers
 {
     public class LastCheckedHandler : IQueryHandler<LastCheckedQuery, LastCheckedResponse>
     {

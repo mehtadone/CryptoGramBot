@@ -1,10 +1,11 @@
 ﻿using System.Threading.Tasks;
+using CryptoGramBot.EventBus.Commands;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
 
-namespace CryptoGramBot.EventBus.Handlers
+namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
 {
     public class CoinigyTotalPnLCommand : ICommand
     {
@@ -25,9 +26,13 @@ namespace CryptoGramBot.EventBus.Handlers
 
         public async Task Handle(CoinigyTotalPnLCommand command)
         {
-            var balance = await _coinigyBalanceService.Get24HourTotalBalance();
+            var balance = await _coinigyBalanceService.GetBalance(Constants.TotalCoinigyBalance);
             _log.LogInformation("Sending total pnl");
-            await _bus.SendAsync(new CoinigyBalanceUpdateCommand(balance.CurrentBalance, balance.PreviousBalance, Constants.TotalCoinigyBalance));
+            await _bus.SendAsync(new SendBalanceInfoCommand(
+                balance.CurrentBalance,
+                balance.PreviousBalance,
+                balance.WalletBalances,
+                Constants.TotalCoinigyBalance));
         }
     }
 }

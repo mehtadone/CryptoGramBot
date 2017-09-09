@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CryptoGramBot.Database;
 using CryptoGramBot.Helpers;
+using CryptoGramBot.Services;
 
 namespace CryptoGramBot.EventBus.Handlers
 {

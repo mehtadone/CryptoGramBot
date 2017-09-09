@@ -1,14 +1,11 @@
 using System.Threading.Tasks;
+using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.EventBus.Handlers
 {
-    public class CheckCoinigyAccountBalancesCommand : ICommand
-    {
-    }
-
-    public class CheckCoinigyAccountBalancesHandler : ICommandHandler<CheckCoinigyAccountBalancesCommand>
+    public class CheckCoinigyAccountBalancesHandler : IEventHandler<BalanceCheckEvent>
     {
         private readonly CoinigyBalanceService _coinigyBalanceService;
 
@@ -17,7 +14,7 @@ namespace CryptoGramBot.EventBus.Handlers
             _coinigyBalanceService = coinigyBalanceService;
         }
 
-        public async Task Handle(CheckCoinigyAccountBalancesCommand command)
+        public async Task Handle(BalanceCheckEvent command)
         {
             await _coinigyBalanceService.GetAllBalances();
         }

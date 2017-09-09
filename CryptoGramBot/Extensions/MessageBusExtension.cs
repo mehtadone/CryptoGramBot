@@ -1,8 +1,9 @@
 ﻿using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus;
+using CryptoGramBot.EventBus.Commands;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
-using CryptoGramBot.EventBus.Queries;
+using CryptoGramBot.EventBus.Handlers.BalanceInfo;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
@@ -22,31 +23,39 @@ namespace CryptoGramBot.Extensions
             busBuilder.RegisterQueryHandler<FindNewTradeQuery, FindNewTradesResponse, SaveAndFindNewTradesHandler>();
             busBuilder.RegisterQueryHandler<TradeProfitQuery, TradesProfitResponse, TradeProfitHandler>();
             busBuilder.RegisterCommandHandler<AddLastCheckedCommand, AddLastCheckedHandler>();
+            busBuilder.RegisterCommandHandler<SendBalanceInfoCommand, SendBalanceInfoCommandHandler>();
 
             if (coinigyEnabled)
             {
-                busBuilder.RegisterCommandHandler<CheckCoinigyTotalBalanceCommand, CheckCoinigyTotalBalanceHandler>();
-                busBuilder.RegisterCommandHandler<CheckCoinigyAccountBalancesCommand, CheckCoinigyAccountBalancesHandler>();
+                busBuilder.RegisterEventHandler<BalanceCheckEvent, CheckCoinigyTotalBalanceHandler>();
+                busBuilder.RegisterEventHandler<BalanceCheckEvent, CheckCoinigyAccountBalancesHandler>();
                 busBuilder.RegisterCommandHandler<CoinigyTotalPnLCommand, CoinigyTotalPnLHandler>();
                 busBuilder.RegisterCommandHandler<CoinigyPnLForAccountCommand, CoinigyPnLForAccountHandler>();
-                busBuilder.RegisterCommandHandler<CoinigyBalanceUpdateCommand, CoinigyBalanceUpdateHandler>();
                 busBuilder.RegisterCommandHandler<SendCoinigyAccountInfoCommand, CoinigyAccountInfoHandler>();
             }
 
             if (poloniexEnabled)
             {
                 busBuilder.RegisterEventHandler<NewTradesCheckEvent, PoloniexNewOrderCheckHandler>();
+                busBuilder.RegisterEventHandler<BalanceCheckEvent, PoloniexBalanceCheckHandler>();
             }
 
             if (bittrexEnabled)
             {
                 busBuilder.RegisterCommandHandler<BittrexTradeExportCommand, BittrexTradeExportHandler>();
                 busBuilder.RegisterEventHandler<NewTradesCheckEvent, BittrexNewOrderCheckHandler>();
+                busBuilder.RegisterEventHandler<BalanceCheckEvent, BittrexBalanceCheckHandler>();
+                busBuilder.RegisterCommandHandler<BittrexBalanceInfoRequestedCommand, BittrexBalanceInfoRequestedHandler>();
             }
 
-            if (bagEnabled)
+            if (bagEnabled && bittrexEnabled)
             {
-                busBuilder.RegisterCommandHandler<BagManagementCommand, BagManagementHandler>();
+                busBuilder.RegisterEventHandler<BagManagementEvent, BittrexBagManagementHandler>();
+            }
+
+            if (bagEnabled && poloniexEnabled)
+            {
+                busBuilder.RegisterEventHandler<BagManagementEvent, PoloniexBagManagementHandler>();
             }
 
             return busBuilder;

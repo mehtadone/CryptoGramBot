@@ -39,6 +39,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Folder Include="Database\" />
 		<Folder Include="images\" />
 		<Folder Include="Properties\" />
 	</ItemGroup>

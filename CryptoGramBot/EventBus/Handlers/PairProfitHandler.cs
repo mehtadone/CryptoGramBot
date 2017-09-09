@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using CryptoGramBot.EventBus;
+using CryptoGramBot.Services;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
-using Serilog;
 
-namespace CryptoGramBot.Services
+namespace CryptoGramBot.EventBus.Handlers
 {
     public class PairProfitCommand : ICommand
     {
@@ -22,13 +18,13 @@ namespace CryptoGramBot.Services
 
     public class PairProfitHandler : ICommandHandler<PairProfitCommand>
     {
-        private readonly CoinigyBalanceService _coinigyBalanceService;
         private readonly IMicroBus _bus;
         private readonly ILogger<PairProfitHandler> _log;
+        private readonly ProfitAndLossService _profitAndLossService;
 
-        public PairProfitHandler(CoinigyBalanceService coinigyBalanceService, ILogger<PairProfitHandler> log, IMicroBus bus)
+        public PairProfitHandler(ProfitAndLossService profitAndLossService, ILogger<PairProfitHandler> log, IMicroBus bus)
         {
-            _coinigyBalanceService = coinigyBalanceService;
+            _profitAndLossService = profitAndLossService;
             _log = log;
             _bus = bus;
         }
@@ -40,7 +36,7 @@ namespace CryptoGramBot.Services
             try
             {
                 var pairsArray = command.Pair.Split("-");
-                var profitAndLoss = await _coinigyBalanceService.GetPnLInfo(pairsArray[0], pairsArray[1]);
+                var profitAndLoss = await _profitAndLossService.GetPnLInfo(pairsArray[0], pairsArray[1]);
 
                 var message =
                     $"{DateTime.Now:g}\n" +

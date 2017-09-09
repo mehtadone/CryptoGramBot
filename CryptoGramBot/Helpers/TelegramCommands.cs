@@ -8,6 +8,7 @@ namespace CryptoGramBot.Helpers
 {
     public static class TelegramCommands
     {
+        public static string BittrexBalanceInfo = "/btc_balance_bittrex";
         public static string BittrexTradeExportUpload = "/upload_bittrex_trades";
         public static string CoinigyAccountBalance = "/acc_n";
         public static string CoinigyAccountList = "/list_coinigy_accounts";

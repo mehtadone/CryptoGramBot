@@ -1,43 +1,40 @@
 ﻿using System;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
-using CryptoGramBot.Database;
 using CryptoGramBot.Models;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus
+namespace CryptoGramBot.EventBus.Handlers
 {
-    public class BagManagementCommand : ICommand
-    {
-    }
-
-    public class BagManagementHandler : ICommandHandler<BagManagementCommand>
+    public class BittrexBagManagementHandler : IEventHandler<BagManagementEvent>
     {
         private readonly BagConfig _bagConfig;
+        private readonly BittrexConfig _bittrexConfig;
         private readonly BittrexService _bittrexService;
         private readonly IMicroBus _bus;
         private readonly DatabaseService _databaseService;
 
-        public BagManagementHandler(IMicroBus bus, BittrexService bittrexService, DatabaseService databaseService, BagConfig bagConfig)
+        public BittrexBagManagementHandler(IMicroBus bus, BittrexService bittrexService, DatabaseService databaseService, BagConfig bagConfig, BittrexConfig bittrexConfig)
         {
             _bus = bus;
             _bittrexService = bittrexService;
             _databaseService = databaseService;
             _bagConfig = bagConfig;
+            _bittrexConfig = bittrexConfig;
         }
 
-        public async Task Handle(BagManagementCommand command)
+        public async Task Handle(BagManagementEvent @event)
         {
-            var walletBalances = _bittrexService.GetWalletBalances();
+            var balanceInformation = await _bittrexService.GetBalance(_bittrexConfig.Name);
 
-            foreach (var walletBalance in walletBalances)
+            foreach (var walletBalance in balanceInformation.WalletBalances)
             {
                 if (walletBalance.Currency == "BTC") continue;
 
-                var lastTradeForPair = _databaseService.GetLastTradeForPair(walletBalance.Currency);
+                var lastTradeForPair = _databaseService.GetLastTradeForPair(walletBalance.Currency, _bittrexConfig.Name, TradeSide.Buy);
                 if (lastTradeForPair == null) continue;
-                var currentPrice = _bittrexService.GetPrice(lastTradeForPair.Terms);
+                var currentPrice = await _bittrexService.GetPrice(lastTradeForPair.Terms);
 
                 if (_bagConfig.PercentageDrop > 30)
                 {

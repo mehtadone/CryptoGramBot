@@ -55,7 +55,7 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
                 foreach (var walletBalance in walletBalances)
                 {
                     message =
-                        message + string.Format("<strong>{0, -20}</strong> {1,-15} {2,20}\n", walletBalance.Currency, $"{walletBalance.BtcAmount:##0.0000} BTC", $"{walletBalance.PercentageChange}%");
+                        message + string.Format("<strong>{0, -10}</strong> {1,-15} {2,10}\n", walletBalance.Currency, $"{walletBalance.BtcAmount:##0.0000} BTC", $"{walletBalance.PercentageChange}%");
                 }
             }
 

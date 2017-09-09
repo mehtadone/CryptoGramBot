@@ -12,22 +12,33 @@ namespace CryptoGramBot.EventBus.Handlers
     public class TradeProfitHandler : IQueryHandler<TradeProfitQuery, TradesProfitResponse>
     {
         private readonly DatabaseService _databaseService;
+        private readonly PriceService _priceService;
 
-        public TradeProfitHandler(DatabaseService databaseService)
+        public TradeProfitHandler(DatabaseService databaseService, PriceService priceService)
         {
             _databaseService = databaseService;
+            _priceService = priceService;
         }
 
-        public Task<TradesProfitResponse> Handle(TradeProfitQuery query)
+        public async Task<TradesProfitResponse> Handle(TradeProfitQuery query)
         {
             var tradesForPairAndQuantity = _databaseService.GetBuysForPairAndQuantity(query.SellReturns, query.Quantity, query.BaseCcy, query.Terms);
 
             if (tradesForPairAndQuantity.Count == 0)
             {
-                return Task.FromResult(new TradesProfitResponse(null));
+                return new TradesProfitResponse(null, null, null);
             }
 
-            return Task.FromResult(new TradesProfitResponse(ProfitCalculator.GetProfitForTrade(tradesForPairAndQuantity, query.SellReturns, query.Quantity)));
+            ProfitCalculator.GetProfitForTrade(tradesForPairAndQuantity, query.SellReturns, query.Quantity, out decimal? totalCost, out decimal? profit);
+
+            if (profit.HasValue && totalCost.HasValue)
+            {
+                decimal? btcProfit = query.SellReturns - totalCost.Value;
+                decimal? dollarProfit = await _priceService.GetDollarAmount(btcProfit.Value);
+                return new TradesProfitResponse(profit, btcProfit, dollarProfit);
+            }
+
+            return new TradesProfitResponse(null, null, null);
         }
     }
 
@@ -49,11 +60,15 @@ namespace CryptoGramBot.EventBus.Handlers
 
     public class TradesProfitResponse
     {
-        public TradesProfitResponse(decimal? profitPercentage)
+        public TradesProfitResponse(decimal? profitPercentage, decimal? btcProfit, decimal? dollarProfit)
         {
             ProfitPercentage = profitPercentage;
+            BtcProfit = btcProfit;
+            DollarProfit = dollarProfit;
         }
 
+        public decimal? BtcProfit { get; }
+        public decimal? DollarProfit { get; }
         public decimal? ProfitPercentage { get; }
     }
 }

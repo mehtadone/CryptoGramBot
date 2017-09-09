@@ -58,7 +58,7 @@ namespace CryptoGramBot.Helpers
             return profitAndLoss;
         }
 
-        public static decimal? GetProfitForTrade(List<Trade> trades, decimal sellReturns, decimal quantity)
+        public static void GetProfitForTrade(List<Trade> trades, decimal sellReturns, decimal quantity, out decimal? totalCost, out decimal? profit)
         {
             var quantityChecked = 0m;
             var totalcost = 0m;
@@ -79,9 +79,15 @@ namespace CryptoGramBot.Helpers
                 }
             }
 
-            if (quantityChecked == 0m) return null;
+            if (quantityChecked == 0m)
+            {
+                profit = null;
+                totalCost = null;
+                return;
+            }
 
-            return Math.Round((sellReturns - totalcost) / totalcost * 100, 3, MidpointRounding.ToEven);
+            profit = Math.Round((sellReturns - totalcost) / totalcost * 100, 3, MidpointRounding.ToEven);
+            totalCost = totalcost;
         }
 
         public static decimal PriceDifference(decimal currentPrice, decimal limit)

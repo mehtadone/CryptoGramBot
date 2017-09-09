@@ -33,11 +33,16 @@ namespace CryptoGramBot.Services
         {
             var newTrade = command.NewTrade;
 
-            decimal? profit = null;
+            decimal? profitPercentage = null;
+            decimal? btcProfit = null;
+            decimal? dollarProfit = null;
+
             if (newTrade.Side == TradeSide.Sell)
             {
                 var tradesProfitResponse = await _bus.QueryAsync(new TradeProfitQuery(newTrade.Cost, newTrade.Quantity, newTrade.Base, newTrade.Terms));
-                profit = tradesProfitResponse.ProfitPercentage;
+                profitPercentage = tradesProfitResponse.ProfitPercentage;
+                btcProfit = tradesProfitResponse.BtcProfit;
+                dollarProfit = tradesProfitResponse.DollarProfit;
             }
 
             var message = $"{newTrade.TimeStamp:R}\n" +
@@ -46,9 +51,9 @@ namespace CryptoGramBot.Services
                           $"Total: {newTrade.Cost:##0.###########} BTC\n" +
                           $"Rate: {newTrade.Limit:##0.##############} BTC";
 
-            if (profit.HasValue)
+            if (profitPercentage.HasValue && btcProfit != null && dollarProfit.HasValue)
             {
-                message = message + $"\nProfit: {profit.Value} %";
+                message = message + $"\nProfit: {btcProfit.Value:##0.####} BTC (${dollarProfit.Value:###0.##})\n" + $"Percentage: {profitPercentage.Value}%";
             }
 
             await _bus.SendAsync(new SendMessageCommand(message));

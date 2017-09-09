@@ -24,15 +24,18 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Coinigy 24 hour PnL with profit and loss in BTC and USD
 * Bittrex Trade notifications with % profit if a sell
 * Poloniex Trade notifications with % profit if a sell
+* Bittrex balance information
+* Bittrex wallet information and % change since bought.
 * Bittrex csv order export upload
 * Excel trade history export
 * Price drop notifications when a balance drops more than 30%. Used for bag management. Runs 4 times a day.
 * Pair profit - TODO - Calculations are wrong.
 
 **Todo**
-* Multiple exchange accounts.
+* Multiple exchange accounts - Might not do this as you can run multiple instances of the Bot.
 * Exception handling
-* Bittrex and poloniex balance info
+* Poloniex balance info
+* Show deposits and withdrawals to show accurate profit and loss. 
 
 **Screenshots**
 

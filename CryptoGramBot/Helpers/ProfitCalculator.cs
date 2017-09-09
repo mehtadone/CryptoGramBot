@@ -72,7 +72,7 @@ namespace CryptoGramBot.Helpers
                     totalcost = totalcost + cost;
                     quantityChecked = quantityChecked + quantityLeft;
                 }
-                else if (trade.Quantity < quantity)
+                else if (trade.Quantity <= quantity)
                 {
                     totalcost = totalcost + trade.Cost;
                     quantityChecked = quantityChecked + trade.Quantity;

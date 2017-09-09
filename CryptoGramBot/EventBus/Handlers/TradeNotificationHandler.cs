@@ -51,7 +51,7 @@ namespace CryptoGramBot.Services
                           $"Total: {newTrade.Cost:##0.###########} BTC\n" +
                           $"Rate: {newTrade.Limit:##0.##############} BTC";
 
-            if (profitPercentage.HasValue && btcProfit != null && dollarProfit.HasValue)
+            if (profitPercentage.HasValue && btcProfit.HasValue && dollarProfit.HasValue)
             {
                 message = message + $"\nProfit: {btcProfit.Value:##0.####} BTC (${dollarProfit.Value:###0.##})\n" + $"Percentage: {profitPercentage.Value}%";
             }

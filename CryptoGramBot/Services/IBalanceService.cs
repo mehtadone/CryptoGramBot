@@ -5,6 +5,6 @@ namespace CryptoGramBot.Services
 {
     public interface IBalanceService
     {
-        Task<BalanceInformation> GetBalance(string accountName);
+        Task<BalanceInformation> GetBalance();
     }
 }

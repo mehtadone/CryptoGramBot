@@ -31,20 +31,15 @@ namespace CryptoGramBot.Services
             _bot.StartBot(_telegramConfig);
 
             var registry = new Registry();
-            //            registry.Schedule(() => GetNewOrdersOnStartup().Wait()).ToRunNow();
-            //            registry.Schedule(() => GetNewOrders().Wait()).ToRunEvery(5).Minutes();
-            //
-            //            registry.Schedule(() => CheckBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
+            registry.Schedule(() => GetNewOrdersOnStartup().Wait()).ToRunNow();
+            registry.Schedule(() => GetNewOrders().Wait()).ToRunEvery(5).Minutes();
 
-            //            registry.Schedule(() => GetNewOrdersOnStartup().Wait()).ToRunNow();
-            //            registry.Schedule(() => GetNewOrders().Wait()).ToRunEvery(5).Minutes();
+            registry.Schedule(() => CheckBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
 
-            registry.Schedule(() => CheckBalances().Wait()).ToRunNow().AndEvery(1).Minutes();
-
-            //            if (bagManagementEnabled)
-            //            {
-            //                registry.Schedule(() => CheckForBags().Wait()).ToRunNow().AndEvery(6).Hours();
-            //            }
+            if (bagManagementEnabled)
+            {
+                registry.Schedule(() => CheckForBags().Wait()).ToRunNow().AndEvery(6).Hours();
+            }
 
             JobManager.Initialize(registry);
         }

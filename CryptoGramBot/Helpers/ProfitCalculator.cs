@@ -83,5 +83,11 @@ namespace CryptoGramBot.Helpers
 
             return Math.Round((sellReturns - totalcost) / totalcost * 100, 3, MidpointRounding.ToEven);
         }
+
+        public static decimal PriceDifference(decimal currentPrice, decimal limit)
+        {
+            var percentage = (currentPrice - limit) / limit * 100;
+            return Math.Round(percentage, 2);
+        }
     }
 }

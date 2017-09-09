@@ -38,7 +38,7 @@ namespace CryptoGramBot.EventBus.Handlers
             //                if (lastTradeForPair == null) continue;
             //                var currentPrice = await _bittrexService.GetPrice(lastTradeForPair.Terms);
             //
-            //                if (_bagConfig.PercentageDrop > 30)
+            //                if (_bagConfig.PercentageChange > 30)
             //                {
             //                    await SendNotification(walletBalance, lastTradeForPair, currentPrice);
             //                }

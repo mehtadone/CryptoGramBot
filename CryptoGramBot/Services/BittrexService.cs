@@ -41,7 +41,7 @@ namespace CryptoGramBot.Services
             exchange.Initialise(context);
         }
 
-        public async Task<BalanceInformation> GetBalance(string name)
+        public async Task<BalanceInformation> GetBalance()
         {
             var response = _exchange.GetBalances();
             var bittrexBalances = TradeConverter.BittrexToWalletBalances(response);
@@ -53,35 +53,55 @@ namespace CryptoGramBot.Services
 
                 decimal price;
                 decimal btcAmount;
+                decimal boughtPrice = 0m;
 
                 switch (balance.Currency)
                 {
                     case "BTC":
                         btcAmount = balance.Balance;
                         price = 1;
+                        boughtPrice = 1;
                         break;
 
                     case "USDT":
                         price = await GetPrice(balance.Currency);
                         btcAmount = (balance.Balance / price);
+                        var lastTradeForPair = _databaseService.GetLastTradeForPair(balance.Currency, Constants.Bittrex, TradeSide.Buy);
+                        if (lastTradeForPair != null)
+                        {
+                            boughtPrice = lastTradeForPair.Limit;
+                        }
                         break;
 
                     default:
                         price = await GetPrice(balance.Currency);
                         btcAmount = (price * balance.Balance);
+                        var lastTradeForPair1 = _databaseService.GetLastTradeForPair(balance.Currency, Constants.Bittrex, TradeSide.Buy);
+                        if (lastTradeForPair1 != null)
+                        {
+                            boughtPrice = lastTradeForPair1.Limit;
+                        }
                         break;
                 }
 
+                try
+                {
+                    balance.PercentageChange = ProfitCalculator.PriceDifference(price, boughtPrice);
+                }
+                catch
+                {
+                    // There maybe a divide by 0 issue if we couldn't find the last trade. Its fine. Just print zero
+                }
                 balance.BtcAmount = btcAmount;
                 balance.Price = price;
                 totalBtcBalance = totalBtcBalance + btcAmount;
             }
 
-            var lastBalance = _databaseService.GetBalance24HoursAgo(name, Constants.Bittrex);
+            var lastBalance = _databaseService.GetBalance24HoursAgo(Constants.Bittrex);
             var dollarAmount = await _priceService.GetDollarAmount(totalBtcBalance);
-            var currentBalance = _databaseService.AddBalance(totalBtcBalance, dollarAmount, _config.Name, Constants.Bittrex);
+            var currentBalance = _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Bittrex);
 
-            return new BalanceInformation(currentBalance, lastBalance, name, bittrexBalances);
+            return new BalanceInformation(currentBalance, lastBalance, Constants.Bittrex, bittrexBalances);
         }
 
         public List<Trade> GetOrderHistory(DateTime lastChecked)

@@ -21,14 +21,14 @@ namespace CryptoGramBot.Services
             EnsureIndex();
         }
 
-        public BalanceHistory AddBalance(decimal balance, decimal dollarAmount, string name, string source)
+        public BalanceHistory AddBalance(decimal balance, decimal dollarAmount, string name)
         {
             var balanceHistory = new BalanceHistory
             {
                 DateTime = DateTime.Now,
                 Balance = balance,
                 DollarAmount = dollarAmount,
-                Source = source
+                Name = name
             };
 
             _log.LogInformation($"Adding balance to database: {name} - {balance}");
@@ -95,7 +95,7 @@ namespace CryptoGramBot.Services
             return trades;
         }
 
-        public BalanceHistory GetBalance24HoursAgo(string name, string source)
+        public BalanceHistory GetBalance24HoursAgo(string name)
         {
             var dateTime = DateTime.Now - TimeSpan.FromHours(24);
             BalanceHistory hour24Balance;
@@ -104,8 +104,7 @@ namespace CryptoGramBot.Services
                                                             x.DateTime.Day == dateTime.Day &&
                                                              x.DateTime.Month == dateTime.Month &&
                                                              x.DateTime.Year == dateTime.Year &&
-                                                             x.Name == name &&
-                                                             x.Source == source)
+                                                             x.Name == name)
                                                              .ToList();
 
             if (histories.Count == 0)
@@ -174,12 +173,12 @@ namespace CryptoGramBot.Services
 
         public Trade GetLastTradeForPair(string currency, string exchange, TradeSide side)
         {
-            var liteQueryable = _db.Query<Trade>()
-                .Where(x => x.Terms == currency && x.Exchange == exchange && x.Side == side)
+            var enumerable = _db.Query<Trade>()
+                .Where(x => x.Terms == currency && x.Exchange == exchange)
                 .ToEnumerable();
 
-            var orderByDescending = liteQueryable.OrderByDescending(x => x.TimeStamp);
-            var lastTrade = orderByDescending.FirstOrDefault();
+            var onlyBuys = enumerable.Where(x => x.Side == TradeSide.Buy);
+            var lastTrade = onlyBuys.FirstOrDefault();
 
             return lastTrade;
         }

@@ -17,6 +17,12 @@ namespace CryptoGramBot.Services
             _poloniexClient = new PoloniexClient(poloniexConfig.Key, poloniexConfig.Secret);
         }
 
+        public async Task<BalanceInformation> GetBalance()
+        {
+            // TODO Polo Api is returning a bum result
+            return null;
+        }
+
         public List<Trade> GetOrderHistory(DateTime lastChecked)
         {
             var tradesAsync = _poloniexClient.Trading.GetTradesAsync(CurrencyPair.All, lastChecked);
@@ -24,12 +30,6 @@ namespace CryptoGramBot.Services
 
             var poloniexToTrades = TradeConverter.PoloniexToTrades(tradesAsyncResult);
             return poloniexToTrades;
-        }
-
-        public async Task<BalanceInformation> GetBalance(string accountName)
-        {
-            // TODO Polo Api is returning a bum result
-            return null;
         }
     }
 }

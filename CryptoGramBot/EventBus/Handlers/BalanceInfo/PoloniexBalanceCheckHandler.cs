@@ -17,7 +17,7 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
 
         public async Task Handle(BalanceCheckEvent @event)
         {
-            await _poloniexService.GetBalance(Constants.Poloniex);
+            await _poloniexService.GetBalance();
         }
     }
 }

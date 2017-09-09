@@ -28,7 +28,7 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
 
         public async Task Handle(BittrexBalanceInfoRequestedCommand command)
         {
-            var balanceInformation = await _bittrexService.GetBalance(_config.Name);
+            var balanceInformation = await _bittrexService.GetBalance();
             await _bus.SendAsync(new SendBalanceInfoCommand(
                 balanceInformation.CurrentBalance,
                 balanceInformation.PreviousBalance,

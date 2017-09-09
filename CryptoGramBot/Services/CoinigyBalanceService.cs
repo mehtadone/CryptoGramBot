@@ -26,12 +26,12 @@ namespace CryptoGramBot.Services
             var accounts = await _coinigyApiService.GetAccounts();
             var selectedAccount = accounts[accountId];
 
-            var hour24Balance = _databaseService.GetBalance24HoursAgo(selectedAccount.AuthId, Constants.Coinigy);
+            var hour24Balance = _databaseService.GetBalance24HoursAgo(selectedAccount.AuthId);
             var balanceCurrent = await _coinigyApiService.GetBtcBalance(selectedAccount.AuthId);
             var dollarAmount = await _priceService.GetDollarAmount(balanceCurrent);
 
             // Add to database. Should move these "Add to database" as an event which is called whenever a balance is queried
-            var currentBalance = _databaseService.AddBalance(balanceCurrent, dollarAmount, selectedAccount.AuthId, Constants.Coinigy);
+            var currentBalance = _databaseService.AddBalance(balanceCurrent, dollarAmount, selectedAccount.AuthId);
             return new BalanceInformation(currentBalance, hour24Balance, selectedAccount.Name); ;
         }
 
@@ -56,12 +56,22 @@ namespace CryptoGramBot.Services
 
         public async Task<BalanceInformation> GetBalance(string accountName)
         {
-            var hour24Balance = _databaseService.GetBalance24HoursAgo(accountName, Constants.Coinigy);
+            var hour24Balance = _databaseService.GetBalance24HoursAgo(accountName);
             var balanceCurrent = await _coinigyApiService.GetBtcBalance();
             var dollarAmount = await _priceService.GetDollarAmount(balanceCurrent);
 
-            var currentBalance = _databaseService.AddBalance(balanceCurrent, dollarAmount, accountName, Constants.Coinigy);
+            var currentBalance = _databaseService.AddBalance(balanceCurrent, dollarAmount, accountName);
             return new BalanceInformation(currentBalance, hour24Balance, accountName);
+        }
+
+        public async Task<BalanceInformation> GetBalance()
+        {
+            var hour24Balance = _databaseService.GetBalance24HoursAgo(Constants.TotalCoinigyBalance);
+            var balanceCurrent = await _coinigyApiService.GetBtcBalance();
+            var dollarAmount = await _priceService.GetDollarAmount(balanceCurrent);
+
+            var currentBalance = _databaseService.AddBalance(balanceCurrent, dollarAmount, Constants.TotalCoinigyBalance);
+            return new BalanceInformation(currentBalance, hour24Balance, Constants.TotalCoinigyBalance);
         }
     }
 }

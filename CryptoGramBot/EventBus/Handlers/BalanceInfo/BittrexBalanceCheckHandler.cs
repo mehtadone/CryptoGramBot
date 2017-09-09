@@ -19,7 +19,7 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
 
         public async Task Handle(BalanceCheckEvent @event)
         {
-            await _bittrexService.GetBalance(_config.Name);
+            await _bittrexService.GetBalance();
         }
     }
 }

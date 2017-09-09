@@ -8,6 +8,5 @@ namespace CryptoGramBot.Models
         public DateTime DateTime { get; set; }
         public decimal DollarAmount { get; set; }
         public string Name { get; set; }
-        public string Source { get; set; }
     }
 }

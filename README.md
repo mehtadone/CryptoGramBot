@@ -1,5 +1,6 @@
 # CryptoGramBot
 
+[![Build status](https://ci.appveyor.com/api/projects/status/64877qbjrmvirbar/branch/master?svg=true)](https://ci.appveyor.com/project/mehtadone/telecoinigy/branch/master)
 
 A simple telegram bot that sends your balance updates from coinigy, send trade notifications from Poloniex and Bittrex and creates you a trade export for your own spreadsheet magicary.
 
@@ -14,14 +15,14 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 
 * Pre-requisites: Net Core SDK: https://www.microsoft.com/net/download/core
 * Get your Bot ID and Chat ID. See https://github.com/LibreLabUCM/teleg-api-bot/wiki/Getting-started-with-the-Telegram-Bot-API
-* Fill in your config in appsettings.json. Bot ID is WITHOUT Bot
+* Download the lastest version of the zip from https://github.com/mehtadone/CryptoGramBot/releases and unzip to a folder
+* Fill in your config in appsettings.json. Bot ID is WITHOUT Bot and choose whether you want enable each service (true or false)
 * Create a folder called logs and another called database in the folder you have the dll.
-* Give CryptoGramBot the correct execute permissions via chmod
+* Give CryptoGramBot the correct execute permissions via chmod if on linux
 * Start on command line with "dotnet CryptoGramBot.dll"
 
 
 **Usage:**
-* Add keys and whether you want enable each service (true or false)
 * Type /help when the bot is running
 
 **Done:**
@@ -37,12 +38,10 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Pair profit 
 
 **Todo**
-* Multiple exchange accounts - Might not do this as you can run multiple instances of the Bot.
 * Exception handling
 * Poloniex balance info
 * Show deposits and withdrawals to show accurate profit and loss. 
 * Profit calculations are wrong on a sell if we don't have the data in the database
-* Pair profit calculations are incorrect. 
 
 **Screenshots**
 

@@ -12,7 +12,6 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 
 **Installation:**
 
-
 * Pre-requisites: Net Core SDK: https://www.microsoft.com/net/download/core
 * Get your Bot ID and Chat ID. See https://github.com/LibreLabUCM/teleg-api-bot/wiki/Getting-started-with-the-Telegram-Bot-API
 * Download the lastest version of the zip from https://github.com/mehtadone/CryptoGramBot/releases and unzip to a folder
@@ -20,7 +19,6 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Create a folder called logs and another called database in the folder you have the dll.
 * Give CryptoGramBot the correct execute permissions via chmod if on linux
 * Start on command line with "dotnet CryptoGramBot.dll"
-
 
 **Usage:**
 * Type /help when the bot is running
@@ -45,5 +43,5 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 
 **Screenshots**
 
-
 ![Screenshot 1](https://github.com/mehtadone/CryptoGramBot/blob/master/CryptoGramBot/images/screenshot.png?raw=true)
+![Screenshot 1](https://github.com/mehtadone/CryptoGramBot/blob/master/CryptoGramBot/images/screenshot-1.png?raw=true)

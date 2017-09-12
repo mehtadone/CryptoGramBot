@@ -175,7 +175,8 @@ namespace CryptoGramBot.Services
         {
             var enumerable = _db.Query<Trade>()
                 .Where(x => x.Terms == currency && x.Exchange == exchange)
-                .ToEnumerable();
+                .ToEnumerable()
+                .OrderByDescending(x => x.TimeStamp);
 
             var onlyBuys = enumerable.Where(x => x.Side == TradeSide.Buy);
             var lastTrade = onlyBuys.FirstOrDefault();

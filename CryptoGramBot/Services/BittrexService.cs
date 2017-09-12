@@ -91,6 +91,7 @@ namespace CryptoGramBot.Services
                 catch
                 {
                     // There maybe a divide by 0 issue if we couldn't find the last trade. Its fine. Just print zero
+                    balance.PercentageChange = 0;
                 }
                 balance.BtcAmount = btcAmount;
                 balance.Price = price;

@@ -38,7 +38,7 @@ namespace CryptoGramBot.EventBus.Handlers
                 var currentPrice = await _bittrexService.GetPrice(lastTradeForPair.Terms);
 
                 var percentageDrop = ProfitCalculator.PriceDifference(currentPrice, lastTradeForPair.Limit);
-                if (_bagConfig.PercentageDrop < percentageDrop)
+                if (-_bagConfig.PercentageDrop < percentageDrop)
                 {
                     await SendNotification(walletBalance, lastTradeForPair, currentPrice, percentageDrop);
                 }

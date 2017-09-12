@@ -16,6 +16,7 @@ namespace CryptoGramBot.Models
         public string Id { get; set; }
         public decimal Limit { get; set; }
         public decimal Quantity { get; set; }
+        public decimal QuantityOfTrade => Quantity - QuantityRemaining;
         public decimal QuantityRemaining { get; set; }
         public TradeSide Side { get; set; }
         public string Terms { get; set; }

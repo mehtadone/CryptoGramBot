@@ -47,11 +47,9 @@ namespace CryptoGramBot.Services
 
                     foreach (var trade in allTradesForTerms)
                     {
-                        var quanitiyAbs = trade.Quantity - trade.QuantityRemaining;
                         var costAbs = trade.Cost;
                         if (trade.Side == TradeSide.Buy)
                         {
-                            quanitiyAbs = -quanitiyAbs;
                             costAbs = -costAbs;
                         }
 
@@ -63,7 +61,7 @@ namespace CryptoGramBot.Services
                         excelWorksheet.Cells["F" + i].Value = trade.Limit;
                         excelWorksheet.Cells["G" + i].Value = trade.Quantity;
                         excelWorksheet.Cells["H" + i].Value = trade.QuantityRemaining;
-                        excelWorksheet.Cells["I" + i].Value = quanitiyAbs;
+                        excelWorksheet.Cells["I" + i].Value = trade.QuantityOfTrade;
                         excelWorksheet.Cells["J" + i].Value = trade.Cost;
                         excelWorksheet.Cells["K" + i].Value = costAbs;
                         excelWorksheet.Cells["L" + i].Value = trade.Commission;

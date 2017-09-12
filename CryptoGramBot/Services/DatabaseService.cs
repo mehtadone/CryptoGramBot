@@ -157,7 +157,7 @@ namespace CryptoGramBot.Services
                 if (quanityChecked >= quantity) continue;
 
                 trades.Add(trade);
-                quanityChecked = quanityChecked + (trade.Quantity - trade.QuantityRemaining);
+                quanityChecked = quanityChecked + trade.QuantityOfTrade;
             }
             return trades;
         }

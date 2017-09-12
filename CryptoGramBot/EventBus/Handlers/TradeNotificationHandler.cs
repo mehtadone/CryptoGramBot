@@ -39,7 +39,7 @@ namespace CryptoGramBot.Services
 
             if (newTrade.Side == TradeSide.Sell)
             {
-                var tradesProfitResponse = await _bus.QueryAsync(new TradeProfitQuery(newTrade.Cost, newTrade.Quantity, newTrade.Base, newTrade.Terms));
+                var tradesProfitResponse = await _bus.QueryAsync(new TradeProfitQuery(newTrade.Cost, newTrade.QuantityOfTrade, newTrade.Base, newTrade.Terms));
                 profitPercentage = tradesProfitResponse.ProfitPercentage;
                 btcProfit = tradesProfitResponse.BtcProfit;
                 dollarProfit = tradesProfitResponse.DollarProfit;

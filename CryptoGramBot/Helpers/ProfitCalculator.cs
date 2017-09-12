@@ -18,15 +18,16 @@ namespace CryptoGramBot.Helpers
             {
                 if (trade.Side == TradeSide.Buy)
                 {
-                    totalBought = totalBought + trade.Quantity;
+                    totalBought = totalBought + trade.QuantityOfTrade;
                     totalBuyCost = totalBuyCost + trade.Cost;
                 }
 
                 if (trade.Side == TradeSide.Sell)
-                {
-                    totalSold = totalSold + trade.Quantity;
-                    totalSellCost = totalSellCost + trade.Cost;
-                }
+                    if (trade.Side == TradeSide.Sell)
+                    {
+                        totalSold = totalSold + trade.QuantityOfTrade;
+                        totalSellCost = totalSellCost + trade.Cost;
+                    }
 
                 commisssion = commisssion + trade.Commission;
             }
@@ -65,17 +66,18 @@ namespace CryptoGramBot.Helpers
             foreach (var trade in trades)
             {
                 if (quantityChecked >= quantity) break;
-                if (quantityChecked + trade.Quantity > quantity)
+
+                if (quantityChecked + trade.QuantityOfTrade > quantity)
                 {
                     var quantityLeft = quantity - quantityChecked;
                     var cost = trade.Limit * quantityLeft;
                     totalcost = totalcost + cost;
                     quantityChecked = quantityChecked + quantityLeft;
                 }
-                else if (trade.Quantity <= quantity)
+                else if (trade.QuantityOfTrade <= quantity)
                 {
                     totalcost = totalcost + trade.Cost;
-                    quantityChecked = quantityChecked + trade.Quantity;
+                    quantityChecked = quantityChecked + trade.QuantityOfTrade;
                 }
             }
 

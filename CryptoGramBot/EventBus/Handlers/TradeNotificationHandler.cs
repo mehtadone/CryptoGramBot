@@ -49,7 +49,7 @@ namespace CryptoGramBot.Services
                           $"New {newTrade.Exchange} order\n" +
                           $"<strong>{newTrade.Side} {newTrade.Base}-{newTrade.Terms}</strong>\n" +
                           $"Total: {newTrade.Cost:##0.###########} BTC\n" +
-                          $"Rate: {newTrade.Limit:##0.##############} BTC";
+                          $"Rate: {newTrade.Limit:##0.##############} {newTrade.Base}";
 
             if (profitPercentage.HasValue && btcProfit.HasValue && dollarProfit.HasValue)
             {

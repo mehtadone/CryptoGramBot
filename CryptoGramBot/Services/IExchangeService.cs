@@ -7,6 +7,6 @@ namespace CryptoGramBot.Services
 {
     public interface IExchangeService : IBalanceService
     {
-        List<Trade> GetOrderHistory(DateTime lastChecked);
+        Task<List<Trade>> GetOrderHistory(DateTime lastChecked);
     }
 }

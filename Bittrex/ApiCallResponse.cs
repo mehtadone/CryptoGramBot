@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Bittrex
 {
-    class ApiCallResponse<T>
+    internal class ApiCallResponse<T>
     {
-        public bool success { get; set; }
-        public string message { get; set; }
-        public T result { get; set; }
+        public string Message { get; set; }
+        public T Result { get; set; }
+        public bool Success { get; set; }
     }
 }

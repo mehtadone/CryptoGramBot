@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
@@ -20,7 +21,7 @@ namespace CryptoGramBot.Tests
                 CreateTrade("BTC", "LTC", 0.000M, 1000m, 15000m, 19, TradeSide.Buy),
             };
 
-            var profitAndLoss = ProfitCalculator.GetProfitForTrade(_trades, 19800m, 18m);
+            ProfitCalculator.GetProfitForTrade(_trades, 19800m, 18m, out decimal? totalCost, out decimal? profitAndLoss);
 
             Assert.AreEqual(89, profitAndLoss);
         }

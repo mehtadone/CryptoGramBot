@@ -1,10 +1,7 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
+using System.Globalization;
 using System.Linq;
-using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,11 +24,11 @@ namespace Bittrex
         private const string ApiCallSellLimit = "market/selllimit";
         private const string ApiCallTemplate = "https://bittrex.com/api/{0}/{1}";
         private const string ApiVersion = "v1.1";
-        private ApiCall apiCall;
-        private string apiKey;
-        private string quoteCurrency;
-        private string secret;
-        private bool simulate;
+        private ApiCall _apiCall;
+        private string _apiKey;
+        private string _quoteCurrency;
+        private string _secret;
+        private bool _simulate;
 
         public decimal CalculateMinimumOrderQuantity(string market, decimal price)
         {
@@ -39,56 +36,57 @@ namespace Bittrex
             return minimumQuantity;
         }
 
-        public void CancelOrder(string uuid)
+        public async Task CancelOrder(string uuid)
         {
-            this.Call<dynamic>(ApiCallCancel, Tuple.Create("uuid", uuid));
+            await Call<dynamic>(ApiCallCancel, Tuple.Create("uuid", uuid));
         }
 
-        public AccountBalance GetBalance(string market)
+        public async Task<AccountBalance> GetBalance(string market)
         {
-            return this.Call<AccountBalance>(ApiCallGetBalance, Tuple.Create("currency", market));
+            return await Call<AccountBalance>(ApiCallGetBalance, Tuple.Create("currency", market));
         }
 
-        public GetBalancesResponse GetBalances()
+        public async Task<GetBalancesResponse> GetBalances()
         {
-            return this.Call<GetBalancesResponse>(ApiCallGetBalances);
+            return await Call<GetBalancesResponse>(ApiCallGetBalances);
         }
 
-        public GetMarketHistoryResponse GetMarketHistory(string market, int count = 20)
+        public async Task<GetMarketHistoryResponse> GetMarketHistory(string market, int count = 20)
         {
-            return this.Call<GetMarketHistoryResponse>(ApiCallGetMarketHistory,
+            return await Call<GetMarketHistoryResponse>(ApiCallGetMarketHistory,
                 Tuple.Create("market", GetMarketName(market)),
                 Tuple.Create("count", count.ToString()));
         }
 
         public dynamic GetMarkets()
         {
-            return this.Call<dynamic>(ApiCallGetMarkets);
+            return Call<dynamic>(ApiCallGetMarkets);
         }
 
-        public GetMarketSummaryResponse GetMarketSummary(string market)
+        public async Task<GetMarketSummaryResponse> GetMarketSummary(string market)
         {
-            return this.Call<GetMarketSummaryResponse[]>(ApiCallGetMarketSummary,
-                Tuple.Create("market", GetMarketName(market))).Single();
+            var summaries = await Call<GetMarketSummaryResponse[]>(ApiCallGetMarketSummary,
+                Tuple.Create("market", GetMarketName(market)));
+            return summaries.FirstOrDefault();
         }
 
-        public GetOpenOrdersResponse GetOpenOrders(string market)
+        public async Task<GetOpenOrdersResponse> GetOpenOrders(string market)
         {
-            return this.Call<GetOpenOrdersResponse>(ApiCallGetOpenOrders, Tuple.Create("market", GetMarketName(market)));
+            return await Call<GetOpenOrdersResponse>(ApiCallGetOpenOrders, Tuple.Create("market", GetMarketName(market)));
         }
 
-        public GetOrderBookResponse GetOrderBook(string market, OrderBookType type, int depth = 20)
+        public async Task<GetOrderBookResponse> GetOrderBook(string market, OrderBookType type, int depth = 20)
         {
             if (type == OrderBookType.Both)
             {
-                return this.Call<GetOrderBookResponse>(ApiCallGetOrderBook,
+                return await Call<GetOrderBookResponse>(ApiCallGetOrderBook,
                     Tuple.Create("market", GetMarketName(market)),
                     Tuple.Create("type", type.ToString().ToLower()),
                     Tuple.Create("depth", depth.ToString()));
             }
             else
             {
-                var results = this.Call<List<OrderEntry>>(ApiCallGetOrderBook,
+                var results = await Call<List<OrderEntry>>(ApiCallGetOrderBook,
                     Tuple.Create("market", GetMarketName(market)),
                     Tuple.Create("type", type.ToString().ToLower()),
                     Tuple.Create("depth", depth.ToString()));
@@ -104,46 +102,46 @@ namespace Bittrex
             }
         }
 
-        public GetOrderHistoryResponse GetOrderHistory()
+        public async Task<GetOrderHistoryResponse> GetOrderHistory()
         {
-            return this.Call<GetOrderHistoryResponse>(ApiCallGetOrderHistory);
+            return await Call<GetOrderHistoryResponse>(ApiCallGetOrderHistory);
         }
 
-        public GetOrderHistoryResponse GetOrderHistory(string market, int count = 20)
+        public async Task<GetOrderHistoryResponse> GetOrderHistory(string market, int count = 10)
         {
-            return this.Call<GetOrderHistoryResponse>(ApiCallGetOrderHistory,
+            return await Call<GetOrderHistoryResponse>(ApiCallGetOrderHistory,
                 Tuple.Create("market", GetMarketName(market)),
                 Tuple.Create("count", count.ToString()));
         }
 
         public dynamic GetTicker(string market)
         {
-            return this.Call<dynamic>(ApiCallGetTicker, Tuple.Create("market", GetMarketName(market)));
+            return Call<dynamic>(ApiCallGetTicker, Tuple.Create("market", GetMarketName(market)));
         }
 
         public void Initialise(ExchangeContext context)
         {
-            this.apiKey = context.ApiKey;
-            this.secret = context.Secret;
-            this.quoteCurrency = context.QuoteCurrency;
-            this.simulate = context.Simulate;
-            this.apiCall = new ApiCall(this.simulate);
+            _apiKey = context.ApiKey;
+            _secret = context.Secret;
+            _quoteCurrency = context.QuoteCurrency;
+            _simulate = context.Simulate;
+            _apiCall = new ApiCall(_simulate);
         }
 
-        public OrderResponse PlaceBuyOrder(string market, decimal quantity, decimal price)
+        public async Task<OrderResponse> PlaceBuyOrder(string market, decimal quantity, decimal price)
         {
-            return this.Call<OrderResponse>(ApiCallBuyLimit, Tuple.Create("market", GetMarketName(market)), Tuple.Create("quantity", quantity.ToString()), Tuple.Create("rate", price.ToString()));
+            return await Call<OrderResponse>(ApiCallBuyLimit, Tuple.Create("market", GetMarketName(market)), Tuple.Create("quantity", quantity.ToString(CultureInfo.InvariantCulture)), Tuple.Create("rate", price.ToString(CultureInfo.InvariantCulture)));
         }
 
-        public OrderResponse PlaceSellOrder(string market, decimal quantity, decimal price)
+        public async Task<OrderResponse> PlaceSellOrder(string market, decimal quantity, decimal price)
         {
-            return this.Call<OrderResponse>(ApiCallSellLimit, Tuple.Create("market", GetMarketName(market)), Tuple.Create("quantity", quantity.ToString()), Tuple.Create("rate", price.ToString()));
+            return await Call<OrderResponse>(ApiCallSellLimit, Tuple.Create("market", GetMarketName(market)), Tuple.Create("quantity", quantity.ToString(CultureInfo.InvariantCulture)), Tuple.Create("rate", price.ToString(CultureInfo.InvariantCulture)));
         }
 
         private static string HashHmac(string message, string secret)
         {
-            Encoding encoding = Encoding.UTF8;
-            using (HMACSHA512 hmac = new HMACSHA512(encoding.GetBytes(secret)))
+            var encoding = Encoding.UTF8;
+            using (var hmac = new HMACSHA512(encoding.GetBytes(secret)))
             {
                 var msg = encoding.GetBytes(message);
                 var hash = hmac.ComputeHash(msg);
@@ -151,7 +149,7 @@ namespace Bittrex
             }
         }
 
-        private T Call<T>(string method, params Tuple<string, string>[] parameters)
+        private async Task<T> Call<T>(string method, params Tuple<string, string>[] parameters)
         {
             if (method.StartsWith("public"))
             {
@@ -166,16 +164,16 @@ namespace Bittrex
 
                     if (extraParameters.Length > 0)
                     {
-                        uri = uri + extraParameters.ToString();
+                        uri = uri + extraParameters;
                     }
                 }
 
-                return this.apiCall.CallWithJsonResponse<T>(uri, false);
+                return await _apiCall.CallWithJsonResponse<T>(uri, false);
             }
             else
             {
                 var nonce = DateTime.Now.Ticks;
-                var uri = string.Format(ApiCallTemplate, ApiVersion, method + "?apikey=" + this.apiKey + "&nonce=" + nonce);
+                var uri = string.Format(ApiCallTemplate, ApiVersion, method + "?apikey=" + _apiKey + "&nonce=" + nonce);
 
                 if (parameters != null)
                 {
@@ -187,12 +185,12 @@ namespace Bittrex
 
                     if (extraParameters.Length > 0)
                     {
-                        uri = uri + extraParameters.ToString();
+                        uri = uri + extraParameters;
                     }
                 }
 
-                var sign = HashHmac(uri, secret);
-                return this.apiCall.CallWithJsonResponse<T>(uri,
+                var sign = HashHmac(uri, _secret);
+                return await _apiCall.CallWithJsonResponse<T>(uri,
                     !method.StartsWith("market/get") && !method.StartsWith("account/get"),
                     Tuple.Create("apisign", sign));
             }
@@ -200,7 +198,7 @@ namespace Bittrex
 
         private string GetMarketName(string market)
         {
-            return this.quoteCurrency + "-" + market;
+            return _quoteCurrency + "-" + market;
         }
     }
 }

@@ -1,62 +1,70 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using CloudFlareUtilities;
 
 namespace Bittrex
 {
     public class ApiCall
     {
-        private readonly bool simulate;
+        private readonly bool _simulate;
 
         public ApiCall(bool simulate)
         {
-            this.simulate = simulate;
+            this._simulate = simulate;
         }
 
-        public T CallWithJsonResponse<T>(string uri, bool hasEffects, params Tuple<string, string>[] headers)
+        public async Task<T> CallWithJsonResponse<T>(string uri, bool hasEffects, params Tuple<string, string>[] headers)
         {
-            if (simulate && hasEffects)
+            if (_simulate && hasEffects)
             {
                 Debug.WriteLine("(simulated)" + GetCallDetails(uri));
                 return default(T);
             }
 
             Debug.WriteLine(GetCallDetails(uri));
-            var request = HttpWebRequest.CreateHttp(uri);
-            foreach (var header in headers)
-            {
-                request.Headers.Add(header.Item1, header.Item2);
-            }
 
-            using (var response = (HttpWebResponse)request.GetResponse())
+            try
             {
-                if (response.StatusCode == HttpStatusCode.OK)
+                // Create the clearance handler.
+                var handler = new ClearanceHandler
                 {
-                    using (var sr = new StreamReader(response.GetResponseStream()))
-                    {
-                        var content = sr.ReadToEnd();
-                        var jsonResponse = JsonConvert.DeserializeObject<ApiCallResponse<T>>(content);
+                    MaxRetries = 2 // Optionally specify the number of retries, if clearance fails (default is 3).
+                };
 
-                        if (jsonResponse.success)
-                        {
-                            return jsonResponse.result;
-                        }
-                        else
-                        {
-                            throw new Exception(jsonResponse.message.ToString() + "Call Details=" + GetCallDetails(uri));
-                        }
-                    }
+                var client = new HttpClient(handler);
+
+                foreach (var header in headers)
+                {
+                    client.DefaultRequestHeaders.Add(header.Item1, header.Item2);
+                }
+
+                var content = await client.GetStringAsync(uri);
+
+                var jsonResponse = JsonConvert.DeserializeObject<ApiCallResponse<T>>(content);
+
+                if (jsonResponse.Success)
+                {
+                    return jsonResponse.Result;
                 }
                 else
                 {
-                    throw new Exception("Error - StatusCode=" + response.StatusCode + " Call Details=" + GetCallDetails(uri));
+                    throw new Exception(jsonResponse.Message.ToString() + "Call Details=" + GetCallDetails(uri));
                 }
+            }
+            catch (AggregateException ex) when (ex.InnerException is CloudFlareClearanceException)
+            {
+                // After all retries, clearance still failed.
+                throw new Exception(ex.Message);
+            }
+            catch (AggregateException ex) when (ex.InnerException is TaskCanceledException)
+            {
+                // Looks like we ran into a timeout. Too many clearance attempts?
+                // Maybe you should increase client.Timeout as each attempt will take about five seconds.
+                throw new Exception(ex.Message);
             }
         }
 

@@ -21,7 +21,7 @@ namespace CryptoGramBot.EventBus.Handlers
         public async Task Handle(NewTradesCheckEvent @event)
         {
             var lastChecked = await _bus.QueryAsync(new LastCheckedQuery(Constants.Poloniex));
-            var orderHistory = _poloService.GetOrderHistory(lastChecked.LastChecked);
+            var orderHistory = await _poloService.GetOrderHistory(lastChecked.LastChecked);
             var newTradesResponse = await _bus.QueryAsync(new FindNewTradeQuery(orderHistory));
             await _bus.SendAsync(new AddLastCheckedCommand(Constants.Poloniex));
 

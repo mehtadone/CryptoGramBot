@@ -43,7 +43,7 @@ namespace CryptoGramBot.Services
 
         public async Task<BalanceInformation> GetBalance()
         {
-            var response = _exchange.GetBalances();
+            var response = await _exchange.GetBalances();
             var bittrexBalances = TradeConverter.BittrexToWalletBalances(response);
 
             var totalBtcBalance = 0m;
@@ -105,9 +105,9 @@ namespace CryptoGramBot.Services
             return new BalanceInformation(currentBalance, lastBalance, Constants.Bittrex, bittrexBalances);
         }
 
-        public List<Trade> GetOrderHistory(DateTime lastChecked)
+        public async Task<List<Trade>> GetOrderHistory(DateTime lastChecked)
         {
-            var response = _exchange.GetOrderHistory();
+            var response = await _exchange.GetOrderHistory();
             var bittrexToTrades = TradeConverter.BittrexToTrades(response);
             return bittrexToTrades;
         }

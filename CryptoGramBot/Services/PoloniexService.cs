@@ -23,10 +23,10 @@ namespace CryptoGramBot.Services
             return null;
         }
 
-        public List<Trade> GetOrderHistory(DateTime lastChecked)
+        public async Task<List<Trade>> GetOrderHistory(DateTime lastChecked)
         {
-            var tradesAsync = _poloniexClient.Trading.GetTradesAsync(CurrencyPair.All, lastChecked);
-            var tradesAsyncResult = tradesAsync.Result;
+            var tradesAsync = await _poloniexClient.Trading.GetTradesAsync(CurrencyPair.All, lastChecked);
+            var tradesAsyncResult = tradesAsync;
 
             var poloniexToTrades = TradeConverter.PoloniexToTrades(tradesAsyncResult);
             return poloniexToTrades;

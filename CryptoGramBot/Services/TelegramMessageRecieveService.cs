@@ -52,7 +52,7 @@ namespace CryptoGramBot.Services
 
         private void BotOnChosenInlineResultReceived(object sender, ChosenInlineResultEventArgs e)
         {
-            Console.WriteLine($"Received choosen inline result: {e.ChosenInlineResult.ResultId}");
+            _log.LogInformation($"Received choosen inline result: {e.ChosenInlineResult.ResultId}");
         }
 
         private async void BotOnMessageReceivedAsync(object sender, MessageEventArgs e)
@@ -61,6 +61,7 @@ namespace CryptoGramBot.Services
 
             await _bot.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
 
+            _log.LogInformation($"Am I waiting for the file? = {_waitingForFile}");
             if (_waitingForFile)
             {
                 if (message.Document == null)
@@ -83,6 +84,7 @@ namespace CryptoGramBot.Services
             }
             catch (Exception ex)
             {
+                _log.LogInformation($"ERROR. Woops. {ex.Message}");
                 await _bus.SendAsync(new SendMessageCommand("Could not process your command"));
             }
         }

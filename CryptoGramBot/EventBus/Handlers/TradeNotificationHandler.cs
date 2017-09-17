@@ -48,12 +48,12 @@ namespace CryptoGramBot.Services
             var message = $"{newTrade.TimeStamp:R}\n" +
                           $"New {newTrade.Exchange} order\n" +
                           $"<strong>{newTrade.Side} {newTrade.Base}-{newTrade.Terms}</strong>\n" +
-                          $"Total: {newTrade.Cost:##0.###########} BTC\n" +
+                          $"Total: {newTrade.Cost:##0.###########} {newTrade.Base}\n" +
                           $"Rate: {newTrade.Limit:##0.##############} {newTrade.Base}";
 
             if (profitPercentage.HasValue && btcProfit.HasValue && dollarProfit.HasValue)
             {
-                message = message + $"\nProfit: {btcProfit.Value:##0.####} BTC (${dollarProfit.Value:###0.##})\n" + $"Percentage: {profitPercentage.Value}%";
+                message = message + $"\nProfit: {btcProfit.Value:##0.####} {newTrade.Base} (${dollarProfit.Value:###0.##})\n" + $"Percentage: {profitPercentage.Value}%";
             }
 
             await _bus.SendAsync(new SendMessageCommand(message));

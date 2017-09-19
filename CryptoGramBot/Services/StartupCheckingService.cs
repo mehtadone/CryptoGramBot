@@ -51,7 +51,7 @@ namespace CryptoGramBot.Services
 
         private async Task CheckForBags()
         {
-            await _bus.PublishAsync(new BagManagementEvent());
+            await _bus.PublishAsync(new BagAndDustEvent());
         }
 
         private async Task GetNewOrders()

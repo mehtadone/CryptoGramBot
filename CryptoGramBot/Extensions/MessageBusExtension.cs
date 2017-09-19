@@ -11,7 +11,7 @@ namespace CryptoGramBot.Extensions
 {
     public static class MessageBusExtension
     {
-        public static BusBuilder ConfigureCore(this BusBuilder busBuilder, bool coinigyEnabled, bool bittrexEnabled, bool poloniexEnabled, bool bagEnabled)
+        public static BusBuilder ConfigureCore(this BusBuilder busBuilder, bool coinigyEnabled, bool bittrexEnabled, bool poloniexEnabled, bool bagEnabled, bool dustEnabled)
         {
             busBuilder.RegisterCommandHandler<SendMessageCommand, SendMessageHandler>();
             busBuilder.RegisterCommandHandler<SendFileCommand, SendFileHandler>();
@@ -48,14 +48,14 @@ namespace CryptoGramBot.Extensions
                 busBuilder.RegisterCommandHandler<BittrexBalanceInfoRequestedCommand, BittrexBalanceInfoRequestedHandler>();
             }
 
-            if (bagEnabled && bittrexEnabled)
+            if ((bagEnabled || dustEnabled) && bittrexEnabled)
             {
-                busBuilder.RegisterEventHandler<BagManagementEvent, BittrexBagManagementHandler>();
+                busBuilder.RegisterEventHandler<BagAndDustEvent, BittrexBagAndDustHandler>();
             }
 
-            if (bagEnabled && poloniexEnabled)
+            if ((bagEnabled || dustEnabled) && poloniexEnabled)
             {
-                busBuilder.RegisterEventHandler<BagManagementEvent, PoloniexBagManagementHandler>();
+                busBuilder.RegisterEventHandler<BagAndDustEvent, PoloniexBagAndDustHandler>();
             }
 
             return busBuilder;

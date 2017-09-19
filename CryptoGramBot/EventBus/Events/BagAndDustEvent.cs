@@ -2,7 +2,7 @@
 
 namespace CryptoGramBot.EventBus.Events
 {
-    public class BagManagementEvent : IEvent
+    public class BagAndDustEvent : IEvent
     {
     }
 }

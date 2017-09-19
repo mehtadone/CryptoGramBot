@@ -11,22 +11,24 @@ using Enexure.MicroBus;
 
 namespace CryptoGramBot.EventBus.Handlers
 {
-    public class PoloniexBagManagementHandler : IEventHandler<BagManagementEvent>
+    public class PoloniexBagAndDustHandler : IEventHandler<BagAndDustEvent>
     {
         private readonly BagConfig _bagConfig;
         private readonly IMicroBus _bus;
         private readonly DatabaseService _databaseService;
+        private readonly DustConfig _dustConfig;
         private readonly PoloniexService _poloService;
 
-        public PoloniexBagManagementHandler(IMicroBus bus, PoloniexService poloService, DatabaseService databaseService, BagConfig bagConfig)
+        public PoloniexBagAndDustHandler(IMicroBus bus, PoloniexService poloService, DatabaseService databaseService, BagConfig bagConfig, DustConfig dustConfig)
         {
             _bus = bus;
             _poloService = poloService;
             _databaseService = databaseService;
             _bagConfig = bagConfig;
+            _dustConfig = dustConfig;
         }
 
-        public async Task Handle(BagManagementEvent @event)
+        public async Task Handle(BagAndDustEvent @event)
         {
             //TODO Add bag management for polo
             //            var walletBalances = _bittrexService.GetWalletBalances();

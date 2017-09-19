@@ -179,7 +179,7 @@ namespace CryptoGramBot
 
             var busBuilder = new BusBuilder();
 
-            busBuilder.ConfigureCore(coinigyEnabled, bittrexEnabled, poloniexEnabled, bagEnabled);
+            busBuilder.ConfigureCore(coinigyEnabled, bittrexEnabled, poloniexEnabled, bagEnabled, dustEnabled);
 
             containerBuilder.RegisterMicroBus(busBuilder);
             var container = containerBuilder.Build();

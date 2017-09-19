@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Bittrex;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using Enexure.MicroBus;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace CryptoGramBot.Services
 {
@@ -16,6 +19,7 @@ namespace CryptoGramBot.Services
         private readonly BittrexConfig _config;
         private readonly DatabaseService _databaseService;
         private readonly IExchange _exchange;
+        private readonly ILogger<BittrexService> _log;
         private readonly PriceService _priceService;
 
         public BittrexService(
@@ -23,12 +27,14 @@ namespace CryptoGramBot.Services
             DatabaseService databaseService,
             PriceService priceService,
             IExchange exchange,
+            ILogger<BittrexService> log,
             IMicroBus bus)
         {
             _config = config;
             _databaseService = databaseService;
             _priceService = priceService;
             _exchange = exchange;
+            _log = log;
             _bus = bus;
             var context = new ExchangeContext
             {
@@ -43,8 +49,17 @@ namespace CryptoGramBot.Services
 
         public async Task<BalanceInformation> GetBalance()
         {
-            var response = await _exchange.GetBalances();
-            var bittrexBalances = TradeConverter.BittrexToWalletBalances(response);
+            List<WalletBalance> bittrexBalances;
+            try
+            {
+                var response = await _exchange.GetBalances();
+                bittrexBalances = TradeConverter.BittrexToWalletBalances(response);
+            }
+            catch (Exception e)
+            {
+                _log.LogError("Error in getting balances from bittrex: " + e.Message);
+                throw;
+            }
 
             var totalBtcBalance = 0m;
             foreach (var balance in bittrexBalances)
@@ -120,7 +135,7 @@ namespace CryptoGramBot.Services
                 return await _priceService.GetDollarAmount(1);
             }
 
-            var ticker = _exchange.GetTicker(terms);
+            var ticker = await _exchange.GetTicker(terms);
             var price = ticker.Last.ToString();
             decimal priceAsDecimal;
             try

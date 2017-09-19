@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
+using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.Models;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;

@@ -1,6 +1,6 @@
 ﻿using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus.Handlers
+namespace CryptoGramBot.EventBus.Events
 {
     public class BagManagementEvent : IEvent
     {

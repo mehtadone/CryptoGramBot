@@ -30,7 +30,7 @@ namespace CryptoGramBot.EventBus.Handlers
 
         public async Task Handle(SendMessageCommand command)
         {
-            await _bot.Bot.SendTextMessageAsync(_bot.ChatId, command.Message, ParseMode.Html);
+            await _bot.SendHtmlMessage(_bot.ChatId, command.Message);
             _log.LogInformation($"Send Message:\n" + command.Message);
         }
     }

@@ -27,40 +27,94 @@ namespace CryptoGramBot
     internal class Program
     {
         private static void CheckWhatIsEnabled(IConfigurationProvider provider, out bool coinigyEnabled, out bool bittrexEnabled,
-            out bool poloniexEnabled, out bool bagEnabled)
+            out bool poloniexEnabled, out bool bagEnabled, out bool dustNotification)
         {
             provider.TryGet("Coinigy:Enabled", out string coinigyEnabledString);
             provider.TryGet("Bittrex:Enabled", out string bittrexEnabledString);
             provider.TryGet("Poloniex:Enabled", out string poloniexEnabledString);
             provider.TryGet("BagManagement:Enabled", out string bagManagementEnabledString);
+            provider.TryGet("DustNotification:Enabled", out string dustNotifcationEnabledString);
 
             coinigyEnabled = bool.Parse(coinigyEnabledString);
             bittrexEnabled = bool.Parse(bittrexEnabledString);
             poloniexEnabled = bool.Parse(poloniexEnabledString);
             bagEnabled = bool.Parse(bagManagementEnabledString);
+            dustNotification = bool.Parse(dustNotifcationEnabledString);
         }
 
         private static void ConfigureConfig(IContainer container, IConfigurationRoot configuration, ILogger<Program> log)
         {
-            var coinigyConfig = container.Resolve<CoinigyConfig>();
-            configuration.GetSection("Coinigy").Bind(coinigyConfig);
-            log.LogInformation("Created Coinigy Config");
+            try
+            {
+                var config = container.Resolve<CoinigyConfig>();
+                configuration.GetSection("Coinigy").Bind(config);
+                log.LogInformation("Created Coinigy Config");
+            }
+            catch (Exception)
+            {
+                log.LogError("Error in reading Coinigy Config");
+                throw;
+            }
 
-            var telegramConfig = container.Resolve<TelegramConfig>();
-            configuration.GetSection("Telegram").Bind(telegramConfig);
-            log.LogInformation("Created Telegram Config");
+            try
+            {
+                var config = container.Resolve<TelegramConfig>();
+                configuration.GetSection("Telegram").Bind(config);
+                log.LogInformation("Created Telegram Config");
+            }
+            catch (Exception)
+            {
+                log.LogError("Error in reading telegram config");
+                throw;
+            }
 
-            var bittrexConfig = container.Resolve<BittrexConfig>();
-            configuration.GetSection("Bittrex").Bind(bittrexConfig);
-            log.LogInformation("Created bittrex Config");
+            try
+            {
+                var config = container.Resolve<BittrexConfig>();
+                configuration.GetSection("Bittrex").Bind(config);
+                log.LogInformation("Created bittrex Config");
+            }
+            catch (Exception)
+            {
+                log.LogError("Error in reading bittrex config");
+                throw;
+            }
 
-            var poloniexConfig = container.Resolve<PoloniexConfig>();
-            configuration.GetSection("Poloniex").Bind(poloniexConfig);
-            log.LogInformation("Created Poloniex Config");
+            try
+            {
+                var config = container.Resolve<PoloniexConfig>();
+                configuration.GetSection("Poloniex").Bind(config);
+                log.LogInformation("Created Poloniex Config");
+            }
+            catch (Exception)
+            {
+                log.LogError("Error in reading telegram config");
+                throw;
+            }
 
-            var bagConfig = container.Resolve<BagConfig>();
-            configuration.GetSection("BagManagement").Bind(bagConfig);
-            log.LogInformation("Created Bag Management Config");
+            try
+            {
+                var config = container.Resolve<BagConfig>();
+                configuration.GetSection("BagManagement").Bind(config);
+                log.LogInformation("Created Bag Management Config");
+            }
+            catch (Exception)
+            {
+                log.LogError("Error in reading bag management config");
+                throw;
+            }
+
+            try
+            {
+                var config = container.Resolve<DustConfig>();
+                configuration.GetSection("DustNotification").Bind(config);
+                log.LogInformation("Created Bag Management Config");
+            }
+            catch (Exception)
+            {
+                log.LogError("Error in reading bag management config");
+                throw;
+            }
         }
 
         private static void ConfigureLogger()
@@ -87,6 +141,7 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<BittrexConfig>().SingleInstance();
             containerBuilder.RegisterType<PoloniexConfig>().SingleInstance();
             containerBuilder.RegisterType<BagConfig>().SingleInstance();
+            containerBuilder.RegisterType<DustConfig>().SingleInstance();
             containerBuilder.RegisterType<CoinigyApiService>();
             containerBuilder.RegisterType<BittrexService>();
             containerBuilder.RegisterType<PoloniexService>();
@@ -120,7 +175,7 @@ namespace CryptoGramBot
             // We only have one settings provider so this works for the moment
             var provider = configuration.Providers.First();
 
-            CheckWhatIsEnabled(provider, out bool coinigyEnabled, out bool bittrexEnabled, out bool poloniexEnabled, out bool bagEnabled);
+            CheckWhatIsEnabled(provider, out bool coinigyEnabled, out bool bittrexEnabled, out bool poloniexEnabled, out bool bagEnabled, out bool dustEnabled);
 
             var busBuilder = new BusBuilder();
 
@@ -132,7 +187,7 @@ namespace CryptoGramBot
             var loggerFactory = container.Resolve<ILoggerFactory>().AddSerilog();
             var log = loggerFactory.CreateLogger<Program>();
 
-            log.LogInformation($"Services: Coinigy:{coinigyEnabled} Bittrex:{bittrexEnabled}: Poloniex:{poloniexEnabled} Bag Management: {bagEnabled}");
+            log.LogInformation($"Services\nCoinigy: {coinigyEnabled}\nBittrex: {bittrexEnabled}\nPoloniex: {poloniexEnabled}\nBag Management: {bagEnabled}\nDust Notifications: {dustEnabled}");
             ConfigureConfig(container, configuration, log);
 
             var startupService = container.Resolve<StartupCheckingService>();

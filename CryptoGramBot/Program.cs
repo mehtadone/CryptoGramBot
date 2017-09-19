@@ -108,11 +108,11 @@ namespace CryptoGramBot
             {
                 var config = container.Resolve<DustConfig>();
                 configuration.GetSection("DustNotification").Bind(config);
-                log.LogInformation("Created Bag Management Config");
+                log.LogInformation("Created dust notification Config");
             }
             catch (Exception)
             {
-                log.LogError("Error in reading bag management config");
+                log.LogError("Error in reading dust notification config");
                 throw;
             }
         }

@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CryptoGramBot.EventBus;
-using CryptoGramBot.EventBus.Handlers;
+﻿using System.Threading.Tasks;
 using CryptoGramBot.Models;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.Services
+namespace CryptoGramBot.EventBus.Handlers
 {
     public class TradeNotificationCommand : ICommand
     {

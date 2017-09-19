@@ -54,7 +54,7 @@ namespace CryptoGramBot.Services
             if (profitPercentage.HasValue && btcProfit.HasValue && dollarProfit.HasValue)
             {
                 message = message + $"\nProfit: {btcProfit.Value:##0.####} {newTrade.Base} (${dollarProfit.Value:###0.##})\n"
-                    + $"Last bought: {newTrade.TimeStamp:R}"
+                    + $"Last bought: {newTrade.TimeStamp:R}\n"
                     + $"Percentage: {profitPercentage.Value}%";
             }
 

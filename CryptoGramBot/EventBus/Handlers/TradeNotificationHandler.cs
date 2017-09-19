@@ -53,7 +53,9 @@ namespace CryptoGramBot.Services
 
             if (profitPercentage.HasValue && btcProfit.HasValue && dollarProfit.HasValue)
             {
-                message = message + $"\nProfit: {btcProfit.Value:##0.####} {newTrade.Base} (${dollarProfit.Value:###0.##})\n" + $"Percentage: {profitPercentage.Value}%";
+                message = message + $"\nProfit: {btcProfit.Value:##0.####} {newTrade.Base} (${dollarProfit.Value:###0.##})\n"
+                    + $"Last bought: {newTrade.TimeStamp:R}"
+                    + $"Percentage: {profitPercentage.Value}%";
             }
 
             await _bus.SendAsync(new SendMessageCommand(message));

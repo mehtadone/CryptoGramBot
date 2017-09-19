@@ -26,19 +26,19 @@ namespace CryptoGramBot.EventBus.Handlers
 
             if (tradesForPairAndQuantity.Count == 0)
             {
-                return new TradesProfitResponse(null, null, null);
+                return new TradesProfitResponse(null, null, null, null);
             }
 
-            ProfitCalculator.GetProfitForTrade(tradesForPairAndQuantity, query.SellReturns, query.Quantity, out decimal? totalCost, out decimal? profit);
+            ProfitCalculator.GetProfitForTrade(tradesForPairAndQuantity, query.SellReturns, query.Quantity, out decimal? totalCost, out decimal? profit, out DateTime lastBought);
 
             if (profit.HasValue && totalCost.HasValue)
             {
                 decimal? btcProfit = query.SellReturns - totalCost.Value;
                 decimal? dollarProfit = await _priceService.GetDollarAmount(btcProfit.Value);
-                return new TradesProfitResponse(profit, btcProfit, dollarProfit);
+                return new TradesProfitResponse(profit, btcProfit, dollarProfit, lastBought);
             }
 
-            return new TradesProfitResponse(null, null, null);
+            return new TradesProfitResponse(null, null, null, null);
         }
     }
 
@@ -60,15 +60,17 @@ namespace CryptoGramBot.EventBus.Handlers
 
     public class TradesProfitResponse
     {
-        public TradesProfitResponse(decimal? profitPercentage, decimal? btcProfit, decimal? dollarProfit)
+        public TradesProfitResponse(decimal? profitPercentage, decimal? btcProfit, decimal? dollarProfit, DateTime? lastBoughtTime)
         {
             ProfitPercentage = profitPercentage;
             BtcProfit = btcProfit;
             DollarProfit = dollarProfit;
+            LastBoughtTime = lastBoughtTime;
         }
 
         public decimal? BtcProfit { get; }
         public decimal? DollarProfit { get; }
+        public DateTime? LastBoughtTime { get; }
         public decimal? ProfitPercentage { get; }
     }
 }

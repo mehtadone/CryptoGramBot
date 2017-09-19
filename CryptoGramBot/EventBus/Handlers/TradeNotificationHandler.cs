@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using CryptoGramBot.Models;
 using Enexure.MicroBus;
 
@@ -30,6 +31,8 @@ namespace CryptoGramBot.EventBus.Handlers
             decimal? profitPercentage = null;
             decimal? btcProfit = null;
             decimal? dollarProfit = null;
+            DateTime? lastBought = DateTime.MinValue;
+            ;
 
             if (newTrade.Side == TradeSide.Sell)
             {
@@ -37,6 +40,7 @@ namespace CryptoGramBot.EventBus.Handlers
                 profitPercentage = tradesProfitResponse.ProfitPercentage;
                 btcProfit = tradesProfitResponse.BtcProfit;
                 dollarProfit = tradesProfitResponse.DollarProfit;
+                lastBought = tradesProfitResponse.LastBoughtTime;
             }
 
             var message = $"{newTrade.TimeStamp:R}\n" +
@@ -48,7 +52,7 @@ namespace CryptoGramBot.EventBus.Handlers
             if (profitPercentage.HasValue && btcProfit.HasValue && dollarProfit.HasValue)
             {
                 message = message + $"\nProfit: {btcProfit.Value:##0.####} {newTrade.Base} (${dollarProfit.Value:###0.##})\n"
-                    + $"Last bought: {newTrade.TimeStamp:R}\n"
+                    + $"Bought on: {lastBought:g}\n"
                     + $"Percentage: {profitPercentage.Value}%";
             }
 

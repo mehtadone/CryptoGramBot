@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CryptoGramBot.Models;
 
 namespace CryptoGramBot.Helpers
@@ -59,10 +60,13 @@ namespace CryptoGramBot.Helpers
             return profitAndLoss;
         }
 
-        public static void GetProfitForTrade(List<Trade> trades, decimal sellReturns, decimal quantity, out decimal? totalCost, out decimal? profit)
+        public static void GetProfitForTrade(List<Trade> trades, decimal sellReturns, decimal quantity, out decimal? totalCost, out decimal? profit, out DateTime dateTime)
         {
             var quantityChecked = 0m;
             var totalcost = 0m;
+
+            dateTime = trades.First().TimeStamp;
+
             foreach (var trade in trades)
             {
                 if (quantityChecked >= quantity) break;

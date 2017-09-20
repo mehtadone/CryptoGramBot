@@ -25,12 +25,15 @@ namespace CryptoGramBot.EventBus.Handlers
             var newTradesResponse = await _bus.QueryAsync(new FindNewTradeQuery(orderHistory));
             await _bus.SendAsync(new AddLastCheckedCommand(Constants.Bittrex));
 
-            var i = 0;
-            foreach (var newTrade in newTradesResponse.NewTrades)
+            if (@event.BittrexTradeNotifcations)
             {
-                if (@event.IsStartup && i > 4) break;
-                await _bus.SendAsync(new TradeNotificationCommand(newTrade));
-                i++;
+                var i = 0;
+                foreach (var newTrade in newTradesResponse.NewTrades)
+                {
+                    if (@event.IsStartup && i > 4) break;
+                    await _bus.SendAsync(new TradeNotificationCommand(newTrade));
+                    i++;
+                }
             }
         }
     }

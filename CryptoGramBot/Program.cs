@@ -27,19 +27,33 @@ namespace CryptoGramBot
     internal class Program
     {
         private static void CheckWhatIsEnabled(IConfigurationProvider provider, out bool coinigyEnabled, out bool bittrexEnabled,
-            out bool poloniexEnabled, out bool bagEnabled, out bool dustNotification)
+            out bool poloniexEnabled, out bool bagEnabled, out bool dustNotification, out bool poloTradeNotifcation, out bool bittrexTradeNotification)
         {
             provider.TryGet("Coinigy:Enabled", out string coinigyEnabledString);
             provider.TryGet("Bittrex:Enabled", out string bittrexEnabledString);
             provider.TryGet("Poloniex:Enabled", out string poloniexEnabledString);
             provider.TryGet("BagManagement:Enabled", out string bagManagementEnabledString);
             provider.TryGet("DustNotification:Enabled", out string dustNotifcationEnabledString);
+            provider.TryGet("Bittrex:TradeNotifications", out string bittrexTradeNoticationString);
+            provider.TryGet("Poloniex:TradeNotifications", out string poloTradeNotifcationString);
 
             coinigyEnabled = bool.Parse(coinigyEnabledString);
             bittrexEnabled = bool.Parse(bittrexEnabledString);
             poloniexEnabled = bool.Parse(poloniexEnabledString);
-            bagEnabled = bool.Parse(bagManagementEnabledString);
-            dustNotification = bool.Parse(dustNotifcationEnabledString);
+
+            if (bittrexEnabled || poloniexEnabled)
+            {
+                bagEnabled = bool.Parse(bagManagementEnabledString);
+                dustNotification = bool.Parse(dustNotifcationEnabledString);
+            }
+            else
+            {
+                bagEnabled = false;
+                dustNotification = false;
+            }
+
+            poloTradeNotifcation = bool.Parse(poloTradeNotifcationString);
+            bittrexTradeNotification = bool.Parse(bittrexTradeNoticationString);
         }
 
         private static void ConfigureConfig(IContainer container, IConfigurationRoot configuration, ILogger<Program> log)
@@ -175,7 +189,7 @@ namespace CryptoGramBot
             // We only have one settings provider so this works for the moment
             var provider = configuration.Providers.First();
 
-            CheckWhatIsEnabled(provider, out bool coinigyEnabled, out bool bittrexEnabled, out bool poloniexEnabled, out bool bagEnabled, out bool dustEnabled);
+            CheckWhatIsEnabled(provider, out bool coinigyEnabled, out bool bittrexEnabled, out bool poloniexEnabled, out bool bagEnabled, out bool dustEnabled, out bool poloTradeNotification, out bool bittrexTradeNotifcation);
 
             var busBuilder = new BusBuilder();
 
@@ -191,7 +205,7 @@ namespace CryptoGramBot
             ConfigureConfig(container, configuration, log);
 
             var startupService = container.Resolve<StartupCheckingService>();
-            startupService.Start(coinigyEnabled, bittrexEnabled, poloniexEnabled, bagEnabled);
+            startupService.Start(coinigyEnabled, bittrexEnabled, poloniexEnabled, bagEnabled, bittrexTradeNotifcation, poloTradeNotification);
 
             while (true)
             {

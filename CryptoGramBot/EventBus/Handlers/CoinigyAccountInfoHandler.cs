@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using CryptoGramBot.EventBus;
-using CryptoGramBot.EventBus.Handlers;
+using CryptoGramBot.Services;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
 
-namespace CryptoGramBot.Services
+namespace CryptoGramBot.EventBus.Handlers
 {
     public class CoinigyAccountInfoHandler : ICommandHandler<SendCoinigyAccountInfoCommand>
     {

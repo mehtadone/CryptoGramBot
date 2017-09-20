@@ -3,7 +3,7 @@ using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus.Handlers
+namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
 {
     public class CheckCoinigyAccountBalancesHandler : IEventHandler<BalanceCheckEvent>
     {

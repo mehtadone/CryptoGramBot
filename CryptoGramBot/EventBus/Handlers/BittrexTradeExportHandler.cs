@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using CryptoGramBot.EventBus.Handlers;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus
+namespace CryptoGramBot.EventBus.Handlers
 {
     public class BittrexTradeExportCommand : ICommand
     {

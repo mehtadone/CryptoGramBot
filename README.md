@@ -46,7 +46,7 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 
 **Support**
 * Send me a [telgram](https://t.me/mehtadone)
-* Join the [telegream group](https://t.me/joinchat/AYGQfg7ZauzhAxe5QyU4Tg)
+* Join the [telegram group](https://t.me/joinchat/AYGQfg7ZauzhAxe5QyU4Tg)
 
 **Screenshots**
 

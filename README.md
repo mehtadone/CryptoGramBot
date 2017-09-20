@@ -26,6 +26,7 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Stop your bot
 * Copy everything over in the new zip EXCEPT logs, database and appsettings.json
 * Check to see if there are any new properties in the new appsettings.json and add then to your existing one. 
+* Start your bot
 
 **Usage:**
 * Type /help when the bot is running

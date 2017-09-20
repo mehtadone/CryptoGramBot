@@ -39,8 +39,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Database\" />
+		<Folder Include="database\">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Folder>
 		<Folder Include="images\" />
+		<Folder Include="logs\">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Folder>
 		<Folder Include="Properties\" />
 	</ItemGroup>
 
@@ -52,6 +57,12 @@
 	<ItemGroup>
 		<None Update="appsettings.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="database\dummy.txt">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="logs\dummy.txt">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
 </Project>

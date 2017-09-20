@@ -15,9 +15,7 @@ before_build:
   - cmd: dotnet restore ./CryptoGramBot/CryptoGramBot.csproj --verbosity m
 build_script:
   # output will be in ./src/bin/debug/netcoreapp1.1/publish
-  - cmd: dotnet publish --configuration release --output \CryptoGramBot\bin\Release\netcoreapp2.0\publish\cryptogrambot ./CryptoGramBot/CryptoGramBot.csproj
-  - cmd: mkdir '\CryptoGramBot\bin\Release\netcoreapp2.0\publish\cryptogrambot\logs'
-  - cmd: mkdir '\CryptoGramBot\bin\Release\netcoreapp2.0\publish\cryptogrambot\database'
+  - cmd: dotnet publish --configuration release ./CryptoGramBot/CryptoGramBot.csproj
 after_build:
   # For once the build has completed
 artifacts:

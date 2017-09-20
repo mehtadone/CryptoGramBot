@@ -35,6 +35,7 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Bittrex csv order export upload
 * Excel trade history export
 * Price drop notifications when a balance drops more than 30%. Used for bag management. Runs 4 times a day.
+* Dust notifications
 * Pair profit 
 
 **Todo**
@@ -42,6 +43,10 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Poloniex balance info
 * Show deposits and withdrawals to show accurate profit and loss. 
 * Profit calculations are wrong on a sell if we don't have the data in the database
+
+**Support**
+* Send me a [telgram](https://t.me/mehtadone)
+* Join the [telegream group](https://t.me/joinchat/AYGQfg7ZauzhAxe5QyU4Tg)
 
 **Screenshots**
 

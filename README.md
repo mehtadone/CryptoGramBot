@@ -45,7 +45,7 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Profit calculations are wrong on a sell if we don't have the data in the database
 
 **Support**
-* Send me a [telgram](https://t.me/mehtadone)
+* Send me a [telegram](https://t.me/mehtadone)
 * Join the [telegram group](https://t.me/joinchat/AYGQfg7ZauzhAxe5QyU4Tg)
 
 **Screenshots**

@@ -15,7 +15,7 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Pre-requisites: [Net Core SDK](https://www.microsoft.com/net/download/core "Net Core SDK")
 * Get your Bot ID, you need to chat to the BotFather. See [here](https://core.telegram.org/bots#3-how-do-i-create-a-bot) and [here](https://core.telegram.org/bots#6-botfather) 
 * Chat to your new bot. Say hi. He won't be very reponsive.
-* Now in a web browser go to: https://api.telegram.org/bot##BOTAPI##/getUpdates replacing ##BOTAPI## with your api key given to your by the BotFather. 
+* Open a chat to this [bot](https://t.me/get_id_bot). This should show you your chat id.
 * Download the lastest version of the zip from [here](https://github.com/mehtadone/CryptoGramBot/releases) and unzip to a folder
 * Fill in your config in appsettings.json. Bot ID is WITHOUT Bot and choose whether you want enable each service (true or false)
 * Create a folder called logs and another called database in the folder you have the dll.
@@ -35,6 +35,7 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Bittrex csv order export upload
 * Excel trade history export
 * Price drop notifications when a balance drops more than 30%. Used for bag management. Runs 4 times a day.
+* Dust notifications
 * Pair profit 
 
 **Todo**
@@ -42,6 +43,10 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Poloniex balance info
 * Show deposits and withdrawals to show accurate profit and loss. 
 * Profit calculations are wrong on a sell if we don't have the data in the database
+
+**Support**
+* Send me a [telegram](https://t.me/mehtadone)
+* Join the [telegram group](https://t.me/joinchat/AYGQfg7ZauzhAxe5QyU4Tg)
 
 **Screenshots**
 

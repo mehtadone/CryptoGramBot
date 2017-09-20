@@ -15,7 +15,9 @@ before_build:
   - cmd: dotnet restore ./CryptoGramBot/CryptoGramBot.csproj --verbosity m
 build_script:
   # output will be in ./src/bin/debug/netcoreapp1.1/publish
-  - cmd: dotnet publish --configuration release ./CryptoGramBot/CryptoGramBot.csproj
+  - cmd: dotnet publish --configuration release --output /CryptoGramBot/bin/Release/netcoreapp2.0/publish/cryptogrambot ./CryptoGramBot/CryptoGramBot.csproj
+  - cmd: mkdir /CryptoGramBot/bin/Release/netcoreapp2.0/publish/cryptogrambot/logs
+  - cmd: mkdir /CryptoGramBot/bin/Release/netcoreapp2.0/publish/cryptogrambot/database 
 after_build:
   # For once the build has completed
 artifacts:
@@ -36,4 +38,4 @@ deploy:
   prerelease: true
   on:
     branch: master                 # release from master branch only
-    appveyor_repo_tag: false  
+    appveyor_repo_tag: false

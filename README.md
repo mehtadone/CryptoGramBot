@@ -12,7 +12,7 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 
 **Installation:**
 
-* Pre-requisites: [Net Core SDK](https://www.microsoft.com/net/download/core "Net Core SDK")
+* Pre-requisites: [Net Core SDK](https://www.microsoft.com/net/download/core "Net Core SDK"). Instruction for windows, linux and macos on that page. 
 * Get your Bot ID, you need to chat to the BotFather. See [here](https://core.telegram.org/bots#3-how-do-i-create-a-bot) and [here](https://core.telegram.org/bots#6-botfather) 
 * Chat to your new bot. Say hi. He won't be very reponsive.
 * Open a chat to this [bot](https://t.me/get_id_bot). This should show you your chat id.

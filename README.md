@@ -16,7 +16,7 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Get your Bot ID, you need to chat to the BotFather. See [here](https://core.telegram.org/bots#3-how-do-i-create-a-bot) and [here](https://core.telegram.org/bots#6-botfather) 
 * Chat to your new bot. Say hi. He won't be very reponsive.
 * Open a chat to this [bot](https://t.me/get_id_bot). This should show you your chat id.
-* Download the lastest version of the zip from [here](https://github.com/mehtadone/CryptoGramBot/releases) and unzip to a folder
+* Download the lastest version of the zip from [here](https://github.com/mehtadone/CryptoGramBot/releases) and unzip to a folder. Download CryptoGramBot.zip and not the source files if you want to run without building. 
 * Fill in your config in appsettings.json. Bot ID is WITHOUT Bot and choose whether you want enable each service (true or false)
 * Give CryptoGramBot the correct execute permissions via chmod if on linux
 * Start on command line with "dotnet CryptoGramBot.dll"

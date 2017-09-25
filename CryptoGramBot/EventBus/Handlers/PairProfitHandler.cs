@@ -46,7 +46,7 @@ namespace CryptoGramBot.EventBus.Handlers
 
                 await _bus.SendAsync(new SendMessageCommand(message));
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 await _bus.SendAsync(new SendMessageCommand("Could not work out what the pair you typed was"));
             }

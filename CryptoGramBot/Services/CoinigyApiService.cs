@@ -13,7 +13,7 @@ namespace CryptoGramBot.Services
 {
     public class CoinigyApiService
     {
-        private readonly Dictionary<int, Account> _coinigyAccounts = new Dictionary<int, Account>();
+        private readonly Dictionary<int, CoinigyAccount> _coinigyAccounts = new Dictionary<int, CoinigyAccount>();
         private readonly CoinigyConfig _config;
         private readonly ILogger<CoinigyApiService> _log;
 
@@ -23,7 +23,7 @@ namespace CryptoGramBot.Services
             _log = log;
         }
 
-        public async Task<Dictionary<int, Account>> GetAccounts()
+        public async Task<Dictionary<int, CoinigyAccount>> GetAccounts()
         {
             _log.LogInformation($"Getting account list from Coinigy");
             if (_coinigyAccounts.Count == 0)
@@ -34,7 +34,7 @@ namespace CryptoGramBot.Services
                 int count = 1;
                 foreach (var t in token)
                 {
-                    var account = new Account
+                    var account = new CoinigyAccount
                     {
                         AuthId = t["auth_id"].ToString(),
                         Name = t["auth_nickname"].ToString()

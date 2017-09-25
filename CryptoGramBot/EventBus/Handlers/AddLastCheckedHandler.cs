@@ -27,10 +27,9 @@ namespace CryptoGramBot.EventBus.Handlers
             _databaseService = databaseService;
         }
 
-        public Task Handle(AddLastCheckedCommand command)
+        public async Task Handle(AddLastCheckedCommand command)
         {
-            _databaseService.AddLastChecked(command.Exchange, DateTime.Now);
-            return Task.CompletedTask;
+            await _databaseService.AddLastChecked(command.Exchange, DateTime.Now);
         }
     }
 }

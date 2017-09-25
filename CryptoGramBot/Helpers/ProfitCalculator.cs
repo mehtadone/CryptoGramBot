@@ -40,7 +40,7 @@ namespace CryptoGramBot.Helpers
                 averageBuy = totalBuyCost / totalBought;
                 averageSell = totalSellCost / totalSold;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // TODO: Should log a could not divide by 0;
             }

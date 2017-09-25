@@ -36,11 +36,11 @@ namespace CryptoGramBot.EventBus.Handlers
             _databaseService = databaseService;
         }
 
-        public Task<FindNewTradesResponse> Handle(FindNewTradeQuery query)
+        public async Task<FindNewTradesResponse> Handle(FindNewTradeQuery query)
         {
-            _databaseService.AddTrades(query.OrderHistory, out List<Trade> newTrades);
+            var newTrades = await _databaseService.AddTrades(query.OrderHistory);
             IOrderedEnumerable<Trade> orderedEnumerable = newTrades.OrderBy(x => x.TimeStamp);
-            return Task.FromResult(new FindNewTradesResponse(orderedEnumerable));
+            return new FindNewTradesResponse(orderedEnumerable);
         }
     }
 }

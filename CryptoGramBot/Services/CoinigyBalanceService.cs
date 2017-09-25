@@ -35,7 +35,7 @@ namespace CryptoGramBot.Services
             return new BalanceInformation(currentBalance, hour24Balance, selectedAccount.Name); ;
         }
 
-        public async Task<Dictionary<int, Account>> GetAccounts()
+        public async Task<Dictionary<int, CoinigyAccount>> GetAccounts()
         {
             var accounts = await _coinigyApiService.GetAccounts();
             return accounts;

@@ -1,24 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using CryptoGramBot.Data;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
-using LiteDB;
 using Microsoft.Extensions.Logging;
 
 namespace CryptoGramBot.Services
 {
     public class DatabaseService
     {
-        private readonly LiteRepository _db;
+        private readonly CryptoGramBotDbContext _context;
         private readonly Dictionary<string, BalanceHistory> _lastBalances = new Dictionary<string, BalanceHistory>();
         private readonly ILogger<DatabaseService> _log;
 
-        public DatabaseService(ILogger<DatabaseService> log)
+        public DatabaseService(ILogger<DatabaseService> log, CryptoGramBotDbContext context)
         {
             _log = log;
-            _db = new LiteRepository(Constants.DatabaseName);
-            EnsureIndex();
+            _context = context;
         }
 
         public BalanceHistory AddBalance(decimal balance, decimal dollarAmount, string name)
@@ -38,13 +38,19 @@ namespace CryptoGramBot.Services
             return balanceHistory;
         }
 
-        public void AddLastChecked(string exchange, DateTime timestamp)
+        public void AddCoinigyAccounts(Dictionary<int, CoinigyAccount> coinigyAccounts)
         {
-            var lastChecked = _db.SingleOrDefault<LastChecked>(x => x.Exchange == exchange);
+            //            throw new NotImplementedException();
+        }
+
+        public async Task AddLastChecked(string exchange, DateTime timestamp)
+        {
+            var lastCheckeds = _context.LastCheckeds;
+            var lastChecked = lastCheckeds.SingleOrDefault(x => x.Exchange == exchange);
 
             if (lastChecked == null)
             {
-                _db.Insert(new LastChecked
+                lastCheckeds.Add(new LastChecked
                 {
                     Exchange = exchange,
                     Timestamp = timestamp
@@ -53,45 +59,76 @@ namespace CryptoGramBot.Services
             else
             {
                 lastChecked.Timestamp = timestamp;
-                var liteCollection = _db.Database.GetCollection<LastChecked>();
-                liteCollection.Update(lastChecked);
             }
+
+            await _context.SaveChangesAsync();
         }
 
-        public void AddTrades(IEnumerable<Trade> trades, out List<Trade> newTrades)
+        public async Task<List<Trade>> AddTrades(IEnumerable<Trade> trades)
         {
-            newTrades = new List<Trade>();
+            var newTrades = new List<Trade>();
             _log.LogInformation("Adding new trades to database");
+
+            var dbtrades = _context.Trades;
 
             foreach (var trade in trades)
             {
-                var singleOrDefault = _db.Fetch<Trade>().SingleOrDefault(x => x.Id == trade.Id);
+                var singleOrDefault = dbtrades.SingleOrDefault(x => x.Id == trade.Id);
                 if (singleOrDefault == null)
                 {
-                    _db.Insert(trade);
+                    dbtrades.Add(trade);
                     newTrades.Add(trade);
                 }
             }
 
+            await _context.SaveChangesAsync();
+
             _log.LogInformation($"Added {newTrades.Count} new trades to database");
+            return newTrades;
         }
 
-        public void AddWalletBalances(List<WalletBalance> walletBalances)
+        public async Task AddWalletBalances(List<WalletBalance> walletBalances)
         {
-            _db.Insert(walletBalances);
+            var walletBalancesDb = _context.WalletBalances;
+            walletBalancesDb.AddRange(walletBalances);
+            await _context.SaveChangesAsync();
+        }
+
+        public IEnumerable<BalanceHistory> GetAllBalances()
+        {
+            var all = _context.BalanceHistories;
+            return all.AsEnumerable();
+        }
+
+        public IEnumerable<LastChecked> GetAllLastChecked()
+        {
+            var all = _context.LastCheckeds;
+            return all.AsEnumerable();
         }
 
         public IEnumerable<string> GetAllPairs()
         {
-            var liteCollection = _db.Database.GetCollection<Trade>();
-            var distinct = liteCollection.FindAll().ToList().Select(x => x.Terms).Distinct().OrderBy(x => x);
+            var collection = _context.Trades;
+            var distinct = collection.Select(x => x.Terms).Distinct().OrderBy(x => x);
             return distinct;
+        }
+
+        public IEnumerable<ProfitAndLoss> GetAllProfitAndLoss()
+        {
+            var all = _context.ProfitAndLosses;
+            return all.AsEnumerable();
+        }
+
+        public IEnumerable<Trade> GetAllTrades()
+        {
+            var all = _context.Trades;
+            return all.AsEnumerable();
         }
 
         public IEnumerable<Trade> GetAllTradesFor(string term)
         {
-            var liteCollection = _db.Database.GetCollection<Trade>();
-            var trades = liteCollection.Find(x => x.Terms == term);
+            var collection = _context.Trades;
+            var trades = collection.Where(x => x.Terms == term).AsEnumerable();
             return trades;
         }
 
@@ -111,8 +148,8 @@ namespace CryptoGramBot.Services
             {
                 _log.LogInformation($"Retrieving 24 hour balance from database for: {name}");
 
-                var liteCollection = _db.Database.GetCollection<BalanceHistory>();
-                var balanceHistories = liteCollection.Find(x => x.Name == name).OrderByDescending(x => x.DateTime).ToList();
+                var collection = _context.BalanceHistories;
+                var balanceHistories = collection.Where(x => x.Name == name).OrderByDescending(x => x.DateTime).ToList();
 
                 histories = balanceHistories.FindAll(x => x.DateTime.Hour == dateTime.Hour &&
                                 x.DateTime.Day == dateTime.Day &&
@@ -141,9 +178,10 @@ namespace CryptoGramBot.Services
 
         public List<Trade> GetBuysForPairAndQuantity(decimal sellPrice, decimal quantity, string baseCcy, string terms)
         {
-            var enumerable = _db.Query<Trade>()
+            var contextTrades = _context.Trades;
+            var enumerable = contextTrades
                 .Where(x => x.Base == baseCcy && x.Terms == terms)
-                .ToEnumerable();
+                .AsEnumerable();
 
             var onlyBuys = enumerable.Where(x => x.Side == TradeSide.Buy);
 
@@ -164,18 +202,19 @@ namespace CryptoGramBot.Services
 
         public DateTime GetLastChecked(string exchange)
         {
-            var lastChecked = _db.Query<LastChecked>()
-                .Where(x => x.Exchange == exchange)
-                .SingleOrDefault();
+            var contextLastCheckeds = _context.LastCheckeds;
+            var lastChecked = contextLastCheckeds
+                .SingleOrDefault(x => x.Exchange == exchange);
 
             return lastChecked?.Timestamp ?? Constants.DateTimeUnixEpochStart;
         }
 
         public Trade GetLastTradeForPair(string currency, string exchange, TradeSide side)
         {
-            var enumerable = _db.Query<Trade>()
+            var contextTrades = _context.Trades;
+            var enumerable = contextTrades
                 .Where(x => x.Terms == currency && x.Exchange == exchange)
-                .ToEnumerable()
+                .AsEnumerable()
                 .OrderByDescending(x => x.TimeStamp);
 
             var onlyBuys = enumerable.Where(x => x.Side == TradeSide.Buy);
@@ -186,35 +225,29 @@ namespace CryptoGramBot.Services
 
         public IEnumerable<Trade> GetTradesForPair(string ccy1, string ccy2)
         {
-            var enumerable = _db.Query<Trade>()
+            var contextTrades = _context.Trades;
+            var enumerable = contextTrades
                 .Where(x => x.Base == ccy1 && x.Terms == ccy2)
-                .ToEnumerable();
+                .AsEnumerable();
 
             return enumerable;
         }
 
-        public void SaveProfitAndLoss(ProfitAndLoss pnl)
+        public async Task SaveProfitAndLoss(ProfitAndLoss pnl)
         {
             _log.LogInformation($"Adding pnl for {pnl.Pair} to database");
-            _db.Upsert(pnl);
-        }
 
-        private void EnsureIndex()
-        {
-            var tradeCollection = _db.Database.GetCollection<Trade>();
-            tradeCollection.EnsureIndex(x => x.Id);
+            var contextProfitAndLosses = _context.ProfitAndLosses;
+            contextProfitAndLosses.Add(pnl);
 
-            var profitCollection = _db.Database.GetCollection<ProfitAndLoss>();
-            profitCollection.EnsureIndex(x => x.Pair);
-
-            var lastCheckedCollection = _db.Database.GetCollection<LastChecked>();
-            lastCheckedCollection.EnsureIndex(x => x.Exchange);
+            await _context.SaveChangesAsync();
         }
 
         private void SaveBalance(BalanceHistory balanceHistory, string name)
         {
+            var balanceHistories = _context.BalanceHistories;
             balanceHistory.Name = name;
-            _db.Insert(balanceHistory);
+            balanceHistories.Add(balanceHistory);
             _log.LogInformation($"Saved new balance in database for: {name}");
             _log.LogInformation("Adding balance to cache");
             _lastBalances[name] = balanceHistory;

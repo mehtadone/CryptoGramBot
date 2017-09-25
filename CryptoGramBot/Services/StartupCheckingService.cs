@@ -1,9 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System.IO;
+using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
+using CryptoGramBot.Data;
 using FluentScheduler;
-using CryptoGramBot.EventBus;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
+using CryptoGramBot.Models;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.Services
@@ -12,17 +14,60 @@ namespace CryptoGramBot.Services
     {
         private readonly TelegramBot _bot;
         private readonly IMicroBus _bus;
+        private readonly GeneralConfig _config;
+        private readonly CryptoGramBotDbContext _context;
+        private readonly LiteDbDatabaseService _liteDbDatabaseService;
         private readonly TelegramConfig _telegramConfig;
 
         public StartupCheckingService(
             IMicroBus bus,
             TelegramConfig telegramConfig,
-            TelegramBot bot
+            TelegramBot bot,
+            GeneralConfig config,
+            LiteDbDatabaseService liteDbDatabaseService,
+            CryptoGramBotDbContext context
             )
         {
             _bus = bus;
             _telegramConfig = telegramConfig;
             _bot = bot;
+            _config = config;
+            _liteDbDatabaseService = liteDbDatabaseService;
+            _context = context;
+        }
+
+        public async Task MigrateToSqlLite()
+        {
+            var balanceHistories = _liteDbDatabaseService.GetAllBalances();
+
+            foreach (var balanceHistory in balanceHistories)
+            {
+                _context.Set<BalanceHistory>().Add(balanceHistory);
+            }
+
+            var allTrades = _liteDbDatabaseService.GetAllTrades();
+            foreach (var allTrade in allTrades)
+            {
+                _context.Set<Trade>().Add(allTrade);
+            }
+
+            var allLastChecked = _liteDbDatabaseService.GetAllLastChecked();
+            foreach (var lastChecked in allLastChecked)
+            {
+                _context.Set<LastChecked>().Add(lastChecked);
+            }
+
+            var allProfitAndLoss = _liteDbDatabaseService.GetAllProfitAndLoss();
+            foreach (var pnl in allProfitAndLoss)
+            {
+                _context.Set<ProfitAndLoss>().Add(pnl);
+            }
+
+            _liteDbDatabaseService.Close();
+
+            File.Delete(_config.DatabaseLocation);
+
+            await _context.SaveChangesAsync();
         }
 
         public void Start(bool coinigyEnabled, bool bittrexEnabled, bool poloEnabled, bool bagManagementEnabled, bool bittrexTradeNotifcations, bool poloniexTradeNotifcation)
@@ -43,12 +88,17 @@ namespace CryptoGramBot.Services
 
             if (bittrexEnabled || poloEnabled || coinigyEnabled)
             {
-                registry.Schedule(() => CheckBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
+                registry.Schedule(() => CheckBalances().Wait()).ToRunEvery(1).Hours().At(0);
             }
 
             if (bagManagementEnabled)
             {
-                registry.Schedule(() => CheckForBags().Wait()).ToRunNow().AndEvery(6).Hours();
+                registry.Schedule(() => CheckForBags().Wait()).ToRunEvery(6).Hours();
+            }
+
+            if (coinigyEnabled)
+            {
+                _bus.SendAsync(new GetCoinigyAccountCommand());
             }
 
             JobManager.Initialize(registry);

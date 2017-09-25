@@ -43,7 +43,7 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
 
                 message = message + percentageFormat;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await _bus.SendAsync(new SendMessageCommand($"Could not calculate percentages. Probably because we don't have 24 hours of data yet"));
             }

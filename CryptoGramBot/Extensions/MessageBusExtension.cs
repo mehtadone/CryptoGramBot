@@ -32,6 +32,7 @@ namespace CryptoGramBot.Extensions
                 busBuilder.RegisterCommandHandler<CoinigyTotalPnLCommand, CoinigyTotalPnLHandler>();
                 busBuilder.RegisterCommandHandler<CoinigyPnLForAccountCommand, CoinigyPnLForAccountHandler>();
                 busBuilder.RegisterCommandHandler<SendCoinigyAccountInfoCommand, CoinigyAccountInfoHandler>();
+                busBuilder.RegisterCommandHandler<GetCoinigyAccountCommand, GetCoinigyAccountHandler>();
             }
 
             if (poloniexEnabled)

@@ -142,13 +142,13 @@ namespace CryptoGramBot.Services
             {
                 priceAsDecimal = decimal.Parse(price, NumberStyles.Float);
             }
-            catch (Exception ex1)
+            catch (Exception)
             {
                 try
                 {
                     priceAsDecimal = await _priceService.GetPriceInBtc(terms);
                 }
-                catch (Exception ex2)
+                catch (Exception)
                 {
                     return 0;
                 }

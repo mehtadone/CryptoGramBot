@@ -30,7 +30,7 @@ namespace CryptoGramBot.Services
 
             profitAndLoss.DollarProfit = dollarAmount;
 
-            _databaseService.SaveProfitAndLoss(profitAndLoss);
+            await _databaseService.SaveProfitAndLoss(profitAndLoss);
 
             return profitAndLoss;
         }

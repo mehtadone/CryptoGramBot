@@ -17,8 +17,11 @@ using CryptoGramBot.Services;
 using CryptoGramBot.Extensions;
 using Enexure.MicroBus;
 using Autofac.Extensions.DependencyInjection;
+using CryptoGramBot.Data;
 using CryptoGramBot.EventBus;
+using CryptoGramBot.Models;
 using Enexure.MicroBus.Autofac;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.Json;
 using IConfigurationProvider = Microsoft.Extensions.Configuration.IConfigurationProvider;
 
@@ -67,6 +70,18 @@ namespace CryptoGramBot
             catch (Exception)
             {
                 log.LogError("Error in reading Coinigy Config");
+                throw;
+            }
+
+            try
+            {
+                var config = container.Resolve<GeneralConfig>();
+                configuration.GetSection("General").Bind(config);
+                log.LogInformation("Created General Config");
+            }
+            catch (Exception)
+            {
+                log.LogError("Error in reading General Config");
                 throw;
             }
 
@@ -147,6 +162,11 @@ namespace CryptoGramBot
             var serviceCollection = new ServiceCollection()
                 .AddLogging();
 
+            var databaseLocation = Directory.GetCurrentDirectory() + "/database/cryptogrambot.sqlite";
+            serviceCollection.AddDbContext<CryptoGramBotDbContext>(options =>
+                options.UseSqlite("Data Source=" + databaseLocation)
+            );
+
             var containerBuilder = new ContainerBuilder();
             containerBuilder.Populate(serviceCollection);
 
@@ -156,10 +176,12 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<PoloniexConfig>().SingleInstance();
             containerBuilder.RegisterType<BagConfig>().SingleInstance();
             containerBuilder.RegisterType<DustConfig>().SingleInstance();
+            containerBuilder.RegisterType<GeneralConfig>().SingleInstance();
             containerBuilder.RegisterType<CoinigyApiService>();
             containerBuilder.RegisterType<BittrexService>();
             containerBuilder.RegisterType<PoloniexService>();
-            containerBuilder.RegisterType<DatabaseService>().SingleInstance();
+            containerBuilder.RegisterType<DatabaseService>();
+            containerBuilder.RegisterType<LiteDbDatabaseService>();
             containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
             containerBuilder.RegisterType<StartupCheckingService>().SingleInstance();
             containerBuilder.RegisterType<CoinigyBalanceService>();
@@ -205,6 +227,13 @@ namespace CryptoGramBot
             ConfigureConfig(container, configuration, log);
 
             var startupService = container.Resolve<StartupCheckingService>();
+            var context = container.Resolve<CryptoGramBotDbContext>();
+
+            context.Database.MigrateAsync().Wait();
+            log.LogInformation("Database migrated.");
+
+            startupService.MigrateToSqlLite().Wait();
+
             startupService.Start(coinigyEnabled, bittrexEnabled, poloniexEnabled, bagEnabled, bittrexTradeNotifcation, poloTradeNotification);
 
             while (true)

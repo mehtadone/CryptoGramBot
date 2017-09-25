@@ -9,11 +9,8 @@ namespace CryptoGramBot.Models
     public class BalanceInformation
     {
         public string AccountName;
-
         public BalanceHistory CurrentBalance;
-
         public BalanceHistory PreviousBalance;
-
         public IEnumerable<WalletBalance> WalletBalances;
 
         public BalanceInformation(BalanceHistory currentBalance, BalanceHistory previousBalance, string accountName, IEnumerable<WalletBalance> walletBalances = null)
@@ -23,5 +20,7 @@ namespace CryptoGramBot.Models
             AccountName = accountName;
             WalletBalances = walletBalances;
         }
+
+        public int Id { get; set; }
     }
 }

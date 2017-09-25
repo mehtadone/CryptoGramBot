@@ -13,7 +13,8 @@ namespace CryptoGramBot.Models
         public decimal Commission { get; set; }
         public decimal Cost { get; set; }
         public string Exchange { get; set; }
-        public string Id { get; set; }
+        public string ExchangeId { get; set; }
+        public int Id { get; set; }
         public decimal Limit { get; set; }
         public decimal Quantity { get; set; }
         public decimal QuantityOfTrade => Quantity - QuantityRemaining;

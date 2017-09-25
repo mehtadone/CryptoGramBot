@@ -165,7 +165,7 @@ namespace CryptoGramBot
             var databaseLocation = Directory.GetCurrentDirectory() + "/database/cryptogrambot.sqlite";
 
             serviceCollection.AddDbContext<CryptoGramBotDbContext>(options =>
-                options.UseSqlite("Data Source=" + databaseLocation + ";cache=shared")
+                options.UseSqlite("Data Source=" + databaseLocation + ";cache=shared").EnableSensitiveDataLogging()
             );
 
             var containerBuilder = new ContainerBuilder();
@@ -201,7 +201,7 @@ namespace CryptoGramBot
 
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                .AddJsonFile("appsettings.json", false, true);
 
             IConfigurationRoot configuration = builder.Build();
 
@@ -230,7 +230,7 @@ namespace CryptoGramBot
             var startupService = container.Resolve<StartupCheckingService>();
             var context = container.Resolve<CryptoGramBotDbContext>();
 
-            context.Database.MigrateAsync().Wait();
+            DbInitializer.Initialize(context).Wait();
             log.LogInformation("Database migrated.");
 
             startupService.MigrateToSqlLite().Wait();

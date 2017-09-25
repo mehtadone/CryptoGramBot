@@ -12,7 +12,7 @@ using System;
 namespace CryptoGramBot.Migrations
 {
     [DbContext(typeof(CryptoGramBotDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    partial class CryptoGramBotDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
@@ -35,6 +35,9 @@ namespace CryptoGramBot.Migrations
 
                     b.HasKey("Key");
 
+                    b.HasIndex("Key")
+                        .IsUnique();
+
                     b.ToTable("BalanceHistories");
                 });
 
@@ -48,6 +51,9 @@ namespace CryptoGramBot.Migrations
                     b.Property<DateTime>("Timestamp");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
 
                     b.ToTable("LastCheckeds");
                 });
@@ -79,12 +85,29 @@ namespace CryptoGramBot.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id")
+                        .IsUnique();
+
                     b.ToTable("ProfitAndLosses");
+                });
+
+            modelBuilder.Entity("CryptoGramBot.Models.Setting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Name");
+
+                    b.Property<string>("Value");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Settings");
                 });
 
             modelBuilder.Entity("CryptoGramBot.Models.Trade", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
                     b.Property<string>("Base");
@@ -94,6 +117,8 @@ namespace CryptoGramBot.Migrations
                     b.Property<decimal>("Cost");
 
                     b.Property<string>("Exchange");
+
+                    b.Property<string>("ExchangeId");
 
                     b.Property<decimal>("Limit");
 
@@ -109,7 +134,47 @@ namespace CryptoGramBot.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id")
+                        .IsUnique();
+
                     b.ToTable("Trades");
+                });
+
+            modelBuilder.Entity("CryptoGramBot.Models.WalletBalance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<decimal>("Address");
+
+                    b.Property<decimal>("Available");
+
+                    b.Property<decimal>("Balance");
+
+                    b.Property<decimal>("BtcAmount");
+
+                    b.Property<string>("Currency");
+
+                    b.Property<string>("Exchange");
+
+                    b.Property<decimal>("Pending");
+
+                    b.Property<decimal>("PercentageChange");
+
+                    b.Property<decimal>("Price");
+
+                    b.Property<decimal>("Requested");
+
+                    b.Property<DateTime>("Timestamp");
+
+                    b.Property<string>("Uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.ToTable("WalletBalances");
                 });
 #pragma warning restore 612, 618
         }

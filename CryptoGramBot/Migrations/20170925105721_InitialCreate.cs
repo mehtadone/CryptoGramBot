@@ -61,14 +61,30 @@ namespace CryptoGramBot.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Settings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
+                    Value = table.Column<string>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Settings", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Trades",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
                     Base = table.Column<string>(type: "TEXT", nullable: true),
                     Commission = table.Column<decimal>(type: "TEXT", nullable: false),
                     Cost = table.Column<decimal>(type: "TEXT", nullable: false),
                     Exchange = table.Column<string>(type: "TEXT", nullable: true),
+                    ExchangeId = table.Column<string>(type: "TEXT", nullable: true),
                     Limit = table.Column<decimal>(type: "TEXT", nullable: false),
                     Quantity = table.Column<decimal>(type: "TEXT", nullable: false),
                     QuantityRemaining = table.Column<decimal>(type: "TEXT", nullable: false),
@@ -80,6 +96,60 @@ namespace CryptoGramBot.Migrations
                 {
                     table.PrimaryKey("PK_Trades", x => x.Id);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "WalletBalances",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Address = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Available = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Balance = table.Column<decimal>(type: "TEXT", nullable: false),
+                    BtcAmount = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Currency = table.Column<string>(type: "TEXT", nullable: true),
+                    Exchange = table.Column<string>(type: "TEXT", nullable: true),
+                    Pending = table.Column<decimal>(type: "TEXT", nullable: false),
+                    PercentageChange = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Price = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Requested = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Uuid = table.Column<string>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WalletBalances", x => x.Id);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BalanceHistories_Key",
+                table: "BalanceHistories",
+                column: "Key",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LastCheckeds_Id",
+                table: "LastCheckeds",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProfitAndLosses_Id",
+                table: "ProfitAndLosses",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Trades_Id",
+                table: "Trades",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WalletBalances_Id",
+                table: "WalletBalances",
+                column: "Id",
+                unique: true);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -94,7 +164,13 @@ namespace CryptoGramBot.Migrations
                 name: "ProfitAndLosses");
 
             migrationBuilder.DropTable(
+                name: "Settings");
+
+            migrationBuilder.DropTable(
                 name: "Trades");
+
+            migrationBuilder.DropTable(
+                name: "WalletBalances");
         }
     }
 }

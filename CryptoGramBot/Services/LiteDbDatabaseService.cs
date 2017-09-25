@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,10 +17,10 @@ namespace CryptoGramBot.Services
         private readonly LiteRepository _db;
         private readonly ILogger<LiteDbDatabaseService> _log;
 
-        public LiteDbDatabaseService(ILogger<LiteDbDatabaseService> log, GeneralConfig config)
+        public LiteDbDatabaseService(ILogger<LiteDbDatabaseService> log)
         {
             _log = log;
-            _db = new LiteRepository(config.DatabaseLocation);
+            _db = new LiteRepository(Directory.GetCurrentDirectory() + "/database/cryptogrambot.db");
         }
 
         public void Close()

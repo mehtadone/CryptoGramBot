@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Data;
@@ -38,36 +39,50 @@ namespace CryptoGramBot.Services
 
         public async Task MigrateToSqlLite()
         {
-            var balanceHistories = _liteDbDatabaseService.GetAllBalances();
+            var allSettings = _context.Settings;
+            var singleOrDefault = allSettings.SingleOrDefault(x => x.Name == "SQLite.Migration.Complete");
 
-            foreach (var balanceHistory in balanceHistories)
+            if (singleOrDefault != null && singleOrDefault.Value != "true")
             {
-                _context.Set<BalanceHistory>().Add(balanceHistory);
+                var balanceHistories = _liteDbDatabaseService.GetAllBalances();
+
+                foreach (var balanceHistory in balanceHistories)
+                {
+                    _context.Set<BalanceHistory>().Add(balanceHistory);
+                }
+
+                var allTrades = _liteDbDatabaseService.GetAllTrades();
+                foreach (var allTrade in allTrades)
+                {
+                    _context.Set<Trade>().Add(allTrade);
+                }
+
+                var allLastChecked = _liteDbDatabaseService.GetAllLastChecked();
+                foreach (var lastChecked in allLastChecked)
+                {
+                    _context.Set<LastChecked>().Add(lastChecked);
+                }
+
+                var allProfitAndLoss = _liteDbDatabaseService.GetAllProfitAndLoss();
+                foreach (var pnl in allProfitAndLoss)
+                {
+                    _context.Set<ProfitAndLoss>().Add(pnl);
+                }
+
+                _liteDbDatabaseService.Close();
+
+                //            File.Delete(_config.DatabaseLocation);
+
+                var setting = new Setting
+                {
+                    Name = "SQLite.Migration.Complete",
+                    Value = "true"
+                };
+
+                _context.Settings.Add(setting);
+
+                await _context.SaveChangesAsync();
             }
-
-            var allTrades = _liteDbDatabaseService.GetAllTrades();
-            foreach (var allTrade in allTrades)
-            {
-                _context.Set<Trade>().Add(allTrade);
-            }
-
-            var allLastChecked = _liteDbDatabaseService.GetAllLastChecked();
-            foreach (var lastChecked in allLastChecked)
-            {
-                _context.Set<LastChecked>().Add(lastChecked);
-            }
-
-            var allProfitAndLoss = _liteDbDatabaseService.GetAllProfitAndLoss();
-            foreach (var pnl in allProfitAndLoss)
-            {
-                _context.Set<ProfitAndLoss>().Add(pnl);
-            }
-
-            _liteDbDatabaseService.Close();
-
-            File.Delete(_config.DatabaseLocation);
-
-            await _context.SaveChangesAsync();
         }
 
         public void Start(bool coinigyEnabled, bool bittrexEnabled, bool poloEnabled, bool bagManagementEnabled, bool bittrexTradeNotifcations, bool poloniexTradeNotifcation)

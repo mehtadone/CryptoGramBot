@@ -53,7 +53,7 @@ namespace CryptoGramBot.Services
                             costAbs = -costAbs;
                         }
 
-                        excelWorksheet.Cells["A" + i].Value = trade.Id;
+                        excelWorksheet.Cells["A" + i].Value = trade.ExchangeId;
                         excelWorksheet.Cells["B" + i].Value = trade.TimeStamp;
                         excelWorksheet.Cells["C" + i].Value = trade.Base;
                         excelWorksheet.Cells["D" + i].Value = trade.Terms;

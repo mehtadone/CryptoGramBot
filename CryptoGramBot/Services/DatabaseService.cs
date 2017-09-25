@@ -69,14 +69,21 @@ namespace CryptoGramBot.Services
             var newTrades = new List<Trade>();
             _log.LogInformation("Adding new trades to database");
 
-            var dbtrades = _context.Trades;
-
             foreach (var trade in trades)
             {
-                var singleOrDefault = dbtrades.SingleOrDefault(x => x.Id == trade.Id);
+                var singleOrDefault = _context.Trades.SingleOrDefault(
+                    x => x.TimeStamp == trade.TimeStamp &&
+                    x.Base == trade.Base &&
+                    x.Exchange == trade.Exchange &&
+                    x.Quantity == trade.Quantity &&
+                    x.QuantityRemaining == trade.QuantityRemaining &&
+                    x.Terms == trade.Terms &&
+                    x.Cost == trade.Cost
+                    );
+
                 if (singleOrDefault == null)
                 {
-                    dbtrades.Add(trade);
+                    _context.Trades.Add(trade);
                     newTrades.Add(trade);
                 }
             }
@@ -223,6 +230,13 @@ namespace CryptoGramBot.Services
             return lastTrade;
         }
 
+        public Setting GetSetting(string name)
+        {
+            var allSettings = _context.Settings;
+            var singleOrDefault = allSettings.SingleOrDefault(x => x.Name == name);
+            return singleOrDefault;
+        }
+
         public IEnumerable<Trade> GetTradesForPair(string ccy1, string ccy2)
         {
             var contextTrades = _context.Trades;
@@ -241,6 +255,18 @@ namespace CryptoGramBot.Services
             contextProfitAndLosses.Add(pnl);
 
             await _context.SaveChangesAsync();
+        }
+
+        public void SaveSetting(Setting setting)
+        {
+            var contextSettings = _context.Settings;
+
+            var singleOrDefault = contextSettings.SingleOrDefault(x => x.Name == setting.Name);
+
+            if (singleOrDefault == null)
+            {
+                _context.Settings.Add(setting);
+            }
         }
 
         private void SaveBalance(BalanceHistory balanceHistory, string name)

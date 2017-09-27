@@ -2,7 +2,7 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/64877qbjrmvirbar/branch/master?svg=true)](https://ci.appveyor.com/project/mehtadone/telecoinigy/branch/master)
 
-A simple telegram bot that sends your balance updates from coinigy, send trade notifications from Poloniex and Bittrex and creates you a trade export for your own spreadsheet magicary.
+A telegram bot that sends your balance updates from coinigy, send trade notifications from Poloniex and Bittrex and creates you a trade export for your own spreadsheet magicary.
 
 ### Donations Welcome
 * **BTC**: 1LVtLb6Vo79nyPBp252GSJVDMPToGvjFN6

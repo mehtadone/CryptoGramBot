@@ -28,8 +28,13 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Check to see if there are any new properties in the new appsettings.json and add then to your existing one. 
 * Start your bot
 
-**Usage:**
+**Usage**
 * Type /help when the bot is running
+
+**Tips**
+This app needs to be run all the time to have the bot running. I might look at creating a windows service for this for windows users. For linux, there are a couple of options. 
+* I use screen. Type "screen -S telegram" to create a new screen. Run the bot like above and CTRL-A-D to dettach from the screen. "screen -r telegram" to reattach. [Screen cheatsheet](http://aperiodic.net/screen/quick_reference)
+* Another option is tmux. "tmux start session" then start the bot. Ctrl+b+d to dettach. [tmux cheatsheet](http://www.dayid.org/comp/tm.html)
 
 **Done:**
 * Use a combination of bittrex, poloniex and/or Coinigy
@@ -49,6 +54,7 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 * Poloniex balance info
 * Show deposits and withdrawals to show accurate profit and loss. 
 * Profit calculations are wrong on a sell if we don't have the data in the database
+* Add one of those buttons on telegram so it shows you the commands. 
 
 **Support**
 * Send me a [telegram](https://t.me/mehtadone)

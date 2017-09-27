@@ -11,8 +11,7 @@ namespace CryptoGramBot.Extensions
         public static void MapEntities(this IMapperConfigurationExpression config)
         {
             config.CreateMap<CompletedOrder, Trade>()
-                .ForMember(x => x.ExchangeId, d => d.MapFrom(src => src.OrderUuid))
-                .ForMember(x => x.Cost, d => d.MapFrom(src => src.Price));
+                .ForMember(x => x.ExchangeId, d => d.MapFrom(src => src.OrderUuid));
 
             config.CreateMap<ITrade, Trade>()
                 .ForMember(x => x.ExchangeId, d => d.MapFrom(src => src.IdOrder))

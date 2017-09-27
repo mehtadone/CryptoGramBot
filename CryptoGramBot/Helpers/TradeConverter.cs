@@ -44,6 +44,7 @@ namespace CryptoGramBot.Helpers
             {
                 var trade = Mapper.Map<Trade>(completedOrder);
                 trade.Exchange = Constants.Bittrex;
+                trade.Cost = completedOrder.Price - completedOrder.Commission;
                 trade.Side = completedOrder.OrderType == OpenOrderType.LIMIT_BUY ? TradeSide.Buy : TradeSide.Sell;
 
                 var ccy = completedOrder.Exchange.Split('-');

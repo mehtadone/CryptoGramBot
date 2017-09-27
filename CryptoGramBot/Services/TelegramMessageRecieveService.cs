@@ -113,7 +113,7 @@ namespace CryptoGramBot.Services
                     _log.LogInformation($"Don't know what the user wants to do with the /acc. The message was {message}");
                 }
             }
-            else if (message.StartsWith("/profit"))
+            else if (message.StartsWith(TelegramCommands.CommonPairProfit))
             {
                 var splitString = message.Split(" ");
                 _log.LogInformation("Profit details requested");
@@ -121,13 +121,13 @@ namespace CryptoGramBot.Services
                 try
                 {
                     var pair = splitString[1];
-                    _log.LogInformation($"User wants to check for profit for {pair}");
+                    _log.LogInformation($"User wants to check for profit for {pair.ToUpper()}");
                     await _bus.SendAsync(new PairProfitCommand(pair));
                 }
                 catch (Exception)
                 {
                     await SendHelpMessage();
-                    _log.LogInformation($"Don't know what the you want to do with the /profit. The message was {message}");
+                    _log.LogInformation($"Don't know what the you want to do with the /profit. Format is /profit BTC-ETH for example. The message was {message}");
                 }
             }
             else if (message.StartsWith(TelegramCommands.CoinigyAccountList))
@@ -143,7 +143,7 @@ namespace CryptoGramBot.Services
                     _log.LogInformation($"Don't know what the user wants to do with the /acc. The message was {message}");
                 }
             }
-            else if (message.StartsWith(TelegramCommands.CommonPairProfit))
+            else if (message.StartsWith(TelegramCommands.CommonExcel))
             {
                 _log.LogInformation("Excel sheet");
                 await _bus.SendAsync(new ExcelExportCommand());

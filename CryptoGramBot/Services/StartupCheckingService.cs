@@ -40,9 +40,12 @@ namespace CryptoGramBot.Services
         public async Task MigrateToSqlLite()
         {
             var allSettings = _context.Settings;
-            var singleOrDefault = allSettings.SingleOrDefault(x => x.Name == "SQLite.Migration.Complete");
 
-            if (singleOrDefault != null && singleOrDefault.Value != "true")
+            if (!File.Exists(Directory.GetCurrentDirectory() + "/database/cryptogrambot.db")) return;
+
+            var hasMigratedBefore = allSettings.SingleOrDefault(x => x.Name == "SQLite.Migration.Complete");
+
+            if (hasMigratedBefore != null && hasMigratedBefore.Value != "true")
             {
                 var balanceHistories = _liteDbDatabaseService.GetAllBalances();
 
@@ -70,8 +73,6 @@ namespace CryptoGramBot.Services
                 }
 
                 _liteDbDatabaseService.Close();
-
-                //            File.Delete(_config.DatabaseLocation);
 
                 var setting = new Setting
                 {

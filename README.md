@@ -12,15 +12,21 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 
 **Installation:**
 
-* Pre-requisites: [Net Core SDK](https://www.microsoft.com/net/download/core "Net Core SDK")
-* Get your Bot ID, you need to chat to the BotFather. See [here](https://core.telegram.org/bots#3-how-do-i-create-a-bot) and [here](https://core.telegram.org/bots#6-botfather) 
-* Chat to your new bot. Say hi. He won't be very reponsive.
-* Open a chat to this [bot](https://t.me/get_id_bot). This should show you your chat id.
-* Download the lastest version of the zip from [here](https://github.com/mehtadone/CryptoGramBot/releases) and unzip to a folder
-* Fill in your config in appsettings.json. Bot ID is WITHOUT Bot and choose whether you want enable each service (true or false)
-* Create a folder called logs and another called database in the folder you have the dll.
-* Give CryptoGramBot the correct execute permissions via chmod if on linux
-* Start on command line with "dotnet CryptoGramBot.dll"
+* Pre-requisites: [.Net Core Runtime](https://www.microsoft.com/net/download/core#/runtime). Instructions for [windows](https://www.microsoft.com/net/download/core#/runtime), [linux](https://www.microsoft.com/net/download/linux) and [macos](https://www.microsoft.com/net/download/core#/runtime) or [.Net Core SDK](https://www.microsoft.com/net/core#windowscmd) for your OS if you want to build yourself. 
+1. Get your Bot ID, you need to chat to the BotFather. See [here](https://core.telegram.org/bots#3-how-do-i-create-a-bot) and [here](https://core.telegram.org/bots#6-botfather) 
+2. Chat to your new bot. Say hi. He won't be very reponsive.
+3. Open a chat to this [bot](https://t.me/get_id_bot). This should show you your chat id.
+4. Download the lastest version of the zip from [here](https://github.com/mehtadone/CryptoGramBot/releases) and unzip to a folder. Download CryptoGramBot.zip and not the source files if you want to run without building. 
+5. Fill in your config in appsettings.json. Bot ID is WITHOUT Bot and choose whether you want enable each service (true or false)
+6. Give CryptoGramBot the correct execute permissions via chmod if on linux
+7. Start on command line with "dotnet CryptoGramBot.dll"
+
+**Upgrade**
+
+* Stop your bot
+* Copy everything over in the new zip EXCEPT logs, database and appsettings.json
+* Check to see if there are any new properties in the new appsettings.json and add then to your existing one. 
+* Start your bot
 
 **Usage:**
 * Type /help when the bot is running

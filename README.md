@@ -22,7 +22,6 @@ A simple telegram bot that sends your balance updates from coinigy, send trade n
 7. Start on command line with "dotnet CryptoGramBot.dll"
 
 **Upgrade**
-
 * Stop your bot
 * Copy everything over in the new zip EXCEPT logs, database and appsettings.json
 * Check to see if there are any new properties in the new appsettings.json and add then to your existing one. 

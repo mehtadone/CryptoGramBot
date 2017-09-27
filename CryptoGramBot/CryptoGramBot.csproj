@@ -63,6 +63,9 @@
 		<None Update="appsettings.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+		<None Update="database\cryptogrambot.sqlite">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 		<None Update="database\dummy.txt">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>

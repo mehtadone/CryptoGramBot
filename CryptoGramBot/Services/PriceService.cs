@@ -6,6 +6,8 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using CryptoGramBot.Helpers;
+using CryptoGramBot.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -13,8 +15,14 @@ namespace CryptoGramBot.Services
 {
     public class PriceService
     {
+        private readonly DatabaseService _databaseService;
         private DateTime _lastChecked = DateTime.MinValue;
         private decimal _price;
+
+        public PriceService(DatabaseService databaseService)
+        {
+            _databaseService = databaseService;
+        }
 
         public async Task<decimal> GetDollarAmount(decimal btcAmount)
         {

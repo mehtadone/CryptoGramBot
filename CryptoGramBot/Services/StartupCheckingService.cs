@@ -92,30 +92,31 @@ namespace CryptoGramBot.Services
             _bot.StartBot(_telegramConfig);
 
             var registry = new Registry();
-            if (bittrexEnabled || poloEnabled)
-            {
-                registry
-                    .Schedule(() => GetNewOrdersOnStartup(bittrexTradeNotifcations, poloniexTradeNotifcation).Wait())
-                    .ToRunNow();
-                registry.Schedule(() => GetNewOrders(bittrexTradeNotifcations, poloniexTradeNotifcation).Wait())
-                    .ToRunEvery(5)
-                    .Minutes();
-            }
+            //            if (bittrexEnabled || poloEnabled)
+            //            {
+            //                registry
+            //                    .Schedule(() => GetNewOrdersOnStartup(bittrexTradeNotifcations, poloniexTradeNotifcation).Wait())
+            //                    .ToRunNow();
+            //                registry.Schedule(() => GetNewOrders(bittrexTradeNotifcations, poloniexTradeNotifcation).Wait())
+            //                    .ToRunEvery(5)
+            //                    .Minutes();
+            //            }
 
             if (bittrexEnabled || poloEnabled || coinigyEnabled)
             {
-                registry.Schedule(() => CheckBalances().Wait()).ToRunEvery(1).Hours().At(0);
+                //                registry.Schedule(() => CheckBalances().Wait()).ToRunEvery(1).Hours().At(0);
+                registry.Schedule(() => CheckBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
             }
 
-            if (bagManagementEnabled)
-            {
-                registry.Schedule(() => CheckForBags().Wait()).ToRunEvery(6).Hours();
-            }
-
-            if (coinigyEnabled)
-            {
-                _bus.SendAsync(new GetCoinigyAccountCommand());
-            }
+            //            if (bagManagementEnabled)
+            //            {
+            //                registry.Schedule(() => CheckForBags().Wait()).ToRunEvery(6).Hours();
+            //            }
+            //
+            //            if (coinigyEnabled)
+            //            {
+            //                _bus.SendAsync(new GetCoinigyAccountCommand());
+            //            }
 
             JobManager.Initialize(registry);
         }

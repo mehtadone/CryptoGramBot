@@ -14,7 +14,6 @@ namespace Poloniex.General
         public static readonly Encoding Encoding = Encoding.ASCII;
         private static readonly JsonSerializer JsonSerializer = new JsonSerializer { NullValueHandling = NullValueHandling.Ignore };
         private Authenticator _authenticator;
-        private HMACSHA512 _encryptor = new HMACSHA512();
 
         public ApiWebClient(string baseUrl)
         {
@@ -34,11 +33,7 @@ namespace Poloniex.General
 
         public string BaseUrl { get; private set; }
 
-        public HMACSHA512 Encryptor
-        {
-            private get { return _encryptor; }
-            set { _encryptor = value; }
-        }
+        public HMACSHA512 Encryptor { get; set; } = new HMACSHA512();
 
         public T GetData<T>(string command, params object[] parameters)
         {

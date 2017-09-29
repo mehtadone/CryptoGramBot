@@ -5,9 +5,11 @@ using System.IO;
 using System.Text;
 using AutoMapper;
 using Bittrex;
+using Bittrex.Data;
 using CsvHelper;
 using CryptoGramBot.Models;
 using Poloniex.TradingTools;
+using Poloniex.WalletTools;
 using ITrade = Poloniex.TradingTools.ITrade;
 using OrderType = Poloniex.General.OrderType;
 using Trade = CryptoGramBot.Models.Trade;
@@ -112,6 +114,29 @@ namespace CryptoGramBot.Helpers
             }
 
             return tradeList;
+        }
+
+        public static List<WalletBalance> PoloniexToWalletBalances(IDictionary<string, IBalance> balances)
+        {
+            var walletBalances = new List<WalletBalance>();
+
+            foreach (var balance in balances)
+            {
+                if (balance.Value.BitcoinValue > 0)
+                {
+                    var walletBalance = new WalletBalance
+                    {
+                        Currency = balance.Key,
+                        BtcAmount = Convert.ToDecimal(balance.Value.BitcoinValue),
+                        Available = Convert.ToDecimal(balance.Value.QuoteAvailable),
+                        Pending = Convert.ToDecimal(balance.Value.QuoteOnOrders),
+                        Exchange = Constants.Poloniex
+                    };
+
+                    walletBalances.Add(walletBalance);
+                }
+            }
+            return walletBalances;
         }
 
         private static CompletedOrder ConvertBittrexCsvToCompletedOrder(IReadOnlyList<string> csvCurrentRecord)

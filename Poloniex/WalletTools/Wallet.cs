@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Jojatekok.PoloniexAPI;
 using Poloniex.General;
+using Poloniex.MarketTools;
 
 namespace Poloniex.WalletTools
 {
@@ -14,16 +16,16 @@ namespace Poloniex.WalletTools
             ApiWebClient = apiWebClient;
         }
 
-        private ApiWebClient ApiWebClient { get; set; }
+        private ApiWebClient ApiWebClient { get; }
 
         public Task<IDictionary<string, IBalance>> GetBalancesAsync()
         {
-            return Task.Factory.StartNew(() => GetBalances());
+            return Task.Factory.StartNew(GetBalances);
         }
 
         public Task<IDictionary<string, string>> GetDepositAddressesAsync()
         {
-            return Task.Factory.StartNew(() => GetDepositAddresses());
+            return Task.Factory.StartNew(GetDepositAddresses);
         }
 
         public Task<IDepositWithdrawalList> GetDepositsAndWithdrawalsAsync(DateTime startTime, DateTime endTime)
@@ -55,8 +57,11 @@ namespace Poloniex.WalletTools
         {
             var postData = new Dictionary<string, object>();
 
-            var data = PostData<IDictionary<string, IBalance>>("returnCompleteBalances", postData);
-            return data;
+            var data = PostData<IDictionary<string, Balance>>("returnCompleteBalances", postData);
+            return data.ToDictionary(
+                x => x.Key,
+                x => (IBalance)x.Value
+            );
         }
 
         private IDictionary<string, string> GetDepositAddresses()

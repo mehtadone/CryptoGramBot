@@ -158,6 +158,11 @@ namespace CryptoGramBot.Services
                 _log.LogInformation("24 Hour pnl difference for bittrex");
                 await _bus.SendAsync(new BittrexBalanceInfoRequestedCommand());
             }
+            else if (message.StartsWith(TelegramCommands.PoloniexBalanceInfo))
+            {
+                _log.LogInformation("24 Hour pnl difference for poloniex");
+                await _bus.SendAsync(new PoloniexBalanceInfoRequestedCommand());
+            }
             else if (message.StartsWith(TelegramCommands.BittrexTradeExportUpload))
             {
                 await _bus.SendAsync(new SendMessageCommand("Please upload bittrex trade export"));

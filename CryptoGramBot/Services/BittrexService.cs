@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Bittrex;
 using CryptoGramBot.Configuration;
@@ -9,7 +8,6 @@ using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
-using Serilog;
 
 namespace CryptoGramBot.Services
 {
@@ -66,6 +64,8 @@ namespace CryptoGramBot.Services
             {
                 if (balance.Balance == 0) continue;
 
+                var marketPrice = await GetPrice(balance.Currency);
+
                 decimal price;
                 decimal btcAmount;
                 decimal boughtPrice = 0m;
@@ -79,9 +79,10 @@ namespace CryptoGramBot.Services
                         break;
 
                     case "USDT":
-                        price = await GetPrice(balance.Currency);
+                        price = marketPrice;
                         btcAmount = (balance.Balance / price);
-                        var lastTradeForPair = _databaseService.GetLastTradeForPair(balance.Currency, Constants.Bittrex, TradeSide.Buy);
+                        var lastTradeForPair =
+                            _databaseService.GetLastTradeForPair(balance.Currency, Constants.Bittrex, TradeSide.Buy);
                         if (lastTradeForPair != null)
                         {
                             boughtPrice = lastTradeForPair.Limit;
@@ -89,16 +90,16 @@ namespace CryptoGramBot.Services
                         break;
 
                     default:
-                        price = await GetPrice(balance.Currency);
+                        price = marketPrice;
                         btcAmount = (price * balance.Balance);
-                        var lastTradeForPair1 = _databaseService.GetLastTradeForPair(balance.Currency, Constants.Bittrex, TradeSide.Buy);
+                        var lastTradeForPair1 =
+                            _databaseService.GetLastTradeForPair(balance.Currency, Constants.Bittrex, TradeSide.Buy);
                         if (lastTradeForPair1 != null)
                         {
                             boughtPrice = lastTradeForPair1.Limit;
                         }
                         break;
                 }
-
                 try
                 {
                     balance.PercentageChange = ProfitCalculator.PriceDifference(price, boughtPrice);
@@ -110,7 +111,7 @@ namespace CryptoGramBot.Services
                 }
                 balance.BtcAmount = btcAmount;
                 balance.Price = price;
-                totalBtcBalance = totalBtcBalance + btcAmount;
+                totalBtcBalance = totalBtcBalance + balance.BtcAmount;
             }
 
             var lastBalance = _databaseService.GetBalance24HoursAgo(Constants.Bittrex);
@@ -130,9 +131,16 @@ namespace CryptoGramBot.Services
         public async Task<decimal> GetPrice(string terms)
         {
             // USDT is not terms. But this bittrex library I'm using doesnt let me set it so checking via another method for the time being.
-            if (terms == "USD" || terms == "USDT")
+            switch (terms)
             {
-                return await _priceService.GetDollarAmount(1);
+                case "USD":
+                    return await _priceService.GetDollarAmount(1);
+
+                case "USDT":
+                    return await _priceService.GetDollarAmount(1);
+
+                case "BTC":
+                    return 0;
             }
 
             var ticker = await _exchange.GetTicker(terms);

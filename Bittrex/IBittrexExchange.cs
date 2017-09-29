@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Bittrex.Data;
 
 namespace Bittrex
 {

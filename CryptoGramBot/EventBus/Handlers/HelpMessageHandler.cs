@@ -50,6 +50,11 @@ namespace CryptoGramBot.EventBus
                         $"{TelegramCommands.BittrexTradeExportUpload} - upload bittrex order export\n" +
                         $"{TelegramCommands.BittrexBalanceInfo} - bittrex account summary\n";
             }
+            if (_poloniexConfig.Enabled)
+            {
+                usage = usage + "\n<strong>Poloniex commands</strong>\n" +
+                        $"{TelegramCommands.PoloniexBalanceInfo} - poloniex account summary\n";
+            }
 
             _log.LogInformation("Sending help message");
 

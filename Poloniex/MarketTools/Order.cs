@@ -14,10 +14,7 @@ namespace Poloniex.MarketTools
         {
         }
 
-        public double AmountBase
-        {
-            get { return (AmountQuote * PricePerCoin).Normalize(); }
-        }
+        public double AmountBase => (AmountQuote * PricePerCoin).Normalize();
 
         public double AmountQuote { get; private set; }
         public double PricePerCoin { get; private set; }

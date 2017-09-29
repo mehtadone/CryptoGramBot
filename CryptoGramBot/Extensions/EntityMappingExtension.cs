@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using Bittrex;
+using Bittrex.Data;
 using CryptoGramBot.Models;
+using Poloniex.WalletTools;
 using ITrade = Poloniex.TradingTools.ITrade;
 using Trade = CryptoGramBot.Models.Trade;
 

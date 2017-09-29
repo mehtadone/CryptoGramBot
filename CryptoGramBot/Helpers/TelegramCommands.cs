@@ -15,5 +15,6 @@ namespace CryptoGramBot.Helpers
         public static string CoinigyTotalBalance = "/total_coinigy";
         public static string CommonExcel = "/trade_export";
         public static string CommonPairProfit = "/profit";
+        public static string PoloniexBalanceInfo = "/btc_balance_poloniex";
     }
 }

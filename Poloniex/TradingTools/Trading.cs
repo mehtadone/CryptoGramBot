@@ -79,11 +79,10 @@ namespace Poloniex.TradingTools
             return ApiWebClient.GetData<T>(Helper.ApiUrlHttpsRelativePublic + command, parameters);
         }
 
-        // TODO This is returning 0. DO NOT USE
         private FeeInfo GetFeeInfo()
         {
-            var data = GetData<FeeInfo>(
-                "returnFeeInfo");
+            var data = PostData<FeeInfo>(
+                "returnFeeInfo", new Dictionary<string, object>());
             return data;
         }
 

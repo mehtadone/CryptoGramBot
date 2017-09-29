@@ -101,11 +101,12 @@ namespace CryptoGramBot.Helpers
 
                 if (trade.Side == TradeSide.Buy)
                 {
-                    trade.Cost = baseAmount + (baseAmount * 0.025m);
+                    trade.Cost = baseAmount;
                 }
                 else
                 {
-                    trade.Cost = baseAmount - (baseAmount * 0.025m);
+                    var commission = baseAmount * 0.0025m;
+                    trade.Cost = baseAmount - commission;
                 }
 
                 trade.Quantity = Convert.ToDecimal(completedOrder.AmountQuote);

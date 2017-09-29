@@ -94,17 +94,17 @@ namespace CryptoGramBot.Services
             var registry = new Registry();
             if (bittrexEnabled || poloEnabled)
             {
-                registry
-                    .Schedule(() => GetNewOrdersOnStartup().Wait())
-                    .ToRunNow();
+                SendStatupMessage().Wait();
+
                 registry.Schedule(() => GetNewOrders().Wait())
-                    .ToRunEvery(5)
+                    .ToRunNow()
+                    .AndEvery(5)
                     .Minutes();
             }
 
             if (bittrexEnabled || poloEnabled || coinigyEnabled)
             {
-                registry.Schedule(() => CheckBalances().Wait()).ToRunEvery(1).Hours().At(0);
+                registry.Schedule(() => CheckBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
             }
 
             if (bagManagementEnabled)
@@ -132,15 +132,14 @@ namespace CryptoGramBot.Services
 
         private async Task GetNewOrders()
         {
-            await _bus.PublishAsync(new NewTradesCheckEvent(false));
+            await _bus.PublishAsync(new NewTradesCheckEvent());
         }
 
         // Need to do this or we end may end up with 500 + messages on first run
-        private async Task GetNewOrdersOnStartup()
+        private async Task SendStatupMessage()
         {
-            const string message = "<strong>Starting up. Will send some trade notifications to test its working. Note that calculations will be incorrect</strong>\n";
+            const string message = "<strong>Welcome to CryptoGramBot. I am currently querying for your trade history. Type /help for commands.</strong>\n";
             await _bus.SendAsync(new SendMessageCommand(message));
-            await _bus.PublishAsync(new NewTradesCheckEvent(true));
         }
     }
 }

@@ -21,7 +21,7 @@ namespace CryptoGramBot.Services
             _context = context;
         }
 
-        public BalanceHistory AddBalance(decimal balance, decimal dollarAmount, string name)
+        public async Task<BalanceHistory> AddBalance(decimal balance, decimal dollarAmount, string name)
         {
             var balanceHistory = new BalanceHistory
             {
@@ -33,7 +33,7 @@ namespace CryptoGramBot.Services
 
             _log.LogInformation($"Adding balance to database: {name} - {balance}");
 
-            SaveBalance(balanceHistory, name);
+            await SaveBalance(balanceHistory, name);
 
             return balanceHistory;
         }
@@ -269,14 +269,17 @@ namespace CryptoGramBot.Services
             }
         }
 
-        private void SaveBalance(BalanceHistory balanceHistory, string name)
+        private async Task SaveBalance(BalanceHistory balanceHistory, string name)
         {
             var balanceHistories = _context.BalanceHistories;
             balanceHistory.Name = name;
             balanceHistories.Add(balanceHistory);
+            _context.BalanceHistories.Add(balanceHistory);
             _log.LogInformation($"Saved new balance in database for: {name}");
             _log.LogInformation("Adding balance to cache");
             _lastBalances[name] = balanceHistory;
+
+            await _context.SaveChangesAsync();
         }
     }
 }

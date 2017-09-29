@@ -160,7 +160,7 @@ namespace CryptoGramBot
             var databaseLocation = Directory.GetCurrentDirectory() + "/database/cryptogrambot.sqlite";
 
             serviceCollection.AddDbContext<CryptoGramBotDbContext>(options =>
-                options.UseSqlite("Data Source=" + databaseLocation + ";cache=shared").EnableSensitiveDataLogging()
+                options.UseSqlite("Data Source=" + databaseLocation + ";cache=shared")
             );
 
             var containerBuilder = new ContainerBuilder();

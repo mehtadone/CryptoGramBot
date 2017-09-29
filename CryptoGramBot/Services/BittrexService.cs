@@ -116,7 +116,8 @@ namespace CryptoGramBot.Services
 
             var lastBalance = _databaseService.GetBalance24HoursAgo(Constants.Bittrex);
             var dollarAmount = await _priceService.GetDollarAmount(totalBtcBalance);
-            var currentBalance = _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Bittrex);
+            var currentBalance = await _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Bittrex);
+            await _databaseService.AddWalletBalances(bittrexBalances);
 
             return new BalanceInformation(currentBalance, lastBalance, Constants.Bittrex, bittrexBalances);
         }

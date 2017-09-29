@@ -53,8 +53,6 @@ This app needs to be run all the time to have the bot running. I might look at c
 * Pair profit 
 
 ## Todo
-* Exception handling
-* Poloniex balance info
 * Show deposits and withdrawals to show accurate profit and loss. 
 * Profit calculations are wrong on a sell if we don't have the data in the database
 * Add one of those buttons on telegram so it shows you the commands. 

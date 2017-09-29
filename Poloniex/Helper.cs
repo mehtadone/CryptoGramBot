@@ -15,7 +15,7 @@ namespace Poloniex
 {
     public static class Helper
     {
-        internal const string ApiUrlHttpsBase = "https://poloniex.com/";
+        internal const string ApiUrlHttpsBase = "https://www.poloniex.com/";
         internal const string ApiUrlHttpsRelativePublic = "public?command=";
         internal const string ApiUrlHttpsRelativeTrading = "tradingApi";
 

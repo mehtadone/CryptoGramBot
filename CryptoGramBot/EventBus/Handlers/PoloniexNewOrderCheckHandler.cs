@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
@@ -35,12 +36,15 @@ namespace CryptoGramBot.EventBus.Handlers
                 var newTradesResponse = await _bus.QueryAsync(new FindNewTradeQuery(orderHistory));
                 await _bus.SendAsync(new AddLastCheckedCommand(Constants.Poloniex));
 
-                if (!_config.BuyNotifications && !_config.SellNotifications && !@event.IsStartup) return;
+                if (newTradesResponse.NewTrades.Count() > 10)
+                {
+                    await _bus.SendAsync(
+                        new SendMessageCommand("There are more than 10 trades to send. Not going to spam you"));
+                    return;
+                }
 
-                var i = 0;
                 foreach (var newTrade in newTradesResponse.NewTrades)
                 {
-                    if (@event.IsStartup && i > 4) break;
                     if (newTrade.Side == TradeSide.Sell && _config.SellNotifications)
                     {
                         await _bus.SendAsync(new TradeNotificationCommand(newTrade));
@@ -50,8 +54,6 @@ namespace CryptoGramBot.EventBus.Handlers
                     {
                         await _bus.SendAsync(new TradeNotificationCommand(newTrade));
                     }
-
-                    i++;
                 }
             }
             catch (Exception ex)

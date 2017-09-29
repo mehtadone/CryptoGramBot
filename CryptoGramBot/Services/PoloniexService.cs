@@ -75,7 +75,8 @@ namespace CryptoGramBot.Services
 
             var lastBalance = _databaseService.GetBalance24HoursAgo(Constants.Poloniex);
             var dollarAmount = await _priceService.GetDollarAmount(totalBtcBalance);
-            var currentBalance = _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Poloniex);
+            var currentBalance = await _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Poloniex);
+            await _databaseService.AddWalletBalances(poloniexToWalletBalances);
 
             return new BalanceInformation(currentBalance, lastBalance, Constants.Poloniex, poloniexToWalletBalances);
         }

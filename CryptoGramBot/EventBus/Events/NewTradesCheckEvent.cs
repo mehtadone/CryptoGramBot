@@ -2,13 +2,5 @@
 
 namespace CryptoGramBot.EventBus.Events
 {
-    public class NewTradesCheckEvent : IEvent
-    {
-        public NewTradesCheckEvent(bool isStartup)
-        {
-            IsStartup = isStartup;
-        }
-
-        public bool IsStartup { get; }
-    }
+    public class NewTradesCheckEvent : IEvent { }
 }

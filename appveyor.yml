@@ -27,7 +27,7 @@ on_finish :
   # any cleanup in here
 deploy:
   release: CryptoGramBot-v$(appveyor_build_version)
-  description: 'Move to SQLite, Fix excel export and take into consideration bittrex commission'
+  description: 'Improve profit calcs (might not be fixed yet. Let me know), Poloniex balances, buy sell notifications, formatted dates, rounding.'
   provider: GitHub
   auth_token:
     secure: esN+SKR3Mla7CRA3bD9NBK1WFuuMc7W0/MyIX8kUC9q8BXELNvSZaBQcEt7S7oTj # your encrypted token from GitHub

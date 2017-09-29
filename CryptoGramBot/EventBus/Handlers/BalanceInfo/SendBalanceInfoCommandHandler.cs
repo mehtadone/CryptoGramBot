@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using CryptoGramBot.EventBus.Commands;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
-using Serilog;
 
 namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
 {
@@ -20,10 +19,10 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
 
         public async Task Handle(SendBalanceInfoCommand requestedCommand)
         {
-            var accountName = requestedCommand.AccountName;
-            var current = requestedCommand.Current;
-            var lastBalance = requestedCommand.LastBalance;
-            var walletBalances = requestedCommand.WalletBalances;
+            var accountName = requestedCommand.BalanceInformation.AccountName;
+            var current = requestedCommand.BalanceInformation.CurrentBalance;
+            var lastBalance = requestedCommand.BalanceInformation.PreviousBalance;
+            var walletBalances = requestedCommand.BalanceInformation.WalletBalances;
 
             var timeFormat = string.Format("<strong>{0,-13}</strong>{1,-25}\n", "Time:", $"     {DateTime.Now:g}");
             var currentFormat = string.Format("<strong>{0,-13}</strong>{1,-25}\n", "Current:", $"  {current.Balance:##0.####} BTC (${current.DollarAmount})");
@@ -55,7 +54,7 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
                 foreach (var walletBalance in walletBalances)
                 {
                     message =
-                        message + string.Format("<strong>{0, -10}</strong> {1,-15} {2,10}\n", walletBalance.Currency, $"{walletBalance.BtcAmount:##0.0000} BTC", $"{walletBalance.PercentageChange}%");
+                        message + string.Format("<strong>{0, -10}</strong> {1,-15} {2,10}\n", walletBalance.Currency, $"{walletBalance.BtcAmount:##0.0###} BTC", $"{walletBalance.PercentageChange}%");
                 }
             }
 

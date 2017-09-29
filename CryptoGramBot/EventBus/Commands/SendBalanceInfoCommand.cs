@@ -7,20 +7,11 @@ namespace CryptoGramBot.EventBus.Commands
     public class SendBalanceInfoCommand : ICommand
     {
         public SendBalanceInfoCommand(
-            BalanceHistory current,
-            BalanceHistory lastBalance,
-            IEnumerable<WalletBalance> walletBalances,
-            string accountName)
+            BalanceInformation balanceInformation)
         {
-            Current = current;
-            LastBalance = lastBalance;
-            WalletBalances = walletBalances;
-            AccountName = accountName;
+            BalanceInformation = balanceInformation;
         }
 
-        public string AccountName { get; }
-        public BalanceHistory Current { get; }
-        public BalanceHistory LastBalance { get; }
-        public IEnumerable<WalletBalance> WalletBalances { get; }
+        public BalanceInformation BalanceInformation { get; }
     }
 }

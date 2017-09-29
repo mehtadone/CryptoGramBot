@@ -27,10 +27,7 @@ namespace CryptoGramBot.Extensions
 
             if (coinigyEnabled)
             {
-                busBuilder.RegisterEventHandler<BalanceCheckEvent, CheckCoinigyTotalBalanceHandler>();
-                busBuilder.RegisterEventHandler<BalanceCheckEvent, CheckCoinigyAccountBalancesHandler>();
-                busBuilder.RegisterCommandHandler<CoinigyTotalPnLCommand, CoinigyTotalPnLHandler>();
-                busBuilder.RegisterCommandHandler<CoinigyPnLForAccountCommand, CoinigyPnLForAccountHandler>();
+                busBuilder.RegisterEventHandler<BalanceCheckEvent, CoinigyBalanceHandler>();
                 busBuilder.RegisterCommandHandler<SendCoinigyAccountInfoCommand, CoinigyAccountInfoHandler>();
                 busBuilder.RegisterCommandHandler<GetCoinigyAccountCommand, GetCoinigyAccountHandler>();
             }
@@ -39,7 +36,6 @@ namespace CryptoGramBot.Extensions
             {
                 busBuilder.RegisterEventHandler<NewTradesCheckEvent, PoloniexNewOrderCheckHandler>();
                 busBuilder.RegisterEventHandler<BalanceCheckEvent, PoloniexBalanceCheckHandler>();
-                busBuilder.RegisterCommandHandler<PoloniexBalanceInfoRequestedCommand, PoloniexBalanceInfoRequestedHandler>();
             }
 
             if (bittrexEnabled)
@@ -47,7 +43,6 @@ namespace CryptoGramBot.Extensions
                 busBuilder.RegisterCommandHandler<BittrexTradeExportCommand, BittrexTradeExportHandler>();
                 busBuilder.RegisterEventHandler<NewTradesCheckEvent, BittrexNewOrderCheckHandler>();
                 busBuilder.RegisterEventHandler<BalanceCheckEvent, BittrexBalanceCheckHandler>();
-                busBuilder.RegisterCommandHandler<BittrexBalanceInfoRequestedCommand, BittrexBalanceInfoRequestedHandler>();
             }
 
             if ((bagEnabled || dustEnabled) && bittrexEnabled)

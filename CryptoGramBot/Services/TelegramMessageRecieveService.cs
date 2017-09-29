@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using CryptoGramBot.EventBus;
+using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
 using CryptoGramBot.EventBus.Handlers.BalanceInfo;
 using CryptoGramBot.Helpers;
@@ -104,8 +105,10 @@ namespace CryptoGramBot.Services
                 try
                 {
                     var accountNumber = splitString[1];
-                    _log.LogInformation($"PnL check for {accountNumber}");
-                    await _bus.SendAsync(new CoinigyPnLForAccountCommand(int.Parse(accountNumber)));
+                    var account = int.Parse(accountNumber);
+
+                    _log.LogInformation($"PnL check for {account}");
+                    await _bus.PublishAsync(new BalanceCheckEvent(true, Constants.CoinigyAccountBalance, account));
                 }
                 catch (Exception)
                 {
@@ -151,17 +154,17 @@ namespace CryptoGramBot.Services
             else if (message.StartsWith(TelegramCommands.CoinigyTotalBalance))
             {
                 _log.LogInformation("24 Hour pnl difference for coinigy");
-                await _bus.SendAsync(new CoinigyTotalPnLCommand());
+                await _bus.PublishAsync(new BalanceCheckEvent(true, Constants.TotalCoinigyBalance));
             }
             else if (message.StartsWith(TelegramCommands.BittrexBalanceInfo))
             {
                 _log.LogInformation("24 Hour pnl difference for bittrex");
-                await _bus.SendAsync(new BittrexBalanceInfoRequestedCommand());
+                await _bus.PublishAsync(new BalanceCheckEvent(true, Constants.Bittrex));
             }
             else if (message.StartsWith(TelegramCommands.PoloniexBalanceInfo))
             {
                 _log.LogInformation("24 Hour pnl difference for poloniex");
-                await _bus.SendAsync(new PoloniexBalanceInfoRequestedCommand());
+                await _bus.PublishAsync(new BalanceCheckEvent(true, Constants.Poloniex));
             }
             else if (message.StartsWith(TelegramCommands.BittrexTradeExportUpload))
             {

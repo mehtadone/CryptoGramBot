@@ -106,10 +106,8 @@ namespace CryptoGramBot.Services
             }
 
             // REALLY?? There is no simple getTicker on the polo client???
-            var ticker =
-                await _poloniexClient.Markets.GetChartDataAsync(new CurrencyPair("BTC", terms), MarketPeriod.Minutes5, DateTime.Now - TimeSpan.FromMinutes(10), DateTime.Now);
+            var price = await _priceService.GetPriceInBtc(terms);
 
-            var price = ticker.Last().Close;
             decimal priceAsDecimal;
             try
             {

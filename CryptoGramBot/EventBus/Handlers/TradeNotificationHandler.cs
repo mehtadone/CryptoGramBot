@@ -43,7 +43,7 @@ namespace CryptoGramBot.EventBus.Handlers
                 lastBought = tradesProfitResponse.LastBoughtTime;
             }
 
-            var message = $"{newTrade.TimeStamp:R}\n" +
+            var message = $"{newTrade.TimeStamp:g}\n" +
                           $"New {newTrade.Exchange} order\n" +
                           $"<strong>{newTrade.Side} {newTrade.Base}-{newTrade.Terms}</strong>\n" +
                           $"Total: {newTrade.Cost:##0.###########} {newTrade.Base}\n" +

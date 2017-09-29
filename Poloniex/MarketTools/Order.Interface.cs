@@ -1,10 +1,9 @@
-﻿namespace Jojatekok.PoloniexAPI.MarketTools
+﻿namespace Poloniex.MarketTools
 {
     public interface IOrder
     {
-        double PricePerCoin { get; }
-
-        double AmountQuote { get; }
         double AmountBase { get; }
+        double AmountQuote { get; }
+        double PricePerCoin { get; }
     }
 }

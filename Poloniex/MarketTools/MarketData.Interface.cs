@@ -1,18 +1,15 @@
-﻿namespace Jojatekok.PoloniexAPI.MarketTools
+﻿namespace Poloniex.MarketTools
 {
     public interface IMarketData
     {
-        double PriceLast { get; }
-        double PriceChangePercentage { get; }
-
-        double Volume24HourBase { get; }
-        double Volume24HourQuote { get; }
-
-        double OrderTopBuy { get; }
-        double OrderTopSell { get; }
+        bool IsFrozen { get; }
         double OrderSpread { get; }
         double OrderSpreadPercentage { get; }
-
-        bool IsFrozen { get; }
+        double OrderTopBuy { get; }
+        double OrderTopSell { get; }
+        double PriceChangePercentage { get; }
+        double PriceLast { get; }
+        double Volume24HourBase { get; }
+        double Volume24HourQuote { get; }
     }
 }

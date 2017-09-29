@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using Bittrex;
 using CryptoGramBot.Models;
-using Jojatekok.PoloniexAPI.TradingTools;
+using ITrade = Poloniex.TradingTools.ITrade;
 using Trade = CryptoGramBot.Models.Trade;
 
 namespace CryptoGramBot.Extensions

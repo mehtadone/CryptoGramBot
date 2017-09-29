@@ -1,37 +1,29 @@
-﻿using Jojatekok.PoloniexAPI.MarketTools;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Web;
+using Jojatekok.PoloniexAPI;
+using Poloniex.General;
+using Poloniex.MarketTools;
 using WampSharp.V2;
 using WampSharp.V2.Client;
 using WampSharp.V2.Fluent;
 using WampSharp.V2.Realm;
 
-namespace Jojatekok.PoloniexAPI.LiveTools
+namespace Poloniex.LiveTools
 {
     public class Live : ILive
     {
         private const string SubjectNameTicker = "ticker";
         private const string SubjectNameTrollbox = "trollbox";
 
-        private readonly IDictionary<string, IDisposable> _activeSubscriptions = new Dictionary<string, IDisposable>();
-
-        private readonly ObservableDictionary<CurrencyPair, MarketData> _tickers = new ObservableDictionary<CurrencyPair, MarketData>();
-
         public event EventHandler<TickerChangedEventArgs> OnTickerChanged;
 
         public event EventHandler<TrollboxMessageEventArgs> OnTrollboxMessage;
 
-        public ObservableDictionary<CurrencyPair, MarketData> Tickers
-        {
-            get { return _tickers; }
-        }
+        public ObservableDictionary<CurrencyPair, MarketData> Tickers { get; } = new ObservableDictionary<CurrencyPair, MarketData>();
 
-        private IDictionary<string, IDisposable> ActiveSubscriptions
-        {
-            get { return _activeSubscriptions; }
-        }
+        private IDictionary<string, IDisposable> ActiveSubscriptions { get; } = new Dictionary<string, IDisposable>();
 
         private IWampChannel WampChannel { get; set; }
         private Task WampChannelOpenTask { get; set; }
@@ -146,7 +138,7 @@ namespace Jojatekok.PoloniexAPI.LiveTools
                 Tickers.Add(currencyPair, marketData);
             }
 
-            if (OnTickerChanged != null) OnTickerChanged(this, new TickerChangedEventArgs(currencyPair, marketData));
+            OnTickerChanged?.Invoke(this, new TickerChangedEventArgs(currencyPair, marketData));
         }
 
         private void ProcessMessageTrollbox(ISerializedValue[] arguments)

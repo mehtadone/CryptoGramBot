@@ -1,10 +1,11 @@
 ﻿using System;
+using Poloniex.MarketTools;
 
-namespace Jojatekok.PoloniexAPI.TradingTools
+namespace Poloniex.TradingTools
 {
     public interface ITrade : IOrder
     {
-        string Pair { get; }
+        string Pair { get; set; }
         DateTime Time { get; }
     }
 }

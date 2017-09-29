@@ -1,11 +1,17 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Jojatekok.PoloniexAPI;
+using Newtonsoft.Json.Linq;
+using Poloniex.General;
+using IOrder = Poloniex.MarketTools.IOrder;
+using ITrade = Poloniex.TradingTools.ITrade;
+using Order = Poloniex.MarketTools.Order;
+using Trade = Poloniex.MarketTools.Trade;
 
-namespace Jojatekok.PoloniexAPI.TradingTools
+namespace Poloniex.TradingTools
 {
     public class Trading : ITrading
     {
@@ -19,6 +25,11 @@ namespace Jojatekok.PoloniexAPI.TradingTools
         public Task<bool> DeleteOrderAsync(CurrencyPair currencyPair, ulong orderId)
         {
             return Task.Factory.StartNew(() => DeleteOrder(currencyPair, orderId));
+        }
+
+        public Task<FeeInfo> GetFeeInfoAsync()
+        {
+            return Task.Factory.StartNew(GetFeeInfo);
         }
 
         public Task<IList<IOrder>> GetOpenOrdersAsync(CurrencyPair currencyPair)
@@ -60,6 +71,20 @@ namespace Jojatekok.PoloniexAPI.TradingTools
 
             var data = PostData<JObject>("cancelOrder", postData);
             return data.Value<byte>("success") == 1;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private T GetData<T>(string command, params object[] parameters)
+        {
+            return ApiWebClient.GetData<T>(Helper.ApiUrlHttpsRelativePublic + command, parameters);
+        }
+
+        // TODO This is returning 0. DO NOT USE
+        private FeeInfo GetFeeInfo()
+        {
+            var data = GetData<FeeInfo>(
+                "returnFeeInfo");
+            return data;
         }
 
         private IList<IOrder> GetOpenOrders(CurrencyPair currencyPair)

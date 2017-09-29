@@ -1,9 +1,9 @@
-﻿using Jojatekok.PoloniexAPI.TradingTools;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Poloniex.General;
 
-namespace Jojatekok.PoloniexAPI
+namespace Poloniex.TradingTools
 {
     public interface ITrading
     {
@@ -14,6 +14,8 @@ namespace Jojatekok.PoloniexAPI
         /// <param name="currencyPair">The currency pair, which consists of the currency being traded on the market, and the base's code.</param>
         /// <param name="orderId">The ID of the order to cancel.</param>
         Task<bool> DeleteOrderAsync(CurrencyPair currencyPair, ulong orderId);
+
+        Task<FeeInfo> GetFeeInfoAsync();
 
         /// <summary>Fetches the current open orders in your account, ordered by most recent first.</summary>
         /// <param name="currencyPair">The currency pair, which consists of the currency being traded on the market, and the base's code.</param>

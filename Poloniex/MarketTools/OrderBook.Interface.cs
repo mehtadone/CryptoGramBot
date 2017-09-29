@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Jojatekok.PoloniexAPI.MarketTools
+namespace Poloniex.MarketTools
 {
     public interface IOrderBook
     {

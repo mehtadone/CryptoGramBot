@@ -1,14 +1,13 @@
-﻿using System;
-using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
-using Jojatekok.PoloniexAPI.TradingTools;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Poloniex.TradingTools;
 
-namespace Jojatekok.PoloniexAPI
+namespace Poloniex.General
 {
     internal sealed class ApiWebClient
     {

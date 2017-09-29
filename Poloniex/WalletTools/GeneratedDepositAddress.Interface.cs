@@ -1,9 +1,8 @@
-﻿namespace Jojatekok.PoloniexAPI.WalletTools
+﻿namespace Poloniex.WalletTools
 {
     public interface IGeneratedDepositAddress
     {
-        bool IsGenerationSuccessful { get; }
-
         string Address { get; }
+        bool IsGenerationSuccessful { get; }
     }
 }

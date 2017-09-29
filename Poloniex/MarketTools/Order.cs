@@ -1,14 +1,9 @@
-﻿namespace Jojatekok.PoloniexAPI.MarketTools
+﻿using Jojatekok.PoloniexAPI;
+
+namespace Poloniex.MarketTools
 {
     public class Order : IOrder
     {
-        public double PricePerCoin { get; private set; }
-
-        public double AmountQuote { get; private set; }
-        public double AmountBase {
-            get { return (AmountQuote * PricePerCoin).Normalize(); }
-        }
-
         internal Order(double pricePerCoin, double amountQuote)
         {
             PricePerCoin = pricePerCoin;
@@ -17,7 +12,14 @@
 
         internal Order()
         {
-
         }
+
+        public double AmountBase
+        {
+            get { return (AmountQuote * PricePerCoin).Normalize(); }
+        }
+
+        public double AmountQuote { get; private set; }
+        public double PricePerCoin { get; private set; }
     }
 }

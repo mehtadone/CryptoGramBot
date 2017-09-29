@@ -1,7 +1,7 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Newtonsoft.Json;
 
-namespace Jojatekok.PoloniexAPI.WalletTools
+namespace Poloniex.WalletTools
 {
     public class DepositWithdrawalList : IDepositWithdrawalList
     {

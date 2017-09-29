@@ -2,69 +2,19 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Jojatekok.PoloniexAPI;
+using Poloniex.General;
 
-namespace Jojatekok.PoloniexAPI.WalletTools
+namespace Poloniex.WalletTools
 {
     public class Wallet : IWallet
     {
-        private ApiWebClient ApiWebClient { get; set; }
-
         internal Wallet(ApiWebClient apiWebClient)
         {
             ApiWebClient = apiWebClient;
         }
 
-        private IDictionary<string, IBalance> GetBalances()
-        {
-            var postData = new Dictionary<string, object>();
-
-            var data = PostData<IDictionary<string, IBalance>>("returnCompleteBalances", postData);
-            return data;
-        }
-
-        private IDictionary<string, string> GetDepositAddresses()
-        {
-            var postData = new Dictionary<string, object>();
-
-            var data = PostData<IDictionary<string, string>>("returnDepositAddresses", postData);
-            return data;
-        }
-
-        private IDepositWithdrawalList GetDepositsAndWithdrawals(DateTime startTime, DateTime endTime)
-        {
-            var postData = new Dictionary<string, object> {
-                { "start", Helper.DateTimeToUnixTimeStamp(startTime) },
-                { "end", Helper.DateTimeToUnixTimeStamp(endTime) }
-            };
-
-            var data = PostData<DepositWithdrawalList>("returnDepositsWithdrawals", postData);
-            return data;
-        }
-
-        private IGeneratedDepositAddress PostGenerateNewDepositAddress(string currency)
-        {
-            var postData = new Dictionary<string, object> {
-                { "currency", currency }
-            };
-
-            var data = PostData<IGeneratedDepositAddress>("generateNewAddress", postData);
-            return data;
-        }
-
-        private void PostWithdrawal(string currency, double amount, string address, string paymentId)
-        {
-            var postData = new Dictionary<string, object> {
-                { "currency", currency },
-                { "amount", amount.ToStringNormalized() },
-                { "address", address }
-            };
-
-            if (paymentId != null) {
-                postData.Add("paymentId", paymentId);
-            }
-
-            PostData<IGeneratedDepositAddress>("withdraw", postData);
-        }
+        private ApiWebClient ApiWebClient { get; set; }
 
         public Task<IDictionary<string, IBalance>> GetBalancesAsync()
         {
@@ -101,10 +51,63 @@ namespace Jojatekok.PoloniexAPI.WalletTools
             return Task.Factory.StartNew(() => PostWithdrawal(currency, amount, address, null));
         }
 
+        private IDictionary<string, IBalance> GetBalances()
+        {
+            var postData = new Dictionary<string, object>();
+
+            var data = PostData<IDictionary<string, IBalance>>("returnCompleteBalances", postData);
+            return data;
+        }
+
+        private IDictionary<string, string> GetDepositAddresses()
+        {
+            var postData = new Dictionary<string, object>();
+
+            var data = PostData<IDictionary<string, string>>("returnDepositAddresses", postData);
+            return data;
+        }
+
+        private IDepositWithdrawalList GetDepositsAndWithdrawals(DateTime startTime, DateTime endTime)
+        {
+            var postData = new Dictionary<string, object> {
+                { "start", Helper.DateTimeToUnixTimeStamp(startTime) },
+                { "end", Helper.DateTimeToUnixTimeStamp(endTime) }
+            };
+
+            var data = PostData<DepositWithdrawalList>("returnDepositsWithdrawals", postData);
+            return data;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private T PostData<T>(string command, Dictionary<string, object> postData)
         {
             return ApiWebClient.PostData<T>(command, postData);
+        }
+
+        private IGeneratedDepositAddress PostGenerateNewDepositAddress(string currency)
+        {
+            var postData = new Dictionary<string, object> {
+                { "currency", currency }
+            };
+
+            var data = PostData<IGeneratedDepositAddress>("generateNewAddress", postData);
+            return data;
+        }
+
+        private void PostWithdrawal(string currency, double amount, string address, string paymentId)
+        {
+            var postData = new Dictionary<string, object> {
+                { "currency", currency },
+                { "amount", amount.ToStringNormalized() },
+                { "address", address }
+            };
+
+            if (paymentId != null)
+            {
+                postData.Add("paymentId", paymentId);
+            }
+
+            PostData<IGeneratedDepositAddress>("withdraw", postData);
         }
     }
 }

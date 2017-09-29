@@ -1,4 +1,4 @@
-﻿namespace Jojatekok.PoloniexAPI.MarketTools
+﻿namespace Poloniex.MarketTools
 {
     /// <summary>Represents a time frame of a market.</summary>
     public enum MarketPeriod

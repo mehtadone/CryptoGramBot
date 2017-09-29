@@ -5,6 +5,8 @@ using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using Jojatekok.PoloniexAPI;
+using Poloniex;
+using Poloniex.General;
 
 namespace CryptoGramBot.Services
 {
@@ -28,7 +30,9 @@ namespace CryptoGramBot.Services
             var tradesAsync = await _poloniexClient.Trading.GetTradesAsync(CurrencyPair.All, lastChecked);
             var tradesAsyncResult = tradesAsync;
 
-            var poloniexToTrades = TradeConverter.PoloniexToTrades(tradesAsyncResult);
+            var feeInfo = await _poloniexClient.Trading.GetFeeInfoAsync();
+
+            var poloniexToTrades = TradeConverter.PoloniexToTrades(tradesAsyncResult, feeInfo);
             return poloniexToTrades;
         }
     }

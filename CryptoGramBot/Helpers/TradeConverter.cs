@@ -2,16 +2,14 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Text;
 using AutoMapper;
 using Bittrex;
 using CsvHelper;
-using CsvHelper.Configuration;
-using CsvHelper.TypeConversion;
 using CryptoGramBot.Models;
-using Jojatekok.PoloniexAPI.TradingTools;
-using OrderType = Jojatekok.PoloniexAPI.OrderType;
+using Poloniex.TradingTools;
+using ITrade = Poloniex.TradingTools.ITrade;
+using OrderType = Poloniex.General.OrderType;
 using Trade = CryptoGramBot.Models.Trade;
 
 namespace CryptoGramBot.Helpers
@@ -44,8 +42,17 @@ namespace CryptoGramBot.Helpers
             {
                 var trade = Mapper.Map<Trade>(completedOrder);
                 trade.Exchange = Constants.Bittrex;
-                trade.Cost = completedOrder.Price - completedOrder.Commission;
+
                 trade.Side = completedOrder.OrderType == OpenOrderType.LIMIT_BUY ? TradeSide.Buy : TradeSide.Sell;
+
+                if (trade.Side == TradeSide.Buy)
+                {
+                    trade.Cost = completedOrder.Price + completedOrder.Commission;
+                }
+                else
+                {
+                    trade.Cost = completedOrder.Price - completedOrder.Commission;
+                }
 
                 var ccy = completedOrder.Exchange.Split('-');
                 trade.Base = ccy[0];
@@ -74,7 +81,7 @@ namespace CryptoGramBot.Helpers
             return walletBalances;
         }
 
-        public static List<Trade> PoloniexToTrades(IList<ITrade> trades)
+        public static List<Trade> PoloniexToTrades(IList<ITrade> trades, FeeInfo feeInfo)
         {
             var tradeList = new List<Trade>();
 
@@ -88,7 +95,17 @@ namespace CryptoGramBot.Helpers
                 trade.Base = ccy[0];
                 trade.Terms = ccy[1];
 
-                trade.Cost = Convert.ToDecimal(completedOrder.AmountBase);
+                var baseAmount = Convert.ToDecimal(completedOrder.AmountBase);
+
+                if (trade.Side == TradeSide.Buy)
+                {
+                    trade.Cost = baseAmount + (baseAmount * 0.025m);
+                }
+                else
+                {
+                    trade.Cost = baseAmount - (baseAmount * 0.025m);
+                }
+
                 trade.Quantity = Convert.ToDecimal(completedOrder.AmountQuote);
 
                 tradeList.Add(trade);

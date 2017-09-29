@@ -51,7 +51,7 @@ namespace CryptoGramBot.EventBus.Handlers
 
             if (profitPercentage.HasValue && btcProfit.HasValue && dollarProfit.HasValue)
             {
-                message = message + $"\nProfit: {btcProfit.Value:##0.####} {newTrade.Base} (${dollarProfit.Value:###0.##})\n"
+                message = message + $"\nProfit: {btcProfit.Value:##0.###########} {newTrade.Base} (${dollarProfit.Value:###0.##})\n"
                     + $"Bought on: {lastBought:g}\n"
                     + $"Percentage: {profitPercentage.Value}%";
             }

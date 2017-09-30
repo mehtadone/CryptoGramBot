@@ -85,8 +85,8 @@ namespace CryptoGramBot.Services
             }
             catch (Exception ex)
             {
-                _log.LogInformation($"ERROR. Woops. {ex.Message}");
-                await _bus.SendAsync(new SendMessageCommand("Could not process your command"));
+                _log.LogError($"Woops. {ex}");
+                await _bus.SendAsync(new SendMessageCommand("Could not process your command. Check your logs"));
             }
         }
 

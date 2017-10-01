@@ -63,7 +63,11 @@ namespace CryptoGramBot.EventBus.Handlers
                         newMessage = stringWithNewLine;
                     }
                 }
-                await _bot.SendHtmlMessage(_bot.ChatId, newMessage);
+
+                if (!string.IsNullOrEmpty(newMessage))
+                {
+                    await _bot.SendHtmlMessage(_bot.ChatId, newMessage);
+                }
             }
 
             _log.LogInformation($"Send Message:\n" + message);

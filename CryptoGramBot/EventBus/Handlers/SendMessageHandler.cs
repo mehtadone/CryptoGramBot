@@ -31,29 +31,47 @@ namespace CryptoGramBot.EventBus.Handlers
 
         public async Task Handle(SendMessageCommand command)
         {
-            string message = command.Message;
-            await _bot.SendHtmlMessage(_bot.ChatId, message);
+            var message = command.Message;
 
-            //            if (message.Length <= 4096)
+            //            message = String.Empty;
+            //            int x = 0;
+            //            while (x <= 4500)
             //            {
-            //                await _bot.SendHtmlMessage(_bot.ChatId, command.Message);
-            //            }
-            //            else
-            //            {
-            //                string newMessage = String.Empty;
-            //                var strings = message.Split("\n");
-            //
-            //                foreach (var s in strings)
-            //                {
-            //                    if (newMessage.Length <= 4096)
-            //                    {
-            //                        ne
-            //                    }
-            //                }
-            //
+            //                message = message + $"I am test message {x}\n";
+            //                x++;
             //            }
 
-            _log.LogInformation($"Send Message:\n" + command.Message);
+            if (message.Length <= 4096)
+            {
+                await _bot.SendHtmlMessage(_bot.ChatId, message);
+            }
+            else
+            {
+                var newMessage = string.Empty;
+                var strings = message.Split("\n");
+
+                foreach (var s in strings)
+                {
+                    var newStringLengh = s.Length;
+                    if (newMessage.Length + newStringLengh <= 4096)
+                    {
+                        newMessage = newMessage + s;
+                    }
+                    else if (newMessage.Length + newStringLengh == 4096)
+                    {
+                        newMessage = newMessage + s;
+                        await _bot.SendHtmlMessage(_bot.ChatId, newMessage);
+                        newMessage = string.Empty;
+                    }
+                    else if (newMessage.Length + newStringLengh > 4096)
+                    {
+                        await _bot.SendHtmlMessage(_bot.ChatId, newMessage);
+                        newMessage = s;
+                    }
+                }
+            }
+
+            _log.LogInformation($"Send Message:\n" + message);
         }
     }
 }

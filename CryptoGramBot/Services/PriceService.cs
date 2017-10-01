@@ -26,13 +26,33 @@ namespace CryptoGramBot.Services
 
         public async Task<decimal> GetDollarAmount(decimal btcAmount)
         {
-            var price = await GetPriceFromCyptoApi("BTC", "USD");
+            var price = await GetBtcPrice();
             return Math.Round(price * btcAmount, 2);
         }
 
-        public async Task<decimal> GetPriceFromCyptoApi(string ccy1, string ccy2)
+        public async Task<decimal> GetPriceInBtc(string terms)
         {
-            if (_lastChecked > DateTime.Now - TimeSpan.FromMinutes(5))
+            string url = $"https://min-api.cryptocompare.com/data/price?fsym={terms}&tsyms=BTC";
+            decimal price;
+            using (var httpClient = new HttpClient())
+            {
+                using (var response = await httpClient.GetAsync(url))
+                {
+                    if (response.StatusCode != HttpStatusCode.OK) return _price;
+
+                    var json = await response.Content.ReadAsStringAsync();
+                    var jObject = JObject.Parse(json);
+                    var stringPrice = jObject["BTC"].ToString();
+                    price = decimal.Parse(stringPrice, NumberStyles.Float);
+                }
+            }
+
+            return price;
+        }
+
+        private async Task<decimal> GetBtcPrice()
+        {
+            if (_lastChecked > DateTime.Now - TimeSpan.FromMinutes(15))
             {
                 return _price;
             }
@@ -51,27 +71,6 @@ namespace CryptoGramBot.Services
                     _lastChecked = DateTime.Now;
                 }
             }
-
-            return _price;
-        }
-
-        public async Task<decimal> GetPriceInBtc(string terms)
-        {
-            string url = $"https://min-api.cryptocompare.com/data/price?fsym={terms}&tsyms=BTC";
-            using (var httpClient = new HttpClient())
-            {
-                using (var response = await httpClient.GetAsync(url))
-                {
-                    if (response.StatusCode != HttpStatusCode.OK) return _price;
-
-                    var json = await response.Content.ReadAsStringAsync();
-                    var jObject = JObject.Parse(json);
-                    var stringPrice = jObject["BTC"].ToString();
-                    _price = decimal.Parse(stringPrice, NumberStyles.Float);
-                    _lastChecked = DateTime.Now;
-                }
-            }
-
             return _price;
         }
     }

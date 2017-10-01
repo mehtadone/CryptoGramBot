@@ -94,7 +94,7 @@ namespace CryptoGramBot.Services
             var registry = new Registry();
             if (bittrexEnabled || poloEnabled)
             {
-                SendStatupMessage().Wait();
+                SendStartupMessage().Wait();
 
                 registry.Schedule(() => GetNewOrders().Wait())
                     .ToRunNow()
@@ -136,7 +136,7 @@ namespace CryptoGramBot.Services
         }
 
         // Need to do this or we end may end up with 500 + messages on first run
-        private async Task SendStatupMessage()
+        private async Task SendStartupMessage()
         {
             const string message = "<strong>Welcome to CryptoGramBot. I am currently querying for your trade history. Type /help for commands.</strong>\n";
             await _bus.SendAsync(new SendMessageCommand(message));

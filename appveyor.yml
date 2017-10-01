@@ -27,7 +27,7 @@ on_finish :
   # any cleanup in here
 deploy:
   release: CryptoGramBot-v$(appveyor_build_version)
-  description: 'Improve profit calcs (might not be fixed yet. Let me know), Poloniex balances, buy sell notifications, formatted dates, rounding.'
+  description: 'Fix Dollar profit values. Split messages for a lot of wallets. Note that appsettings.json is the same. To update, just replace all the files in your main directory, leaving the database folder and the appsettings.json file'
   provider: GitHub
   auth_token:
     secure: esN+SKR3Mla7CRA3bD9NBK1WFuuMc7W0/MyIX8kUC9q8BXELNvSZaBQcEt7S7oTj # your encrypted token from GitHub

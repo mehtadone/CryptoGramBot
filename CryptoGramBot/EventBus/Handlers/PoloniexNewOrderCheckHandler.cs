@@ -39,7 +39,7 @@ namespace CryptoGramBot.EventBus.Handlers
                 if (newTradesResponse.NewTrades.Count() > 10)
                 {
                     await _bus.SendAsync(
-                        new SendMessageCommand("There are more than 10 trades to send. Not going to spam you"));
+                        new SendMessageCommand("There are more than 10 trades to send. Not going to send them to avoid spamming you"));
                     return;
                 }
 

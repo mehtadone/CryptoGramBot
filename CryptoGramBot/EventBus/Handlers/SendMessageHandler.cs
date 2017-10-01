@@ -33,15 +33,7 @@ namespace CryptoGramBot.EventBus.Handlers
         {
             var message = command.Message;
 
-            //            message = String.Empty;
-            //            int x = 0;
-            //            while (x <= 4500)
-            //            {
-            //                message = message + $"I am test message {x}\n";
-            //                x++;
-            //            }
-
-            if (message.Length <= 4096)
+            if (message.Length <= 4094)
             {
                 await _bot.SendHtmlMessage(_bot.ChatId, message);
             }
@@ -53,20 +45,22 @@ namespace CryptoGramBot.EventBus.Handlers
                 foreach (var s in strings)
                 {
                     var newStringLengh = s.Length;
-                    if (newMessage.Length + newStringLengh <= 4096)
+                    var stringWithNewLine = s + "\n";
+
+                    if (newMessage.Length + newStringLengh <= 4094)
                     {
-                        newMessage = newMessage + s;
+                        newMessage = newMessage + stringWithNewLine;
                     }
-                    else if (newMessage.Length + newStringLengh == 4096)
+                    else if (newMessage.Length + newStringLengh == 4094)
                     {
-                        newMessage = newMessage + s;
+                        newMessage = newMessage + stringWithNewLine;
                         await _bot.SendHtmlMessage(_bot.ChatId, newMessage);
                         newMessage = string.Empty;
                     }
-                    else if (newMessage.Length + newStringLengh > 4096)
+                    else if (newMessage.Length + newStringLengh > 4094)
                     {
                         await _bot.SendHtmlMessage(_bot.ChatId, newMessage);
-                        newMessage = s;
+                        newMessage = stringWithNewLine;
                     }
                 }
             }

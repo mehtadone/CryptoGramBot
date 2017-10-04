@@ -31,7 +31,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
             try
             {
                 var lastChecked = await _bus.QueryAsync(new LastCheckedQuery(Constants.Poloniex));
-                var orderHistory = await _poloService.GetOrderHistory(lastChecked.LastChecked);
+                var orderHistory = await _poloService.GetOrderHistory(lastChecked.LastChecked - TimeSpan.FromDays(1));
                 var newTradesResponse = await _bus.QueryAsync(new FindNewTradeQuery(orderHistory));
                 await _bus.SendAsync(new AddLastCheckedCommand(Constants.Poloniex));
 

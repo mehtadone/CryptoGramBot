@@ -86,7 +86,7 @@ namespace CryptoGramBot.Services
             }
         }
 
-        public void Start(bool coinigyEnabled, bool bittrexEnabled, bool poloEnabled, bool bagManagementEnabled)
+        public void Start(bool coinigyEnabled, bool bittrexEnabled, bool poloEnabled, bool bagManagementEnabled, bool lowBtcNotification, bool dustNotifications)
         {
             // Needs to be called here as if we use DI, the config has not been binded yet
             _bot.StartBot(_telegramConfig);
@@ -107,9 +107,10 @@ namespace CryptoGramBot.Services
                 registry.Schedule(() => CheckBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
             }
 
-            if (bagManagementEnabled)
+            if (bagManagementEnabled || lowBtcNotification || dustNotifications)
             {
                 registry.Schedule(() => CheckForBags().Wait()).ToRunEvery(6).Hours();
+                registry.Schedule(() => CheckForBags().Wait()).ToRunOnceIn(5).Minutes();
             }
 
             if (coinigyEnabled)

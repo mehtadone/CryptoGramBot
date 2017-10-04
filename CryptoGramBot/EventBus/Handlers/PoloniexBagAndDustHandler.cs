@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Events;
+using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
@@ -17,54 +15,99 @@ namespace CryptoGramBot.EventBus.Handlers
         private readonly IMicroBus _bus;
         private readonly DatabaseService _databaseService;
         private readonly DustConfig _dustConfig;
+        private readonly LowBtcConfig _lowBtcConfig;
         private readonly PoloniexService _poloService;
 
-        public PoloniexBagAndDustHandler(IMicroBus bus, PoloniexService poloService, DatabaseService databaseService, BagConfig bagConfig, DustConfig dustConfig)
+        public PoloniexBagAndDustHandler(IMicroBus bus, PoloniexService poloService, DatabaseService databaseService, BagConfig bagConfig, DustConfig dustConfig, LowBtcConfig lowBtcConfig)
         {
             _bus = bus;
             _poloService = poloService;
             _databaseService = databaseService;
             _bagConfig = bagConfig;
             _dustConfig = dustConfig;
+            _lowBtcConfig = lowBtcConfig;
         }
 
         public async Task Handle(BagAndDustEvent @event)
         {
-            //TODO Add bag management for polo
-            //            var walletBalances = _bittrexService.GetWalletBalances();
-            //
-            //            foreach (var walletBalance in walletBalances)
-            //            {
-            //                if (walletBalance.Currency == "BTC") continue;
-            //
-            //                var lastTradeForPair = _databaseService.GetLastTradeForPair(walletBalance.Currency);
-            //                if (lastTradeForPair == null) continue;
-            //                var currentPrice = await _bittrexService.GetPrice(lastTradeForPair.Terms);
-            //
-            //                if (_bagConfig.PercentageChange > 30)
-            //                {
-            //                    await SendNotification(walletBalance, lastTradeForPair, currentPrice);
-            //                }
-            //            }
+            var balanceInformation = await _poloService.GetBalance();
+
+            foreach (var walletBalance in balanceInformation.WalletBalances)
+            {
+                if (walletBalance.Currency == "BTC")
+                {
+                    if (_lowBtcConfig.Enabled)
+                    {
+                        if (walletBalance.BtcAmount <= _lowBtcConfig.LowBtcAmount)
+                        {
+                            await SendBtcLowNotification(walletBalance.BtcAmount);
+                        }
+                    }
+                }
+
+                var lastTradeForPair = _databaseService.GetLastTradeForPair(walletBalance.Currency, Constants.Poloniex, TradeSide.Buy);
+                if (lastTradeForPair == null) continue;
+                var currentPrice = await _poloService.GetPrice(lastTradeForPair.Terms);
+
+                if (_bagConfig.Enabled)
+                {
+                    await BagManagement(currentPrice, lastTradeForPair, walletBalance);
+                }
+
+                if (_dustConfig.Enabled)
+                {
+                    await DustManagement(walletBalance);
+                }
+            }
         }
 
-        private static decimal PriceDifference(decimal currentPrice, decimal limit)
+        private async Task BagManagement(decimal currentPrice, Trade lastTradeForPair, WalletBalance walletBalance)
         {
-            var percentage = (currentPrice - limit) / limit * 100;
-            return Math.Round(percentage, 0);
+            var percentageDrop = ProfitCalculator.PriceDifference(currentPrice, lastTradeForPair.Limit);
+            if (percentageDrop < -_bagConfig.PercentageDrop)
+            {
+                await SendBagNotification(walletBalance, lastTradeForPair, currentPrice, percentageDrop);
+            }
         }
 
-        private async Task SendNotification(WalletBalance walletBalance, Trade lastTradeForPair, decimal currentPrice)
+        private async Task DustManagement(WalletBalance walletBalance)
+        {
+            var bagDetected = walletBalance.BtcAmount <= _dustConfig.BtcAmount;
+            if (bagDetected)
+            {
+                await SendDustNotification(walletBalance);
+            }
+        }
+
+        private async Task SendBagNotification(WalletBalance walletBalance, Trade lastTradeForPair, decimal currentPrice, decimal percentageDrop)
         {
             var message =
-                $"{DateTime.Now:g}\n" +
+                $"<strong>{Constants.Poloniex}</strong>: {DateTime.Now:g}\n" +
                 $"<strong>Bag detected for {walletBalance.Currency}</strong>\n" +
                 $"Bought price: {lastTradeForPair.Limit:#0.#############}\n" +
                 $"Current price: {currentPrice:#0.#############}\n" +
-                $"Percentage drop: {PriceDifference(currentPrice, lastTradeForPair.Limit)}%\n" +
+                $"Percentage: {percentageDrop}%\n" +
                 $"Bought on: {lastTradeForPair.TimeStamp:g}\n" +
-                $"Value: {walletBalance.Balance * currentPrice:#0.#############}";
+                $"Value: {walletBalance.Balance * currentPrice:#0.#####} BTC";
 
+            await _bus.SendAsync(new SendMessageCommand(message));
+        }
+
+        private async Task SendBtcLowNotification(decimal walletBalanceBtcAmount)
+        {
+            var message =
+                $"<strong>{Constants.Poloniex}</strong>: {DateTime.Now:g}\n" +
+                $"<strong>Low BTC detected</strong>\n" +
+                $"BTC Amount: {walletBalanceBtcAmount:#0.#############}\n";
+            await _bus.SendAsync(new SendMessageCommand(message));
+        }
+
+        private async Task SendDustNotification(WalletBalance walletBalance)
+        {
+            var message =
+                $"<strong>{Constants.Poloniex}</strong>: {DateTime.Now:g}\n" +
+                $"<strong>Dust detected for {walletBalance.Currency}</strong>\n" +
+                $"BTC Amount: {walletBalance.BtcAmount:#0.#############}\n";
             await _bus.SendAsync(new SendMessageCommand(message));
         }
     }

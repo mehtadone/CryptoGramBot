@@ -30,13 +30,15 @@ namespace CryptoGramBot
             out bool bittrexEnabled,
             out bool poloniexEnabled,
             out bool bagEnabled,
-            out bool dustNotification)
+            out bool dustNotification,
+            out bool lowBtcNotification)
         {
             provider.TryGet("Coinigy:Enabled", out string coinigyEnabledString);
             provider.TryGet("Bittrex:Enabled", out string bittrexEnabledString);
             provider.TryGet("Poloniex:Enabled", out string poloniexEnabledString);
             provider.TryGet("BagManagement:Enabled", out string bagManagementEnabledString);
             provider.TryGet("DustNotification:Enabled", out string dustNotifcationEnabledString);
+            provider.TryGet("LowBtcNotification:Enabled", out string lowBtcNotificationString);
 
             coinigyEnabled = bool.Parse(coinigyEnabledString);
             bittrexEnabled = bool.Parse(bittrexEnabledString);
@@ -46,11 +48,13 @@ namespace CryptoGramBot
             {
                 bagEnabled = bool.Parse(bagManagementEnabledString);
                 dustNotification = bool.Parse(dustNotifcationEnabledString);
+                lowBtcNotification = bool.Parse(lowBtcNotificationString);
             }
             else
             {
                 bagEnabled = false;
                 dustNotification = false;
+                lowBtcNotification = false;
             }
         }
 
@@ -139,6 +143,18 @@ namespace CryptoGramBot
                 log.LogError("Error in reading dust notification config");
                 throw;
             }
+
+            try
+            {
+                var config = container.Resolve<LowBtcConfig>();
+                configuration.GetSection("LowBtcNotification").Bind(config);
+                log.LogInformation("Created low btc Config");
+            }
+            catch (Exception)
+            {
+                log.LogError("Error in reading low btc config");
+                throw;
+            }
         }
 
         private static void ConfigureLogger()
@@ -173,6 +189,7 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<BagConfig>().SingleInstance();
             containerBuilder.RegisterType<DustConfig>().SingleInstance();
             containerBuilder.RegisterType<GeneralConfig>().SingleInstance();
+            containerBuilder.RegisterType<LowBtcConfig>().SingleInstance();
             containerBuilder.RegisterType<CoinigyApiService>();
             containerBuilder.RegisterType<BittrexService>();
             containerBuilder.RegisterType<PoloniexService>();
@@ -212,7 +229,8 @@ namespace CryptoGramBot
                 out bool bittrexEnabled,
                 out bool poloniexEnabled,
                 out bool bagEnabled,
-                out bool dustEnabled);
+                out bool dustEnabled,
+                out bool lowBtcEnabled);
 
             var busBuilder = new BusBuilder();
 
@@ -235,7 +253,7 @@ namespace CryptoGramBot
 
             startupService.MigrateToSqlLite().Wait();
 
-            startupService.Start(coinigyEnabled, bittrexEnabled, poloniexEnabled, bagEnabled);
+            startupService.Start(coinigyEnabled, bittrexEnabled, poloniexEnabled, bagEnabled, lowBtcEnabled, dustEnabled);
 
             while (true)
             {

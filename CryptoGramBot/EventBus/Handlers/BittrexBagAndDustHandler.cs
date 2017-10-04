@@ -17,8 +17,9 @@ namespace CryptoGramBot.EventBus.Handlers
         private readonly IMicroBus _bus;
         private readonly DatabaseService _databaseService;
         private readonly DustConfig _dustConfig;
+        private readonly LowBtcConfig _lowBtcConfig;
 
-        public BittrexBagAndDustHandler(IMicroBus bus, BittrexService bittrexService, DatabaseService databaseService, BagConfig bagConfig, BittrexConfig bittrexConfig, DustConfig dustConfig)
+        public BittrexBagAndDustHandler(IMicroBus bus, BittrexService bittrexService, DatabaseService databaseService, BagConfig bagConfig, BittrexConfig bittrexConfig, DustConfig dustConfig, LowBtcConfig lowBtcConfig)
         {
             _bus = bus;
             _bittrexService = bittrexService;
@@ -26,6 +27,7 @@ namespace CryptoGramBot.EventBus.Handlers
             _bagConfig = bagConfig;
             _bittrexConfig = bittrexConfig;
             _dustConfig = dustConfig;
+            _lowBtcConfig = lowBtcConfig;
         }
 
         public async Task Handle(BagAndDustEvent @event)
@@ -34,7 +36,16 @@ namespace CryptoGramBot.EventBus.Handlers
 
             foreach (var walletBalance in balanceInformation.WalletBalances)
             {
-                if (walletBalance.Currency == "BTC") continue;
+                if (walletBalance.Currency == "BTC")
+                {
+                    if (_lowBtcConfig.Enabled)
+                    {
+                        if (walletBalance.BtcAmount <= _lowBtcConfig.LowBtcAmount)
+                        {
+                            await SendBtcLowNotification(walletBalance.BtcAmount);
+                        }
+                    }
+                }
 
                 var lastTradeForPair = _databaseService.GetLastTradeForPair(walletBalance.Currency, Constants.Bittrex, TradeSide.Buy);
                 if (lastTradeForPair == null) continue;
@@ -81,6 +92,15 @@ namespace CryptoGramBot.EventBus.Handlers
                 $"Bought on: {lastTradeForPair.TimeStamp:g}\n" +
                 $"Value: {walletBalance.Balance * currentPrice:#0.#####} BTC";
 
+            await _bus.SendAsync(new SendMessageCommand(message));
+        }
+
+        private async Task SendBtcLowNotification(decimal walletBalanceBtcAmount)
+        {
+            var message =
+                $"<strong>{Constants.Bittrex}</strong>: {DateTime.Now:g}\n" +
+                $"<strong>Low BTC detected</strong>\n" +
+                $"BTC Amount: {walletBalanceBtcAmount:#0.#############}\n";
             await _bus.SendAsync(new SendMessageCommand(message));
         }
 

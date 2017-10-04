@@ -9,7 +9,6 @@ using CryptoGramBot.Models;
 using Microsoft.Extensions.Logging;
 using Poloniex;
 using Poloniex.General;
-using Poloniex.MarketTools;
 using Poloniex.WalletTools;
 using Deposit = CryptoGramBot.Models.Deposit;
 using Trade = CryptoGramBot.Models.Trade;
@@ -93,9 +92,10 @@ namespace CryptoGramBot.Services
 
             var localDesposits = poloDeposits.Select(Mapper.Map<Deposit>).ToList();
 
+            var newDeposits = await _databaseService.AddDeposits(localDesposits, Constants.Poloniex);
             await _databaseService.AddLastChecked("Poloniex.DepositCheck", DateTime.Now);
 
-            return localDesposits;
+            return newDeposits;
         }
 
         public async Task<List<Withdrawal>> GetNewWithdrawals()
@@ -106,9 +106,10 @@ namespace CryptoGramBot.Services
 
             var withdrawals = poloWithdrawals.Select(Mapper.Map<Withdrawal>).ToList();
 
+            var newWithdrawals = await _databaseService.AddWithdrawals(withdrawals, Constants.Poloniex);
             await _databaseService.AddLastChecked("Poloniex.WithdrawalCheck", DateTime.Now);
 
-            return withdrawals;
+            return newWithdrawals;
         }
 
         public async Task<List<Trade>> GetOrderHistory(DateTime lastChecked)

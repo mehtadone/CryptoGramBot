@@ -14,6 +14,7 @@ namespace CryptoGramBot.Models
 
         public double Amount { get; set; }
 
+        public double Cost { get; set; }
         public string Currency { get; set; }
 
         public string Exchange { get; set; }
@@ -24,5 +25,6 @@ namespace CryptoGramBot.Models
         public string Status { get; set; }
 
         public DateTime Time { get; set; }
+        public string TransactionId { get; set; }
     }
 }

@@ -24,8 +24,23 @@ namespace CryptoGramBot.Extensions
             config.CreateMap<GetBalancesResponse, WalletBalance>();
             config.CreateMap<AccountBalance, WalletBalance>();
 
-            config.CreateMap<Poloniex.WalletTools.Withdrawal, Withdrawal>();
-            config.CreateMap<Poloniex.WalletTools.Deposit, Deposit>();
+            config.CreateMap<Poloniex.WalletTools.Withdrawal, Withdrawal>()
+                .ForMember(x => x.TransactionId, d => d.MapFrom(src => src.Id))
+                .ForMember(x => x.Id, opt => opt.Ignore());
+            config.CreateMap<Poloniex.WalletTools.Deposit, Deposit>()
+                .ForMember(x => x.Id, opt => opt.Ignore());
+
+            config.CreateMap<Bittrex.Data.Withdrawal, Withdrawal>()
+                .ForMember(x => x.TransactionId, d => d.MapFrom(src => src.TxId))
+                .ForMember(x => x.Id, opt => opt.Ignore())
+                .ForMember(x => x.Time, d => d.MapFrom(src => src.Opened))
+                .ForMember(x => x.Cost, d => d.MapFrom(src => src.TxCost));
+
+            config.CreateMap<Bittrex.Data.Deposit, Deposit>()
+                .ForMember(x => x.Id, opt => opt.Ignore())
+                .ForMember(x => x.TransactionId, d => d.MapFrom(src => src.TxId))
+                .ForMember(x => x.Time, d => d.MapFrom(src => src.LastUpdated))
+                .ForMember(x => x.Address, d => d.MapFrom(src => src.CryptoAddress));
         }
     }
 }

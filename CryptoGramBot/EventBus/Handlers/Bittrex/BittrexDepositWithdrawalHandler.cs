@@ -7,24 +7,24 @@ using CryptoGramBot.Models;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus.Handlers.Poloniex
+namespace CryptoGramBot.EventBus.Handlers.Bittrex
 {
-    public class PoloniexDepositWithdrawalHandler : IEventHandler<DepositAndWithdrawalEvent>
+    public class BittrexDepositWithdrawalHandler : IEventHandler<DepositAndWithdrawalEvent>
     {
+        private readonly BittrexService _bittrexService;
         private readonly IMicroBus _bus;
-        private readonly PoloniexConfig _config;
+        private readonly BittrexConfig _config;
         private readonly DatabaseService _databaseService;
-        private readonly PoloniexService _poloniexService;
         private readonly PriceService _priceService;
 
-        public PoloniexDepositWithdrawalHandler(
-            PoloniexService poloniexService,
-            PoloniexConfig config,
+        public BittrexDepositWithdrawalHandler(
+            BittrexService bittrexService,
+            BittrexConfig config,
             DatabaseService databaseService,
             PriceService priceService,
             IMicroBus bus)
         {
-            _poloniexService = poloniexService;
+            _bittrexService = bittrexService;
             _config = config;
             _databaseService = databaseService;
             _priceService = priceService;
@@ -35,14 +35,14 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         {
             if (_config.DepositNotification)
             {
-                var deposits = await _poloniexService.GetNewDeposits();
+                var deposits = await _bittrexService.GetNewDeposits();
 
                 var i = 0;
                 foreach (var deposit in deposits)
                 {
                     if (i > 3)
                     {
-                        var message = $"{deposits.Count - i} deposit can be sent but not going to as to avoid spamming";
+                        var message = $"{deposits.Count - i} deposits can be sent but not going as to avoid spamming";
                         await _bus.SendAsync(new SendMessageCommand(message));
                         break;
                     }
@@ -56,14 +56,14 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
 
             if (_config.WithdrawalNotification)
             {
-                var withdrawals = await _poloniexService.GetNewWithdrawals();
+                var withdrawals = await _bittrexService.GetNewWithdrawals();
 
                 var i = 0;
                 foreach (var withdrawal in withdrawals)
                 {
                     if (i > 3)
                     {
-                        var message = $"{withdrawals.Count - i} withdrawals can be sent but not going to as to avoid spamming";
+                        var message = $"{withdrawals.Count - i} withdrawals can be sent but not going as to avoid spamming";
                         await _bus.SendAsync(new SendMessageCommand(message));
                         break;
                     }
@@ -80,7 +80,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         {
             var message =
                 $"{deposit.Time:g}\n" +
-                $"<strong>{Constants.Poloniex} Deposit of {deposit.Currency}</strong>\n" +
+                $"<strong>{Constants.Bittrex} Deposit of {deposit.Currency}</strong>\n" +
                 $"<strong>Currency: {deposit.Currency}</strong>\n" +
                 $"Amount: {deposit.Amount} ({btcAmount:##0.####} BTC)\n";
             await _bus.SendAsync(new SendMessageCommand(message));
@@ -90,7 +90,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         {
             var message =
                 $"{withdrawal.Time:g}\n" +
-                $"<strong>{Constants.Poloniex} Withdrawal of {withdrawal.Currency}</strong>\n" +
+                $"<strong>{Constants.Bittrex} Withdrawal of {withdrawal.Currency}</strong>\n" +
                 $"Amount: {withdrawal.Amount} ({btcAmount:##0.####} BTC)\n";
             await _bus.SendAsync(new SendMessageCommand(message));
         }

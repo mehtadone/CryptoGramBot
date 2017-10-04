@@ -43,13 +43,31 @@ namespace CryptoGramBot.Services
             //            throw new NotImplementedException();
         }
 
-        public async Task AddDeposits(List<Deposit> deposits)
+        public async Task<List<Deposit>> AddDeposits(List<Deposit> deposits, string exchange)
         {
             _log.LogInformation($"Adding new deposits to database");
 
             var context = _context.Deposits;
-            context.AddRange(deposits);
+            var list = new List<Deposit>();
+            foreach (var deposit in deposits)
+            {
+                deposit.Exchange = exchange;
+                var singleOrDefault = context.SingleOrDefault(x => x.Currency == deposit.Currency &&
+                                                                   x.Time == deposit.Time &&
+                                                                   x.Exchange == deposit.Exchange &&
+                                                                   x.Address == deposit.Address &&
+                                                                   x.Amount == deposit.Amount &&
+                                                                   x.TransactionId == deposit.TransactionId);
+
+                if (singleOrDefault == null)
+                {
+                    context.Add(deposit);
+                    list.Add(deposit);
+                }
+            }
+
             await _context.SaveChangesAsync();
+            return list;
         }
 
         public async Task AddLastChecked(string key, DateTime timestamp)
@@ -110,13 +128,31 @@ namespace CryptoGramBot.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task AddWithdrawals(List<Withdrawal> withdrawals)
+        public async Task<List<Withdrawal>> AddWithdrawals(List<Withdrawal> withdrawals, string exchange)
         {
             _log.LogInformation($"Adding new withdrawals to database");
-
             var context = _context.Withdrawals;
-            context.AddRange(withdrawals);
+
+            var list = new List<Withdrawal>();
+            foreach (var withdrawal in withdrawals)
+            {
+                withdrawal.Exchange = exchange;
+                var singleOrDefault = context.SingleOrDefault(x => x.Currency == withdrawal.Currency &&
+                                                                   x.Time == withdrawal.Time &&
+                                                                   x.Exchange == withdrawal.Exchange &&
+                                                                   x.Address == withdrawal.Address &&
+                                                                   x.Amount == withdrawal.Amount &&
+                                                                   x.TransactionId == withdrawal.TransactionId);
+
+                if (singleOrDefault == null)
+                {
+                    context.Add(withdrawal);
+                    list.Add(withdrawal);
+                }
+            }
+
             await _context.SaveChangesAsync();
+            return list;
         }
 
         public IEnumerable<BalanceHistory> GetAllBalances()

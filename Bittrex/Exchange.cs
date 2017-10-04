@@ -15,6 +15,7 @@ namespace Bittrex
         private const string ApiCallCancel = "market/cancel";
         private const string ApiCallGetBalance = "account/getbalance";
         private const string ApiCallGetBalances = "account/getbalances";
+        private const string ApiCallGetDeposits = "account/getdeposithistory";
         private const string ApiCallGetMarketHistory = "public/getmarkethistory";
         private const string ApiCallGetMarkets = "public/getmarkets";
         private const string ApiCallGetMarketSummary = "public/getmarketsummary";
@@ -22,6 +23,7 @@ namespace Bittrex
         private const string ApiCallGetOrderBook = "public/getorderbook";
         private const string ApiCallGetOrderHistory = "account/getorderhistory";
         private const string ApiCallGetTicker = "public/getticker";
+        private const string ApiCallGetWithdrawals = "account/getwithdrawalhistory";
         private const string ApiCallSellLimit = "market/selllimit";
         private const string ApiCallTemplate = "https://bittrex.com/api/{0}/{1}";
         private const string ApiVersion = "v1.1";
@@ -50,6 +52,11 @@ namespace Bittrex
         public async Task<GetBalancesResponse> GetBalances()
         {
             return await Call<GetBalancesResponse>(ApiCallGetBalances);
+        }
+
+        public async Task<GetDepositResponse> GetDeposits()
+        {
+            return await Call<GetDepositResponse>(ApiCallGetDeposits);
         }
 
         public async Task<GetMarketHistoryResponse> GetMarketHistory(string market, int count = 20)
@@ -118,6 +125,11 @@ namespace Bittrex
         public dynamic GetTicker(string market)
         {
             return Call<dynamic>(ApiCallGetTicker, Tuple.Create("market", GetMarketName(market)));
+        }
+
+        public async Task<GetWithdrawalResponse> GetWithdrawals()
+        {
+            return await Call<GetWithdrawalResponse>(ApiCallGetWithdrawals);
         }
 
         public void Initialise(ExchangeContext context)

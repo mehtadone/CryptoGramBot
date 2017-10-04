@@ -27,7 +27,7 @@ namespace CryptoGramBot.Data
             builder.Entity<ProfitAndLoss>().HasIndex(x => x.Id).IsUnique();
             builder.Entity<BalanceHistory>().HasIndex(x => x.Key).IsUnique();
             builder.Entity<WalletBalance>().HasIndex(x => x.Id).IsUnique();
-            builder.Entity<Deposit>().HasIndex(x => x.TransactionId).IsUnique();
+            builder.Entity<Deposit>().HasIndex(x => x.Id).IsUnique();
             builder.Entity<Withdrawal>().HasIndex(x => x.Id).IsUnique();
             base.OnModelCreating(builder);
         }

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Bittrex;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
@@ -120,6 +122,28 @@ namespace CryptoGramBot.Services
             await _databaseService.AddWalletBalances(bittrexBalances);
 
             return new BalanceInformation(currentBalance, lastBalance, Constants.Bittrex, bittrexBalances);
+        }
+
+        public async Task<List<Deposit>> GetNewDeposits()
+        {
+            var list = await _exchange.GetDeposits();
+
+            var localDesposits = list.Select(Mapper.Map<Deposit>).ToList();
+            var newDeposits = await _databaseService.AddDeposits(localDesposits, Constants.Bittrex);
+
+            await _databaseService.AddLastChecked("Bittrex.DepositCheck", DateTime.Now);
+            return newDeposits;
+        }
+
+        public async Task<List<Withdrawal>> GetNewWithdrawals()
+        {
+            var list = await _exchange.GetWithdrawals();
+
+            var localWithdrawals = list.Select(Mapper.Map<Withdrawal>).ToList();
+
+            var newWithdrawals = await _databaseService.AddWithdrawals(localWithdrawals, Constants.Bittrex);
+            await _databaseService.AddLastChecked("Bittrex.WithdrawalCheck", DateTime.Now);
+            return newWithdrawals;
         }
 
         public async Task<List<Trade>> GetOrderHistory(DateTime lastChecked)

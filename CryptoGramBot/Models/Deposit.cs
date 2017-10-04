@@ -13,6 +13,7 @@ namespace CryptoGramBot.Models
         public string Address { get; set; }
         public double Amount { get; set; }
         public uint Confirmations { get; set; }
+        public double Cost { get; set; }
         public string Currency { get; set; }
         public string Exchange { get; set; }
         public int Id { get; set; }

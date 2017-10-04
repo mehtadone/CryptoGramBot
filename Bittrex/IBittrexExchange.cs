@@ -13,6 +13,8 @@ namespace Bittrex
 
         Task<GetBalancesResponse> GetBalances();
 
+        Task<GetDepositResponse> GetDeposits();
+
         /// <summary>
         /// Used to retrieve the latest trades that have occured for a specific market.
         /// </summary>
@@ -41,6 +43,8 @@ namespace Bittrex
         Task<GetOrderHistoryResponse> GetOrderHistory(string market, int count = 10);
 
         dynamic GetTicker(string market);
+
+        Task<GetWithdrawalResponse> GetWithdrawals();
 
         void Initialise(ExchangeContext context);
 

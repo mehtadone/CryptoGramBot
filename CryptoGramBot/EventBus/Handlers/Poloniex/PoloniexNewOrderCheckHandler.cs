@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Events;
@@ -10,7 +9,7 @@ using CryptoGramBot.Services;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
 
-namespace CryptoGramBot.EventBus.Handlers
+namespace CryptoGramBot.EventBus.Handlers.Poloniex
 {
     public class PoloniexNewOrderCheckHandler : IEventHandler<NewTradesCheckEvent>
     {

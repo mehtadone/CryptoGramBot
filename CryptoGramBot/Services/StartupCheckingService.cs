@@ -17,6 +17,7 @@ namespace CryptoGramBot.Services
         private readonly IMicroBus _bus;
         private readonly GeneralConfig _config;
         private readonly CryptoGramBotDbContext _context;
+        private readonly DatabaseService _databaseService;
         private readonly LiteDbDatabaseService _liteDbDatabaseService;
         private readonly TelegramConfig _telegramConfig;
 
@@ -26,6 +27,7 @@ namespace CryptoGramBot.Services
             TelegramBot bot,
             GeneralConfig config,
             LiteDbDatabaseService liteDbDatabaseService,
+            DatabaseService databaseService,
             CryptoGramBotDbContext context
             )
         {
@@ -34,16 +36,15 @@ namespace CryptoGramBot.Services
             _bot = bot;
             _config = config;
             _liteDbDatabaseService = liteDbDatabaseService;
+            _databaseService = databaseService;
             _context = context;
         }
 
         public async Task MigrateToSqlLite()
         {
-            var allSettings = _context.Settings;
-
             if (!File.Exists(Directory.GetCurrentDirectory() + "/database/cryptogrambot.db")) return;
 
-            var hasMigratedBefore = allSettings.SingleOrDefault(x => x.Name == "SQLite.Migration.Complete");
+            var hasMigratedBefore = _databaseService.GetSetting("SQLite.Migration.Complete");
 
             if (hasMigratedBefore != null && hasMigratedBefore.Value != "true")
             {
@@ -105,6 +106,7 @@ namespace CryptoGramBot.Services
             if (bittrexEnabled || poloEnabled || coinigyEnabled)
             {
                 registry.Schedule(() => CheckBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
+                registry.Schedule(() => CheckDepositAndWithdrawals().Wait()).ToRunEvery(2).Minutes();
             }
 
             if (bagManagementEnabled || lowBtcNotification || dustNotifications)
@@ -124,6 +126,11 @@ namespace CryptoGramBot.Services
         private async Task CheckBalances()
         {
             await _bus.PublishAsync(new BalanceCheckEvent(false));
+        }
+
+        private async Task CheckDepositAndWithdrawals()
+        {
+            await _bus.PublishAsync(new DepositAndWithdrawalEvent());
         }
 
         private async Task CheckForBags()

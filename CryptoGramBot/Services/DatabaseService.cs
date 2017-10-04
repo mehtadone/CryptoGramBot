@@ -43,16 +43,25 @@ namespace CryptoGramBot.Services
             //            throw new NotImplementedException();
         }
 
-        public async Task AddLastChecked(string exchange, DateTime timestamp)
+        public async Task AddDeposits(List<Deposit> deposits)
+        {
+            _log.LogInformation($"Adding new deposits to database");
+
+            var context = _context.Deposits;
+            context.AddRange(deposits);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task AddLastChecked(string key, DateTime timestamp)
         {
             var lastCheckeds = _context.LastCheckeds;
-            var lastChecked = lastCheckeds.SingleOrDefault(x => x.Exchange == exchange);
+            var lastChecked = lastCheckeds.SingleOrDefault(x => x.Exchange == key);
 
             if (lastChecked == null)
             {
                 lastCheckeds.Add(new LastChecked
                 {
-                    Exchange = exchange,
+                    Exchange = key,
                     Timestamp = timestamp
                 });
             }
@@ -98,6 +107,15 @@ namespace CryptoGramBot.Services
         {
             var walletBalancesDb = _context.WalletBalances;
             walletBalancesDb.AddRange(walletBalances);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task AddWithdrawals(List<Withdrawal> withdrawals)
+        {
+            _log.LogInformation($"Adding new withdrawals to database");
+
+            var context = _context.Withdrawals;
+            context.AddRange(withdrawals);
             await _context.SaveChangesAsync();
         }
 
@@ -207,11 +225,11 @@ namespace CryptoGramBot.Services
             return trades;
         }
 
-        public DateTime GetLastChecked(string exchange)
+        public DateTime GetLastChecked(string key)
         {
             var contextLastCheckeds = _context.LastCheckeds;
             var lastChecked = contextLastCheckeds
-                .SingleOrDefault(x => x.Exchange == exchange);
+                .SingleOrDefault(x => x.Exchange == key);
 
             return lastChecked?.Timestamp ?? Constants.DateTimeUnixEpochStart;
         }

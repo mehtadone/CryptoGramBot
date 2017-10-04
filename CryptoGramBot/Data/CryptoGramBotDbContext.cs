@@ -12,19 +12,23 @@ namespace CryptoGramBot.Data
         { }
 
         public DbSet<BalanceHistory> BalanceHistories { get; set; }
+        public DbSet<Deposit> Deposits { get; set; }
         public DbSet<LastChecked> LastCheckeds { get; set; }
         public DbSet<ProfitAndLoss> ProfitAndLosses { get; set; }
         public DbSet<Setting> Settings { get; set; }
         public DbSet<Trade> Trades { get; set; }
         public DbSet<WalletBalance> WalletBalances { get; set; }
+        public DbSet<Withdrawal> Withdrawals { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.Entity<Trade>().HasIndex(x => x.Id).IsUnique(true);
-            builder.Entity<LastChecked>().HasIndex(x => x.Id).IsUnique(true);
-            builder.Entity<ProfitAndLoss>().HasIndex(x => x.Id).IsUnique(true);
-            builder.Entity<BalanceHistory>().HasIndex(x => x.Key).IsUnique(true);
-            builder.Entity<WalletBalance>().HasIndex(x => x.Id).IsUnique(true);
+            builder.Entity<Trade>().HasIndex(x => x.Id).IsUnique();
+            builder.Entity<LastChecked>().HasIndex(x => x.Id).IsUnique();
+            builder.Entity<ProfitAndLoss>().HasIndex(x => x.Id).IsUnique();
+            builder.Entity<BalanceHistory>().HasIndex(x => x.Key).IsUnique();
+            builder.Entity<WalletBalance>().HasIndex(x => x.Id).IsUnique();
+            builder.Entity<Deposit>().HasIndex(x => x.TransactionId).IsUnique();
+            builder.Entity<Withdrawal>().HasIndex(x => x.Id).IsUnique();
             base.OnModelCreating(builder);
         }
     }

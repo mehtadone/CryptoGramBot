@@ -2,9 +2,10 @@
 using Bittrex;
 using Bittrex.Data;
 using CryptoGramBot.Models;
-using Poloniex.WalletTools;
+using Deposit = CryptoGramBot.Models.Deposit;
 using ITrade = Poloniex.TradingTools.ITrade;
 using Trade = CryptoGramBot.Models.Trade;
+using Withdrawal = CryptoGramBot.Models.Withdrawal;
 
 namespace CryptoGramBot.Extensions
 {
@@ -22,6 +23,9 @@ namespace CryptoGramBot.Extensions
 
             config.CreateMap<GetBalancesResponse, WalletBalance>();
             config.CreateMap<AccountBalance, WalletBalance>();
+
+            config.CreateMap<Poloniex.WalletTools.Withdrawal, Withdrawal>();
+            config.CreateMap<Poloniex.WalletTools.Deposit, Deposit>();
         }
     }
 }

@@ -7,7 +7,7 @@ using CryptoGramBot.Models;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus.Handlers
+namespace CryptoGramBot.EventBus.Handlers.Poloniex
 {
     public class PoloniexBagAndDustHandler : IEventHandler<BagAndDustEvent>
     {

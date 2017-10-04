@@ -4,6 +4,7 @@ using CryptoGramBot.EventBus.Commands;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
 using CryptoGramBot.EventBus.Handlers.BalanceInfo;
+using CryptoGramBot.EventBus.Handlers.Poloniex;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
@@ -53,6 +54,7 @@ namespace CryptoGramBot.Extensions
             if ((bagEnabled || dustEnabled) && poloniexEnabled)
             {
                 busBuilder.RegisterEventHandler<BagAndDustEvent, PoloniexBagAndDustHandler>();
+                busBuilder.RegisterEventHandler<DepositAndWithdrawalEvent, PoloniexDepositWithdrawalHandler>();
             }
 
             return busBuilder;

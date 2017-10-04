@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
@@ -9,7 +10,10 @@ using Microsoft.Extensions.Logging;
 using Poloniex;
 using Poloniex.General;
 using Poloniex.MarketTools;
+using Poloniex.WalletTools;
+using Deposit = CryptoGramBot.Models.Deposit;
 using Trade = CryptoGramBot.Models.Trade;
+using Withdrawal = CryptoGramBot.Models.Withdrawal;
 
 namespace CryptoGramBot.Services
 {
@@ -81,6 +85,32 @@ namespace CryptoGramBot.Services
             return new BalanceInformation(currentBalance, lastBalance, Constants.Poloniex, poloniexToWalletBalances);
         }
 
+        public async Task<List<Deposit>> GetNewDeposits()
+        {
+            var checkedBefore = _databaseService.GetSetting("Poloniex.DepositCheck");
+            var list = await GetDepositsAndWithdrawals(checkedBefore);
+            var poloDeposits = list.Deposits;
+
+            var localDesposits = poloDeposits.Select(Mapper.Map<Deposit>).ToList();
+
+            await _databaseService.AddLastChecked("Poloniex.DepositCheck", DateTime.Now);
+
+            return localDesposits;
+        }
+
+        public async Task<List<Withdrawal>> GetNewWithdrawals()
+        {
+            var checkedBefore = _databaseService.GetSetting("Poloniex.WithdrawalCheck");
+            var list = await GetDepositsAndWithdrawals(checkedBefore);
+            var poloWithdrawals = list.Withdrawals;
+
+            var withdrawals = poloWithdrawals.Select(Mapper.Map<Withdrawal>).ToList();
+
+            await _databaseService.AddLastChecked("Poloniex.WithdrawalCheck", DateTime.Now);
+
+            return withdrawals;
+        }
+
         public async Task<List<Trade>> GetOrderHistory(DateTime lastChecked)
         {
             var tradesAsync = await _poloniexClient.Trading.GetTradesAsync(CurrencyPair.All, lastChecked);
@@ -89,6 +119,7 @@ namespace CryptoGramBot.Services
             var feeInfo = await _poloniexClient.Trading.GetFeeInfoAsync();
 
             var poloniexToTrades = TradeConverter.PoloniexToTrades(tradesAsyncResult, feeInfo);
+
             return poloniexToTrades;
         }
 
@@ -126,6 +157,23 @@ namespace CryptoGramBot.Services
                 }
             }
             return priceAsDecimal;
+        }
+
+        private async Task<IDepositWithdrawalList> GetDepositsAndWithdrawals(Setting checkedBefore)
+        {
+            IDepositWithdrawalList depositWithdrawalList;
+            if (checkedBefore == null || checkedBefore.Value == "false")
+            {
+                depositWithdrawalList = await _poloniexClient.Wallet.GetDepositsAndWithdrawalsAsync();
+            }
+            else
+            {
+                var lastChecked = _databaseService.GetLastChecked("Poloniex.DepositsAndWithdrawals");
+                depositWithdrawalList =
+                    await _poloniexClient.Wallet.GetDepositsAndWithdrawalsAsync(lastChecked, DateTime.MaxValue);
+            }
+
+            return depositWithdrawalList;
         }
     }
 }

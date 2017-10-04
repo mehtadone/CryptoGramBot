@@ -95,32 +95,30 @@ namespace CryptoGramBot.Services
             var registry = new Registry();
             if (bittrexEnabled || poloEnabled)
             {
-                //                SendStartupMessage().Wait();
-                //
-                //                registry.Schedule(() => GetNewOrders().Wait())
-                //                    .ToRunNow()
-                //                    .AndEvery(5)
-                //                    .Minutes();
+                SendStartupMessage().Wait();
+
+                registry.Schedule(() => GetNewOrders().Wait())
+                    .ToRunNow()
+                    .AndEvery(5)
+                    .Minutes();
             }
 
             if (bittrexEnabled || poloEnabled || coinigyEnabled)
             {
-                //                registry.Schedule(() => CheckBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
-                //                registry.Schedule(() => CheckDepositAndWithdrawals().Wait()).ToRunEvery(2).Minutes();
-
-                registry.Schedule(() => CheckDepositAndWithdrawals().Wait()).ToRunNow();
+                registry.Schedule(() => CheckBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
+                registry.Schedule(() => CheckDepositAndWithdrawals().Wait()).ToRunEvery(2).Minutes();
             }
 
-            //            if (bagManagementEnabled || lowBtcNotification || dustNotifications)
-            //            {
-            //                registry.Schedule(() => CheckForBags().Wait()).ToRunEvery(6).Hours();
-            //                registry.Schedule(() => CheckForBags().Wait()).ToRunOnceIn(5).Minutes();
-            //            }
-            //
-            //            if (coinigyEnabled)
-            //            {
-            //                _bus.SendAsync(new GetCoinigyAccountCommand());
-            //            }
+            if (bagManagementEnabled || lowBtcNotification || dustNotifications)
+            {
+                registry.Schedule(() => CheckForBags().Wait()).ToRunEvery(6).Hours();
+                registry.Schedule(() => CheckForBags().Wait()).ToRunOnceIn(5).Minutes();
+            }
+
+            if (coinigyEnabled)
+            {
+                _bus.SendAsync(new GetCoinigyAccountCommand());
+            }
 
             JobManager.Initialize(registry);
         }

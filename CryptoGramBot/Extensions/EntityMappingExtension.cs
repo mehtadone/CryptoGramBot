@@ -4,6 +4,7 @@ using Bittrex.Data;
 using CryptoGramBot.Models;
 using Deposit = CryptoGramBot.Models.Deposit;
 using ITrade = Poloniex.TradingTools.ITrade;
+using OpenOrder = CryptoGramBot.Models.OpenOrder;
 using Trade = CryptoGramBot.Models.Trade;
 using Withdrawal = CryptoGramBot.Models.Withdrawal;
 
@@ -15,6 +16,13 @@ namespace CryptoGramBot.Extensions
         {
             config.CreateMap<CompletedOrder, Trade>()
                 .ForMember(x => x.ExchangeId, d => d.MapFrom(src => src.OrderUuid));
+
+            config.CreateMap<Bittrex.OpenOrder, OpenOrder>();
+
+            config.CreateMap<Poloniex.TradingTools.IOrder, OpenOrder>()
+                .ForMember(x => x.OrderUuid, d => d.MapFrom(src => src.IdOrder))
+                .ForMember(x => x.Price, d => d.MapFrom(src => src.PricePerCoin))
+                .ForMember(x => x.Limit, d => d.MapFrom(src => src.PricePerCoin));
 
             config.CreateMap<ITrade, Trade>()
                 .ForMember(x => x.ExchangeId, d => d.MapFrom(src => src.IdOrder))

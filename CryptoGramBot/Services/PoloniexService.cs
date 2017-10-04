@@ -98,6 +98,15 @@ namespace CryptoGramBot.Services
             return newDeposits;
         }
 
+        public async Task<List<OpenOrder>> GetNewOpenOrders(DateTime lastChecked)
+        {
+            var poloOrders = await _poloniexClient.Trading.GetOpenOrdersAsync();
+            var orders = TradeConverter.PoloniexToOpenOrders(poloOrders);
+            var newOrders = await _databaseService.AddOpenOrders(orders);
+
+            return newOrders;
+        }
+
         public async Task<List<Withdrawal>> GetNewWithdrawals()
         {
             var checkedBefore = _databaseService.GetSetting("Poloniex.WithdrawalCheck");

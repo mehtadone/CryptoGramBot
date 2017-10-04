@@ -8,7 +8,7 @@ using CryptoGramBot.Models;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus.Handlers
+namespace CryptoGramBot.EventBus.Handlers.Bittrex
 {
     public class BittrexNewOrderCheckHandler : IEventHandler<NewTradesCheckEvent>
     {
@@ -30,14 +30,20 @@ namespace CryptoGramBot.EventBus.Handlers
             var newTradesResponse = await _bus.QueryAsync(new FindNewTradeQuery(orderHistory));
             await _bus.SendAsync(new AddLastCheckedCommand(Constants.Bittrex));
 
-            var i = 0;
+            await SendAndCheckNotifications(newTradesResponse);
+            await SendOpenOrdersNotifications(lastChecked.LastChecked);
+        }
 
+        private async Task SendAndCheckNotifications(FindNewTradesResponse newTradesResponse)
+        {
+            var i = 0;
             if (!_config.BuyNotifications && !_config.SellNotifications) return;
 
             if (newTradesResponse.NewTrades.Count() > 10)
             {
                 await _bus.SendAsync(
-                    new SendMessageCommand("There are more than 10 trades to send. Not going to send them to avoid spamming you"));
+                    new SendMessageCommand(
+                        "There are more than 10 trades to send. Not going to send them to avoid spamming you"));
                 return;
             }
 
@@ -51,6 +57,24 @@ namespace CryptoGramBot.EventBus.Handlers
                 if (newTrade.Side == TradeSide.Buy && _config.BuyNotifications)
                 {
                     await _bus.SendAsync(new TradeNotificationCommand(newTrade));
+                }
+            }
+        }
+
+        private async Task SendOpenOrdersNotifications(DateTime lastChecked)
+        {
+            if (_config.OpenOrderNotification)
+            {
+                var newOrders = await _bittrexService.GetNewOpenOrders(lastChecked);
+
+                foreach (var openOrder in newOrders)
+                {
+                    var message = $"{openOrder.Opened:g}\n" +
+                                  $"New {openOrder.Exchange} OPEN order\n" +
+                                  $"<strong>{openOrder.Side} {openOrder.Base}-{openOrder.Terms}</strong>\n" +
+                                  $"Price: {openOrder.Price}\n" +
+                                  $"Quanitity: {openOrder.Quantity}";
+                    await _bus.SendAsync(new SendMessageCommand(message));
                 }
             }
         }

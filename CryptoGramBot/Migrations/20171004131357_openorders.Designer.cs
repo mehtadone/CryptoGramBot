@@ -12,9 +12,10 @@ using System;
 namespace CryptoGramBot.Migrations
 {
     [DbContext(typeof(CryptoGramBotDbContext))]
-    partial class CryptoGramBotDbContextModelSnapshot : ModelSnapshot
+    [Migration("20171004131357_openorders")]
+    partial class openorders
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

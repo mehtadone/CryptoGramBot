@@ -83,6 +83,11 @@ namespace Bittrex
             return await Call<GetOpenOrdersResponse>(ApiCallGetOpenOrders, Tuple.Create("market", GetMarketName(market)));
         }
 
+        public async Task<GetOpenOrdersResponse> GetOpenOrders()
+        {
+            return await Call<GetOpenOrdersResponse>(ApiCallGetOpenOrders);
+        }
+
         public async Task<GetOrderBookResponse> GetOrderBook(string market, OrderBookType type, int depth = 20)
         {
             if (type == OrderBookType.Both)

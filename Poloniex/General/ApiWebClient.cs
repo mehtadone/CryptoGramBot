@@ -56,6 +56,37 @@ namespace Poloniex.General
             return output;
         }
 
+        public Dictionary<string, IOrder> PostDataForAllOpenOrders(string command, Dictionary<string, object> postData)
+        {
+            postData.Add("command", command);
+            postData.Add("nonce", Helper.GetCurrentHttpPostNonce());
+
+            var jsonString = PostString(Helper.ApiUrlHttpsRelativeTrading, postData.ToHttpPostString());
+            var list = new Dictionary<string, IOrder>();
+
+            try
+            {
+                var output = JObject.Parse(jsonString);
+                foreach (var token in output)
+                {
+                    if (!token.Value.HasValues) continue;
+
+                    var pairTrades = JsonSerializer.DeserializeObject<List<Order>>(token.Value.ToString());
+
+                    foreach (var pairTrade in pairTrades)
+                    {
+                        list.Add(token.Key, pairTrade);
+                    }
+                }
+            }
+            catch (JsonReaderException e)
+            {
+                var ex = e;
+            }
+
+            return list;
+        }
+
         public List<ITrade> PostDataForAllTradeHistory(string command, Dictionary<string, object> postData)
         {
             postData.Add("command", command);

@@ -5,6 +5,7 @@
         bool BuyNotifications { get; set; }
         bool Enabled { get; set; }
         string Key { get; set; }
+        bool OpenOrderNotification { get; set; }
         string Secret { get; set; }
         bool SellNotifications { get; set; }
         bool SendHourlyUpdates { get; set; }

@@ -10,6 +10,7 @@ using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
+using OpenOrder = CryptoGramBot.Models.OpenOrder;
 
 namespace CryptoGramBot.Services
 {
@@ -133,6 +134,16 @@ namespace CryptoGramBot.Services
 
             await _databaseService.AddLastChecked("Bittrex.DepositCheck", DateTime.Now);
             return newDeposits;
+        }
+
+        public async Task<List<OpenOrder>> GetNewOpenOrders(DateTime lastChecked)
+        {
+            var openOrders = await _exchange.GetOpenOrders();
+
+            var orders = TradeConverter.BittrexToOpenOrders(openOrders);
+            var newOrders = await _databaseService.AddOpenOrders(orders);
+
+            return newOrders;
         }
 
         public async Task<List<Withdrawal>> GetNewWithdrawals()

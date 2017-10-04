@@ -35,30 +35,55 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                 var newTradesResponse = await _bus.QueryAsync(new FindNewTradeQuery(orderHistory));
                 await _bus.SendAsync(new AddLastCheckedCommand(Constants.Poloniex));
 
-                if (newTradesResponse.NewTrades.Count() > 10)
-                {
-                    await _bus.SendAsync(
-                        new SendMessageCommand("There are more than 10 trades to send. Not going to send them to avoid spamming you"));
-                    return;
-                }
-
-                foreach (var newTrade in newTradesResponse.NewTrades)
-                {
-                    if (newTrade.Side == TradeSide.Sell && _config.SellNotifications)
-                    {
-                        await _bus.SendAsync(new TradeNotificationCommand(newTrade));
-                    }
-
-                    if (newTrade.Side == TradeSide.Buy && _config.BuyNotifications)
-                    {
-                        await _bus.SendAsync(new TradeNotificationCommand(newTrade));
-                    }
-                }
+                await SendAndCheckNotifications(newTradesResponse);
+                await SendOpenOrdersNotifications(lastChecked.LastChecked);
             }
             catch (Exception ex)
             {
                 _log.LogError("Error in getting new orders from poloniex\n" + ex.Message);
                 throw;
+            }
+        }
+
+        private async Task SendAndCheckNotifications(FindNewTradesResponse newTradesResponse)
+        {
+            if (newTradesResponse.NewTrades.Count() > 10)
+            {
+                await _bus.SendAsync(
+                    new SendMessageCommand(
+                        "There are more than 10 trades to send. Not going to send them to avoid spamming you"));
+                return;
+            }
+
+            foreach (var newTrade in newTradesResponse.NewTrades)
+            {
+                if (newTrade.Side == TradeSide.Sell && _config.SellNotifications)
+                {
+                    await _bus.SendAsync(new TradeNotificationCommand(newTrade));
+                }
+
+                if (newTrade.Side == TradeSide.Buy && _config.BuyNotifications)
+                {
+                    await _bus.SendAsync(new TradeNotificationCommand(newTrade));
+                }
+            }
+        }
+
+        private async Task SendOpenOrdersNotifications(DateTime lastChecked)
+        {
+            if (_config.OpenOrderNotification)
+            {
+                var newOrders = await _poloService.GetNewOpenOrders(lastChecked);
+
+                foreach (var openOrder in newOrders)
+                {
+                    var message = $"{openOrder.Opened:g}\n" +
+                                  $"New {openOrder.Exchange} OPEN order\n" +
+                                  $"<strong>{openOrder.Side} {openOrder.Base}-{openOrder.Terms}</strong>\n" +
+                                  $"Price: {openOrder.Price}\n" +
+                                  $"Quanitity: {openOrder.Quantity}";
+                    await _bus.SendAsync(new SendMessageCommand(message));
+                }
             }
         }
     }

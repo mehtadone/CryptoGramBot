@@ -21,6 +21,8 @@ namespace Poloniex.TradingTools
         /// <param name="currencyPair">The currency pair, which consists of the currency being traded on the market, and the base's code.</param>
         Task<IList<IOrder>> GetOpenOrdersAsync(CurrencyPair currencyPair);
 
+        Task<IDictionary<string, IOrder>> GetOpenOrdersAsync();
+
         /// <summary>Fetches the trades made in your account, ordered by most recent first.</summary>
         /// <param name="currencyPair">The currency pair, which consists of the currency being traded on the market, and the base's code.</param>
         Task<IList<ITrade>> GetTradesAsync(CurrencyPair currencyPair);

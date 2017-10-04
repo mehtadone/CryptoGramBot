@@ -14,6 +14,7 @@ namespace CryptoGramBot.Data
         public DbSet<BalanceHistory> BalanceHistories { get; set; }
         public DbSet<Deposit> Deposits { get; set; }
         public DbSet<LastChecked> LastCheckeds { get; set; }
+        public DbSet<OpenOrder> OpenOrders { get; set; }
         public DbSet<ProfitAndLoss> ProfitAndLosses { get; set; }
         public DbSet<Setting> Settings { get; set; }
         public DbSet<Trade> Trades { get; set; }
@@ -29,6 +30,7 @@ namespace CryptoGramBot.Data
             builder.Entity<WalletBalance>().HasIndex(x => x.Id).IsUnique();
             builder.Entity<Deposit>().HasIndex(x => x.Id).IsUnique();
             builder.Entity<Withdrawal>().HasIndex(x => x.Id).IsUnique();
+            builder.Entity<OpenOrder>().HasIndex(x => x.Id).IsUnique();
             base.OnModelCreating(builder);
         }
     }

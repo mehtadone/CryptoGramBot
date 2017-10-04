@@ -3,13 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Jojatekok.PoloniexAPI;
 using Newtonsoft.Json.Linq;
 using Poloniex.General;
-using IOrder = Poloniex.MarketTools.IOrder;
-using ITrade = Poloniex.TradingTools.ITrade;
-using Order = Poloniex.MarketTools.Order;
-using Trade = Poloniex.MarketTools.Trade;
 
 namespace Poloniex.TradingTools
 {
@@ -20,7 +15,7 @@ namespace Poloniex.TradingTools
             ApiWebClient = apiWebClient;
         }
 
-        private ApiWebClient ApiWebClient { get; set; }
+        private ApiWebClient ApiWebClient { get; }
 
         public Task<bool> DeleteOrderAsync(CurrencyPair currencyPair, ulong orderId)
         {
@@ -35,6 +30,11 @@ namespace Poloniex.TradingTools
         public Task<IList<IOrder>> GetOpenOrdersAsync(CurrencyPair currencyPair)
         {
             return Task.Factory.StartNew(() => GetOpenOrders(currencyPair));
+        }
+
+        public Task<IDictionary<string, IOrder>> GetOpenOrdersAsync()
+        {
+            return Task.Factory.StartNew(GetOpenOrders);
         }
 
         public Task<IList<ITrade>> GetTradesAsync(CurrencyPair currencyPair, DateTime startTime, DateTime endTime)
@@ -73,12 +73,6 @@ namespace Poloniex.TradingTools
             return data.Value<byte>("success") == 1;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private T GetData<T>(string command, params object[] parameters)
-        {
-            return ApiWebClient.GetData<T>(Helper.ApiUrlHttpsRelativePublic + command, parameters);
-        }
-
         private FeeInfo GetFeeInfo()
         {
             var data = PostData<FeeInfo>(
@@ -94,6 +88,16 @@ namespace Poloniex.TradingTools
 
             var data = PostData<IList<Order>>("returnOpenOrders", postData);
             return data.Any() ? data.ToList<IOrder>() : new List<IOrder>();
+        }
+
+        private IDictionary<string, IOrder> GetOpenOrders()
+        {
+            var postData = new Dictionary<string, object> {
+                { "currencyPair", CurrencyPair.All }
+            };
+
+            var allOrders = PostDataForAllOrders("returnOpenOrders", postData);
+            return allOrders;
         }
 
         private IList<ITrade> GetTrades(CurrencyPair currencyPair, DateTime startTime, DateTime endTime)
@@ -118,6 +122,11 @@ namespace Poloniex.TradingTools
         private T PostData<T>(string command, Dictionary<string, object> postData)
         {
             return ApiWebClient.PostData<T>(command, postData);
+        }
+
+        private Dictionary<string, IOrder> PostDataForAllOrders(string command, Dictionary<string, object> postData)
+        {
+            return ApiWebClient.PostDataForAllOpenOrders(command, postData);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

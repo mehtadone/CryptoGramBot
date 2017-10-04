@@ -91,6 +91,31 @@ namespace CryptoGramBot.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<List<OpenOrder>> AddOpenOrders(List<OpenOrder> orders)
+        {
+            _log.LogInformation("Adding new open orders to database");
+            var context = _context.OpenOrders;
+
+            var list = new List<OpenOrder>();
+            foreach (var openOrder in orders)
+            {
+                var singleOrDefault = context.SingleOrDefault(x => x.Terms == openOrder.Terms &&
+                                                                   x.Base == openOrder.Base &&
+                                                                   x.Exchange == openOrder.Exchange &&
+                                                                   x.OrderUuid == openOrder.OrderUuid &&
+                                                                   x.Price == openOrder.Price);
+
+                if (singleOrDefault == null)
+                {
+                    context.Add(openOrder);
+                    list.Add(openOrder);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return list;
+        }
+
         public async Task<List<Trade>> AddTrades(IEnumerable<Trade> trades)
         {
             var newTrades = new List<Trade>();

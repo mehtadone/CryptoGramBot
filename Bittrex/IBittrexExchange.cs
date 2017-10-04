@@ -29,6 +29,8 @@ namespace Bittrex
 
         Task<GetOpenOrdersResponse> GetOpenOrders(string market);
 
+        Task<GetOpenOrdersResponse> GetOpenOrders();
+
         /// <summary>
         /// Used to retrieve the orderbook for a given market
         /// </summary>

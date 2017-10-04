@@ -1,5 +1,4 @@
-﻿using System.Reflection.Metadata;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Commands;
 using CryptoGramBot.EventBus.Events;
@@ -7,7 +6,7 @@ using CryptoGramBot.Helpers;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
+namespace CryptoGramBot.EventBus.Handlers.Bittrex
 {
     public class BittrexBalanceCheckHandler : IEventHandler<BalanceCheckEvent>
     {

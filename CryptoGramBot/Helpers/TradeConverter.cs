@@ -6,11 +6,13 @@ using System.Text;
 using AutoMapper;
 using Bittrex;
 using Bittrex.Data;
+using CryptoGramBot.Helpers;
 using CsvHelper;
 using CryptoGramBot.Models;
 using Poloniex.TradingTools;
 using Poloniex.WalletTools;
-using ITrade = Poloniex.TradingTools.ITrade;
+using Remotion.Linq.Parsing.ExpressionVisitors.Transformation.PredefinedTransformations;
+using OpenOrder = CryptoGramBot.Models.OpenOrder;
 using OrderType = Poloniex.General.OrderType;
 using Trade = CryptoGramBot.Models.Trade;
 
@@ -34,6 +36,28 @@ namespace CryptoGramBot.Helpers
             }
 
             return BittrexToTrades(tradeList);
+        }
+
+        public static List<OpenOrder> BittrexToOpenOrders(IEnumerable<Bittrex.OpenOrder> bittrexOrders)
+        {
+            var list = new List<OpenOrder>();
+
+            foreach (var openOrder in bittrexOrders)
+            {
+                var order = Mapper.Map<OpenOrder>(openOrder);
+                order.Exchange = Constants.Bittrex;
+                order.Price = openOrder.Limit;
+
+                order.Side = openOrder.OrderType == OpenOrderType.LIMIT_BUY ? TradeSide.Buy : TradeSide.Sell;
+
+                var ccy = openOrder.Exchange.Split('-');
+                order.Base = ccy[0];
+                order.Terms = ccy[1];
+
+                list.Add(order);
+            }
+
+            return list;
         }
 
         public static List<Trade> BittrexToTrades(IEnumerable<CompletedOrder> bittrexTrades)
@@ -81,6 +105,32 @@ namespace CryptoGramBot.Helpers
             }
 
             return walletBalances;
+        }
+
+        public static List<OpenOrder> PoloniexToOpenOrders(IDictionary<string, IOrder> orders)
+        {
+            var openOrders = new List<OpenOrder>();
+
+            foreach (var openOrderPair in orders)
+            {
+                var poloOrder = openOrderPair.Value;
+
+                var openOrder = Mapper.Map<OpenOrder>(poloOrder);
+                openOrder.Exchange = Constants.Poloniex;
+                openOrder.Side = poloOrder.Type == OrderType.Buy ? TradeSide.Buy : TradeSide.Sell;
+
+                var ccy = openOrderPair.Key.Split('_');
+                openOrder.Base = ccy[0];
+                openOrder.Terms = ccy[1];
+
+                openOrder.Opened = DateTime.Now;
+
+                openOrder.Quantity = Convert.ToDecimal(openOrderPair.Value.AmountQuote);
+
+                openOrders.Add(openOrder);
+            }
+
+            return openOrders;
         }
 
         public static List<Trade> PoloniexToTrades(IList<ITrade> trades, FeeInfo feeInfo)

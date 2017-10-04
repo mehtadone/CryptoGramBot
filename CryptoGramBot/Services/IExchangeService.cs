@@ -14,5 +14,6 @@ namespace CryptoGramBot.Services
         Task<List<Trade>> GetOrderHistory(DateTime lastChecked);
 
         Task<decimal> GetPrice(string terms);
+        Task<List<OpenOrder>> GetNewOpenOrders(DateTime lastChecked);
     }
 }

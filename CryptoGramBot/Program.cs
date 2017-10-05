@@ -16,6 +16,7 @@ using CryptoGramBot.Extensions;
 using Enexure.MicroBus;
 using Autofac.Extensions.DependencyInjection;
 using CryptoGramBot.Data;
+using CryptoGramBot.Services.Telegram;
 using Enexure.MicroBus.Autofac;
 using Microsoft.EntityFrameworkCore;
 using IConfigurationProvider = Microsoft.Extensions.Configuration.IConfigurationProvider;
@@ -196,6 +197,7 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<DatabaseService>();
             containerBuilder.RegisterType<LiteDbDatabaseService>();
             containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
+            containerBuilder.RegisterType<TelegramMessageSendingService>().SingleInstance();
             containerBuilder.RegisterType<StartupCheckingService>().SingleInstance();
             containerBuilder.RegisterType<CoinigyBalanceService>();
             containerBuilder.RegisterType<TelegramBot>().SingleInstance();

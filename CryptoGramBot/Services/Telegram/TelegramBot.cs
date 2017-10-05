@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
+using CryptoGramBot.Services.Telegram;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Telegram.Bot;

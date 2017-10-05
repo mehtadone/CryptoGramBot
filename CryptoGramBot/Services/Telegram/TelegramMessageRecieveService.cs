@@ -1,31 +1,32 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using CryptoGramBot.EventBus;
-using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
-using CryptoGramBot.EventBus.Handlers.BalanceInfo;
 using CryptoGramBot.Helpers;
 using Enexure.MicroBus;
+using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Args;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using MessageType = Telegram.Bot.Types.Enums.MessageType;
 
-namespace CryptoGramBot.Services
+namespace CryptoGramBot.Services.Telegram
 {
     public class TelegramMessageRecieveService
     {
         private static ILogger<TelegramMessageRecieveService> _log;
         private readonly IMicroBus _bus;
+        private readonly TelegramMessageSendingService _sendingService;
         private TelegramBotClient _bot;
         private bool _waitingForFile;
 
         public TelegramMessageRecieveService(
             IMicroBus bus,
+            TelegramMessageSendingService sendingService,
             ILogger<TelegramMessageRecieveService> log)
         {
             _bus = bus;
+            _sendingService = sendingService;
             _log = log;
         }
 
@@ -41,6 +42,22 @@ namespace CryptoGramBot.Services
             var me = _bot.GetMeAsync().Result;
             Console.Title = me.Username;
             _bot.StartReceiving();
+        }
+
+        private async Task<bool> AreWeFileHandling(Message message)
+        {
+            if (!_waitingForFile) return false;
+            _log.LogInformation($"Am I waiting for the file? = {_waitingForFile}");
+            if (message.Document == null)
+            {
+                await _bus.SendAsync(new SendMessageCommand("Did not receive a file"));
+                Reset();
+                return true;
+            }
+
+            await _bus.SendAsync(new BittrexTradeExportCommand(message.Document.FileId));
+            Reset();
+            return true;
         }
 
         private async void BotOnCallbackQueryReceived(object sender, CallbackQueryEventArgs e)
@@ -59,23 +76,9 @@ namespace CryptoGramBot.Services
         private async void BotOnMessageReceivedAsync(object sender, MessageEventArgs e)
         {
             var message = e.Message;
-
             await _bot.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
 
-            _log.LogInformation($"Am I waiting for the file? = {_waitingForFile}");
-            if (_waitingForFile)
-            {
-                if (message.Document == null)
-                {
-                    await _bus.SendAsync(new SendMessageCommand("Did not receive a file"));
-                    _waitingForFile = false;
-                    return;
-                }
-
-                await _bus.SendAsync(new BittrexTradeExportCommand(message.Document.FileId));
-                _waitingForFile = false;
-                return;
-            }
+            if (await AreWeFileHandling(message)) return;
 
             if (message.Type != MessageType.TextMessage) return;
 
@@ -99,88 +102,47 @@ namespace CryptoGramBot.Services
         {
             if (message.StartsWith("/acc"))
             {
-                _log.LogInformation("Message begins with /acc. Going to split string");
-                var splitString = message.Split("_");
-
-                try
-                {
-                    var accountNumber = splitString[1];
-                    var account = int.Parse(accountNumber);
-
-                    _log.LogInformation($"PnL check for {account}");
-                    await _bus.PublishAsync(new BalanceCheckEvent(true, Constants.CoinigyAccountBalance, account));
-                }
-                catch (Exception)
-                {
-                    await SendHelpMessage();
-                    _log.LogInformation($"Don't know what the user wants to do with the /acc. The message was {message}");
-                }
+                await _sendingService.CoinigyAccountBalance(message);
             }
             else if (message.StartsWith(TelegramCommands.CommonPairProfit))
             {
-                var splitString = message.Split(" ");
-                _log.LogInformation("Profit details requested");
-
-                try
-                {
-                    var pair = splitString[1];
-                    _log.LogInformation($"User wants to check for profit for {pair.ToUpper()}");
-                    await _bus.SendAsync(new PairProfitCommand(pair));
-                }
-                catch (Exception)
-                {
-                    await SendHelpMessage();
-                    _log.LogInformation($"Don't know what the you want to do with the /profit. Format is /profit BTC-ETH for example. The message was {message}");
-                }
+                await _sendingService.PairProfit(message);
             }
             else if (message.StartsWith(TelegramCommands.CoinigyAccountList))
             {
-                try
-                {
-                    _log.LogInformation("PnL Account List request");
-                    await _bus.SendAsync(new SendCoinigyAccountInfoCommand());
-                }
-                catch (Exception)
-                {
-                    await SendHelpMessage();
-                    _log.LogInformation($"Don't know what the user wants to do with the /acc. The message was {message}");
-                }
+                await _sendingService.CoinigyAccountList(message);
             }
             else if (message.StartsWith(TelegramCommands.CommonExcel))
             {
-                _log.LogInformation("Excel sheet");
-                await _bus.SendAsync(new ExcelExportCommand());
+                await _sendingService.ExcelSheet();
             }
             else if (message.StartsWith(TelegramCommands.CoinigyTotalBalance))
             {
-                _log.LogInformation("24 Hour pnl difference for coinigy");
-                await _bus.PublishAsync(new BalanceCheckEvent(true, Constants.TotalCoinigyBalance));
+                await _sendingService.TotalCoinigyBalance();
             }
             else if (message.StartsWith(TelegramCommands.BittrexBalanceInfo))
             {
-                _log.LogInformation("24 Hour pnl difference for bittrex");
-                await _bus.PublishAsync(new BalanceCheckEvent(true, Constants.Bittrex));
+                await _sendingService.BittrexBalance();
             }
             else if (message.StartsWith(TelegramCommands.PoloniexBalanceInfo))
             {
-                _log.LogInformation("24 Hour pnl difference for poloniex");
-                await _bus.PublishAsync(new BalanceCheckEvent(true, Constants.Poloniex));
+                await _sendingService.PoloniexBalance();
             }
             else if (message.StartsWith(TelegramCommands.BittrexTradeExportUpload))
             {
-                await _bus.SendAsync(new SendMessageCommand("Please upload bittrex trade export"));
+                await _sendingService.BittrexTradeImport();
                 _waitingForFile = true;
             }
             else
             {
                 _log.LogInformation($"Don't know what the user wants to do. The message was {message}");
-                await SendHelpMessage();
+                await _sendingService.SendHelpMessage();
             }
         }
 
-        private async Task SendHelpMessage()
+        private void Reset()
         {
-            await _bus.SendAsync(new SendHelpMessageCommand());
+            _waitingForFile = false;
         }
     }
 }

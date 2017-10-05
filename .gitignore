@@ -296,3 +296,4 @@ __pycache__/
 /TeleCoinigy/Database/coinigyBalances.db
 /CryptoGramBot/Database/cryptogrambot-journal.db
 /CryptoGramBot/Database/cryptogrambot.db
+/CryptoGramBot/database/cryptogrambot.sqlite

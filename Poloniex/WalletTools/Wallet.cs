@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Jojatekok.PoloniexAPI;
 using Poloniex.General;
-using Poloniex.MarketTools;
 
 namespace Poloniex.WalletTools
 {
@@ -48,7 +46,7 @@ namespace Poloniex.WalletTools
             return Task.Factory.StartNew(() => PostWithdrawal(currency, amount, address, paymentId));
         }
 
-        public Task PostWithdrawalAsync(string currency, double amount, string address)
+        public Task<IGeneratedDepositAddress> PostWithdrawalAsync(string currency, double amount, string address)
         {
             return Task.Factory.StartNew(() => PostWithdrawal(currency, amount, address, null));
         }
@@ -95,11 +93,10 @@ namespace Poloniex.WalletTools
                 { "currency", currency }
             };
 
-            var data = PostData<IGeneratedDepositAddress>("generateNewAddress", postData);
-            return data;
+            return PostData<GeneratedDepositAddress>("generateNewAddress", postData);
         }
 
-        private void PostWithdrawal(string currency, double amount, string address, string paymentId)
+        private IGeneratedDepositAddress PostWithdrawal(string currency, double amount, string address, string paymentId)
         {
             var postData = new Dictionary<string, object> {
                 { "currency", currency },
@@ -112,7 +109,7 @@ namespace Poloniex.WalletTools
                 postData.Add("paymentId", paymentId);
             }
 
-            PostData<IGeneratedDepositAddress>("withdraw", postData);
+            return PostData<GeneratedDepositAddress>("withdraw", postData);
         }
     }
 }

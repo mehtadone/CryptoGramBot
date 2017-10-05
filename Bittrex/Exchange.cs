@@ -15,6 +15,7 @@ namespace Bittrex
         private const string ApiCallCancel = "market/cancel";
         private const string ApiCallGetBalance = "account/getbalance";
         private const string ApiCallGetBalances = "account/getbalances";
+        private const string ApiCallGetDepositAddress = "account/getdepositaddress";
         private const string ApiCallGetDeposits = "account/getdeposithistory";
         private const string ApiCallGetMarketHistory = "public/getmarkethistory";
         private const string ApiCallGetMarkets = "public/getmarkets";
@@ -26,6 +27,7 @@ namespace Bittrex
         private const string ApiCallGetWithdrawals = "account/getwithdrawalhistory";
         private const string ApiCallSellLimit = "market/selllimit";
         private const string ApiCallTemplate = "https://bittrex.com/api/{0}/{1}";
+        private const string ApiCallWithdraw = "account/withdraw";
         private const string ApiVersion = "v1.1";
         private ApiCall _apiCall;
         private string _apiKey;
@@ -52,6 +54,11 @@ namespace Bittrex
         public async Task<GetBalancesResponse> GetBalances()
         {
             return await Call<GetBalancesResponse>(ApiCallGetBalances);
+        }
+
+        public async Task<DepositAddress> GetDepositAddresses(string currency)
+        {
+            return await Call<DepositAddress>(ApiCallGetDepositAddress, Tuple.Create("currency", currency));
         }
 
         public async Task<GetDepositResponse> GetDeposits()
@@ -154,6 +161,15 @@ namespace Bittrex
         public async Task<OrderResponse> PlaceSellOrder(string market, decimal quantity, decimal price)
         {
             return await Call<OrderResponse>(ApiCallSellLimit, Tuple.Create("market", GetMarketName(market)), Tuple.Create("quantity", quantity.ToString(CultureInfo.InvariantCulture)), Tuple.Create("rate", price.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        public async Task<WithdrawalConfirmationResponse> SendWithdrawalRequest(string bagWalletPair, decimal amount, string bagWalletAddress)
+        {
+            return await Call<WithdrawalConfirmationResponse>(ApiCallWithdraw,
+                Tuple.Create("currency", bagWalletPair),
+                Tuple.Create("quantity", amount.ToString(CultureInfo.InvariantCulture)),
+                Tuple.Create("address", bagWalletAddress)
+                );
         }
 
         private static string HashHmac(string message, string secret)

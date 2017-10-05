@@ -53,5 +53,7 @@ namespace Bittrex
         Task<OrderResponse> PlaceBuyOrder(string market, decimal quantity, decimal price);
 
         Task<OrderResponse> PlaceSellOrder(string market, decimal quantity, decimal price);
+
+        Task<WithdrawalConfirmationResponse> SendWithdrawalRequest(string bagWalletPair, decimal amount, string bagWalletAddress);
     }
 }

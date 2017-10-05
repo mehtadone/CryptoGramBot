@@ -48,6 +48,6 @@ namespace Poloniex.WalletTools
         ///     <para>Note: A withdrawal fee will be applied to this amount.</para>
         /// </param>
         /// <param name="address">The address you wish to withdraw to.</param>
-        Task PostWithdrawalAsync(string currency, double amount, string address);
+        Task<IGeneratedDepositAddress> PostWithdrawalAsync(string currency, double amount, string address);
     }
 }

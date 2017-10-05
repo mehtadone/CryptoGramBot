@@ -74,6 +74,9 @@ This app needs to be run all the time to have the bot running. I might look at c
 * Price drop notifications when a balance drops more than 30%. Used for bag management. Runs 4 times a day.
 * Dust notifications
 * Pair profit 
+* Open order notifications
+* Deposit and withdrawal notification
+* Low BTC notifications
 
 ## Todo
 * Show deposits and withdrawals to show accurate profit and loss. 

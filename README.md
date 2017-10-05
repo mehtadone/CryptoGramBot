@@ -11,17 +11,40 @@ A telegram bot that sends your balance updates from coinigy, send trade notifica
 * **LTC**: XoQepSjoTEriBV7bLo1bdTVjbdy1AJW11B
 
 ## Installation
-
 * Pre-requisites:
 [.Net Core Runtime](https://www.microsoft.com/net/download/core#/runtime). Instructions for [windows](https://www.microsoft.com/net/download/core#/runtime), [linux](https://www.microsoft.com/net/download/linux) and [macos](https://www.microsoft.com/net/download/core#/runtime) or [.Net Core SDK](https://www.microsoft.com/net/core#windowscmd) for your OS if you want to build yourself. 
 
 1. Get your Bot ID, you need to chat to the BotFather. See [here](https://core.telegram.org/bots#3-how-do-i-create-a-bot) and [here](https://core.telegram.org/bots#6-botfather) 
-2. Chat to your new bot. Say hi. He won't be very reponsive.
+2. If you would like to add commands, do this now. See Bot Commands below. Note they will only show on a new chat with the bot or by clearing history and clicking "/start"
 3. Open a chat to this [bot](https://t.me/get_id_bot). This should show you your chat id.
 4. Download the lastest version of the zip from [here](https://github.com/mehtadone/CryptoGramBot/releases) and unzip to a folder. Download CryptoGramBot.zip and not the source files if you want to run without building. 
 5. Fill in your config in appsettings.json. Bot ID is WITHOUT Bot and choose whether you want enable each service (true or false)
 6. Give CryptoGramBot the correct execute permissions via chmod if on linux
 7. Start on command line with "dotnet CryptoGramBot.dll"
+
+## Bot Commands
+To add bot commands so they pop up when you type /, you need to let the BotFather know of the commands. You will need to make sure the commands correspond with what you have enabled on the appsettings.json file as clicking "/total_coinigy" when you do not have coinigy enabled will not do anything. 
+
+1. Open a chat to the [BotFather](https://telegram.me/botfather) again
+2. Type /mybots
+3. Click the bot you created for CryptoGramBag
+4. Click "Edit Bot"
+5. Click "Edit Commands"
+6. Paste a selection from the following below you want commands for: 
+
+```
+trade_export - an excel export of all trades
+profit - profit information for pair
+
+list_coinigy_accounts - list coinigy account names
+total_coinigy - total balance from all acounts
+
+upload_bittrex_trades - upload bittrex order export
+trex_btc_balance - bittrex account summary
+
+polo_btc_balance - poloniex account summary
+```
+7. Clear history on your telegram bot to pick up the commands
 
 ## Upgrade
 * Stop your bot

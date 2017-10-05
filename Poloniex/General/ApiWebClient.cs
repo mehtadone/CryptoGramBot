@@ -6,6 +6,7 @@ using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Poloniex.TradingTools;
+using Poloniex.WalletTools;
 
 namespace Poloniex.General
 {
@@ -56,13 +57,13 @@ namespace Poloniex.General
             return output;
         }
 
-        public Dictionary<string, IOrder> PostDataForAllOpenOrders(string command, Dictionary<string, object> postData)
+        public Dictionary<string, List<Order>> PostDataForAllOpenOrders(string command, Dictionary<string, object> postData)
         {
             postData.Add("command", command);
             postData.Add("nonce", Helper.GetCurrentHttpPostNonce());
 
             var jsonString = PostString(Helper.ApiUrlHttpsRelativeTrading, postData.ToHttpPostString());
-            var list = new Dictionary<string, IOrder>();
+            var list = new Dictionary<string, List<Order>>();
 
             try
             {
@@ -73,10 +74,7 @@ namespace Poloniex.General
 
                     var pairTrades = JsonSerializer.DeserializeObject<List<Order>>(token.Value.ToString());
 
-                    foreach (var pairTrade in pairTrades)
-                    {
-                        list.Add(token.Key, pairTrade);
-                    }
+                    list.Add(token.Key, pairTrades);
                 }
             }
             catch (JsonReaderException e)

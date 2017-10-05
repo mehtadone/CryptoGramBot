@@ -31,7 +31,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
             try
             {
                 var lastChecked = await _bus.QueryAsync(new LastCheckedQuery(Constants.Poloniex));
-                var orderHistory = await _poloService.GetOrderHistory(lastChecked.LastChecked - TimeSpan.FromDays(1));
+                var orderHistory = await _poloService.GetOrderHistory(lastChecked.LastChecked - TimeSpan.FromDays(2));
                 var newTradesResponse = await _bus.QueryAsync(new FindNewTradeQuery(orderHistory));
                 await _bus.SendAsync(new AddLastCheckedCommand(Constants.Poloniex));
 
@@ -51,7 +51,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
             {
                 await _bus.SendAsync(
                     new SendMessageCommand(
-                        "There are more than 10 trades to send. Not going to send them to avoid spamming you"));
+                        "There are more than 10 Poloniex trades to send. Not going to send them to avoid spamming you"));
                 return;
             }
 
@@ -73,7 +73,13 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         {
             if (_config.OpenOrderNotification)
             {
-                var newOrders = await _poloService.GetNewOpenOrders(lastChecked);
+                var newOrders = await _poloService.GetNewOpenOrders(lastChecked - TimeSpan.FromDays(2));
+
+                if (newOrders.Count > 5)
+                {
+                    await _bus.SendAsync(new SendMessageCommand($"{newOrders.Count} open poloniex orders available to send. Will not send them to avoid spam."));
+                    return;
+                }
 
                 foreach (var openOrder in newOrders)
                 {

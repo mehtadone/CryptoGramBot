@@ -32,7 +32,7 @@ namespace Poloniex.TradingTools
             return Task.Factory.StartNew(() => GetOpenOrders(currencyPair));
         }
 
-        public Task<IDictionary<string, IOrder>> GetOpenOrdersAsync()
+        public Task<Dictionary<string, List<Order>>> GetOpenOrdersAsync()
         {
             return Task.Factory.StartNew(GetOpenOrders);
         }
@@ -90,7 +90,7 @@ namespace Poloniex.TradingTools
             return data.Any() ? data.ToList<IOrder>() : new List<IOrder>();
         }
 
-        private IDictionary<string, IOrder> GetOpenOrders()
+        private Dictionary<string, List<Order>> GetOpenOrders()
         {
             var postData = new Dictionary<string, object> {
                 { "currencyPair", CurrencyPair.All }
@@ -124,7 +124,7 @@ namespace Poloniex.TradingTools
             return ApiWebClient.PostData<T>(command, postData);
         }
 
-        private Dictionary<string, IOrder> PostDataForAllOrders(string command, Dictionary<string, object> postData)
+        private Dictionary<string, List<Order>> PostDataForAllOrders(string command, Dictionary<string, object> postData)
         {
             return ApiWebClient.PostDataForAllOpenOrders(command, postData);
         }

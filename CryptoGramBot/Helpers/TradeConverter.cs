@@ -100,6 +100,7 @@ namespace CryptoGramBot.Helpers
                 {
                     var walletBalance = Mapper.Map<WalletBalance>(wallet);
                     walletBalance.Exchange = Constants.Bittrex;
+                    walletBalance.Timestamp = DateTime.Now;
                     walletBalances.Add(walletBalance);
                 }
             }
@@ -107,27 +108,28 @@ namespace CryptoGramBot.Helpers
             return walletBalances;
         }
 
-        public static List<OpenOrder> PoloniexToOpenOrders(IDictionary<string, IOrder> orders)
+        public static List<OpenOrder> PoloniexToOpenOrders(Dictionary<string, List<Order>> orders)
         {
             var openOrders = new List<OpenOrder>();
 
             foreach (var openOrderPair in orders)
             {
-                var poloOrder = openOrderPair.Value;
+                foreach (var poloOrder in openOrderPair.Value)
+                {
+                    var openOrder = Mapper.Map<OpenOrder>(poloOrder);
+                    openOrder.Exchange = Constants.Poloniex;
+                    openOrder.Side = poloOrder.Type == OrderType.Buy ? TradeSide.Buy : TradeSide.Sell;
 
-                var openOrder = Mapper.Map<OpenOrder>(poloOrder);
-                openOrder.Exchange = Constants.Poloniex;
-                openOrder.Side = poloOrder.Type == OrderType.Buy ? TradeSide.Buy : TradeSide.Sell;
+                    var ccy = openOrderPair.Key.Split('_');
+                    openOrder.Base = ccy[0];
+                    openOrder.Terms = ccy[1];
 
-                var ccy = openOrderPair.Key.Split('_');
-                openOrder.Base = ccy[0];
-                openOrder.Terms = ccy[1];
+                    openOrder.Opened = DateTime.Now;
 
-                openOrder.Opened = DateTime.Now;
+                    openOrder.Quantity = Convert.ToDecimal(poloOrder.AmountQuote);
 
-                openOrder.Quantity = Convert.ToDecimal(openOrderPair.Value.AmountQuote);
-
-                openOrders.Add(openOrder);
+                    openOrders.Add(openOrder);
+                }
             }
 
             return openOrders;
@@ -181,12 +183,14 @@ namespace CryptoGramBot.Helpers
                         BtcAmount = Convert.ToDecimal(balance.Value.BitcoinValue),
                         Available = Convert.ToDecimal(balance.Value.QuoteAvailable),
                         Pending = Convert.ToDecimal(balance.Value.QuoteOnOrders),
-                        Exchange = Constants.Poloniex
+                        Exchange = Constants.Poloniex,
+                        Timestamp = DateTime.Now
                     };
 
                     walletBalances.Add(walletBalance);
                 }
             }
+
             return walletBalances;
         }
 

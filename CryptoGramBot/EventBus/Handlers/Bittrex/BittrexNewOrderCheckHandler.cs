@@ -43,7 +43,7 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
             {
                 await _bus.SendAsync(
                     new SendMessageCommand(
-                        "There are more than 10 trades to send. Not going to send them to avoid spamming you"));
+                        "There are more than 10 Bittrex trades to send. Not going to send them to avoid spamming you"));
                 return;
             }
 
@@ -67,6 +67,11 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
             {
                 var newOrders = await _bittrexService.GetNewOpenOrders(lastChecked);
 
+                if (newOrders.Count > 5)
+                {
+                    await _bus.SendAsync(new SendMessageCommand($"{newOrders.Count} open Bittrex orders available to send. Will not send them to avoid spam."));
+                    return;
+                }
                 foreach (var openOrder in newOrders)
                 {
                     var message = $"{openOrder.Opened:g}\n" +

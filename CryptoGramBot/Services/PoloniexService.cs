@@ -9,6 +9,7 @@ using CryptoGramBot.Models;
 using Microsoft.Extensions.Logging;
 using Poloniex;
 using Poloniex.General;
+using Poloniex.TradingTools;
 using Poloniex.WalletTools;
 using Deposit = CryptoGramBot.Models.Deposit;
 using Trade = CryptoGramBot.Models.Trade;
@@ -102,6 +103,7 @@ namespace CryptoGramBot.Services
         {
             var poloOrders = await _poloniexClient.Trading.GetOpenOrdersAsync();
             var orders = TradeConverter.PoloniexToOpenOrders(poloOrders);
+
             var newOrders = await _databaseService.AddOpenOrders(orders);
 
             return newOrders;

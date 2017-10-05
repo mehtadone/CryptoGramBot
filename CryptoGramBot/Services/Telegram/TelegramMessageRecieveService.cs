@@ -1,7 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
+using CryptoGramBot.Configuration;
+using CryptoGramBot.EventBus.Commands;
 using CryptoGramBot.EventBus.Handlers;
 using CryptoGramBot.Helpers;
+using CryptoGramBot.Models;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
@@ -16,17 +22,22 @@ namespace CryptoGramBot.Services.Telegram
     {
         private static ILogger<TelegramMessageRecieveService> _log;
         private readonly IMicroBus _bus;
+        private readonly TelegramBittrexFileUploadService _fileImportService;
+        private readonly TelegramPairProfitService _pairProfitService;
         private readonly TelegramMessageSendingService _sendingService;
         private TelegramBotClient _bot;
-        private bool _waitingForFile;
 
         public TelegramMessageRecieveService(
             IMicroBus bus,
             TelegramMessageSendingService sendingService,
+            TelegramBittrexFileUploadService fileImportService,
+            TelegramPairProfitService pairProfitService,
             ILogger<TelegramMessageRecieveService> log)
         {
             _bus = bus;
             _sendingService = sendingService;
+            _fileImportService = fileImportService;
+            _pairProfitService = pairProfitService;
             _log = log;
         }
 
@@ -42,22 +53,6 @@ namespace CryptoGramBot.Services.Telegram
             var me = _bot.GetMeAsync().Result;
             Console.Title = me.Username;
             _bot.StartReceiving();
-        }
-
-        private async Task<bool> AreWeFileHandling(Message message)
-        {
-            if (!_waitingForFile) return false;
-            _log.LogInformation($"Am I waiting for the file? = {_waitingForFile}");
-            if (message.Document == null)
-            {
-                await _bus.SendAsync(new SendMessageCommand("Did not receive a file"));
-                Reset();
-                return true;
-            }
-
-            await _bus.SendAsync(new BittrexTradeExportCommand(message.Document.FileId));
-            Reset();
-            return true;
         }
 
         private async void BotOnCallbackQueryReceived(object sender, CallbackQueryEventArgs e)
@@ -78,7 +73,7 @@ namespace CryptoGramBot.Services.Telegram
             var message = e.Message;
             await _bot.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
 
-            if (await AreWeFileHandling(message)) return;
+            if (await CheckStates(message)) return;
 
             if (message.Type != MessageType.TextMessage) return;
 
@@ -106,7 +101,7 @@ namespace CryptoGramBot.Services.Telegram
             }
             else if (message.StartsWith(TelegramCommands.CommonPairProfit))
             {
-                await _sendingService.PairProfit(message);
+                await _pairProfitService.RequestedPairProfit();
             }
             else if (message.StartsWith(TelegramCommands.CoinigyAccountList))
             {
@@ -131,7 +126,6 @@ namespace CryptoGramBot.Services.Telegram
             else if (message.StartsWith(TelegramCommands.BittrexTradeExportUpload))
             {
                 await _sendingService.BittrexTradeImport();
-                _waitingForFile = true;
             }
             else
             {
@@ -140,9 +134,13 @@ namespace CryptoGramBot.Services.Telegram
             }
         }
 
-        private void Reset()
+        private async Task<bool> CheckStates(Message message)
         {
-            _waitingForFile = false;
+            if (await _fileImportService.AreWeFileHandling(message.Document)) return true;
+
+            if (await _pairProfitService.SendPairProfit(message.Text)) return true;
+
+            return false;
         }
     }
 }

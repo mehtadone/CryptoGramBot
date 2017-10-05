@@ -31,6 +31,7 @@ namespace CryptoGramBot.Services.Telegram
 
         public async Task BittrexTradeImport()
         {
+            BittrexFileUploadState.Waiting = true;
             await _bus.SendAsync(new SendMessageCommand("Please upload bittrex trade export"));
         }
 
@@ -72,25 +73,6 @@ namespace CryptoGramBot.Services.Telegram
         {
             _log.LogInformation("Excel sheet");
             await _bus.SendAsync(new ExcelExportCommand());
-        }
-
-        public async Task PairProfit(string message)
-        {
-            var splitString = message.Split(" ");
-            _log.LogInformation("Profit details requested");
-
-            try
-            {
-                var pair = splitString[1];
-                _log.LogInformation($"User wants to check for profit for {pair.ToUpper()}");
-                await _bus.SendAsync(new PairProfitCommand(pair));
-            }
-            catch (Exception)
-            {
-                await SendHelpMessage();
-                _log.LogInformation(
-                    $"Don't know what the you want to do with the /profit. Format is /profit BTC-ETH for example. The message was {message}");
-            }
         }
 
         public async Task PoloniexBalance()

@@ -205,6 +205,8 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<PriceService>().SingleInstance();
             containerBuilder.RegisterType<ProfitAndLossService>();
             containerBuilder.RegisterType<TradeExportService>();
+            containerBuilder.RegisterType<TelegramBittrexFileUploadService>();
+            containerBuilder.RegisterType<TelegramPairProfitService>();
 
             return containerBuilder;
         }

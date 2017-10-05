@@ -1,11 +1,10 @@
 ﻿using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
-using CryptoGramBot.EventBus.Handlers;
 using CryptoGramBot.Helpers;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
 
-namespace CryptoGramBot.EventBus
+namespace CryptoGramBot.EventBus.Handlers
 {
     public class HelpMessageHandler : ICommandHandler<SendHelpMessageCommand>
     {
@@ -32,15 +31,14 @@ namespace CryptoGramBot.EventBus
         public async Task Handle(SendHelpMessageCommand command)
         {
             var usage = "<strong>Help</strong>\n\n" +
-                "<strong>Common commands</strong>\n" +
+                        "<strong>Common commands</strong>\n" +
                         $"{TelegramCommands.CommonExcel} - an excel export of all trades\n" +
                         $"{TelegramCommands.CommonPairProfit} - profit information for pair\n";
 
             if (_coinigyConfig.Enabled)
             {
                 usage = usage + "\n<strong>Coinigy commands</strong>\n" +
-                        $"{TelegramCommands.CoinigyAccountBalance} - summary for account number n.\n" +
-                        $"{TelegramCommands.CoinigyAccountList} - list coinigy account names\n" +
+                        $"{TelegramCommands.CoinigyAccountList} - coinigy accounts and their balance\n" +
                         $"{TelegramCommands.CoinigyTotalBalance} - total balance from all acounts\n";
             }
 

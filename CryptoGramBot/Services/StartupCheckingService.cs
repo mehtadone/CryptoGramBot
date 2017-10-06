@@ -1,11 +1,8 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
-using CryptoGramBot.Data;
 using FluentScheduler;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
-using CryptoGramBot.Models;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.Services
@@ -14,76 +11,17 @@ namespace CryptoGramBot.Services
     {
         private readonly TelegramBot _bot;
         private readonly IMicroBus _bus;
-        private readonly GeneralConfig _config;
-        private readonly CryptoGramBotDbContext _context;
-        private readonly DatabaseService _databaseService;
-        private readonly LiteDbDatabaseService _liteDbDatabaseService;
         private readonly TelegramConfig _telegramConfig;
 
         public StartupCheckingService(
             IMicroBus bus,
             TelegramConfig telegramConfig,
-            TelegramBot bot,
-            GeneralConfig config,
-            LiteDbDatabaseService liteDbDatabaseService,
-            DatabaseService databaseService,
-            CryptoGramBotDbContext context
+            TelegramBot bot
             )
         {
             _bus = bus;
             _telegramConfig = telegramConfig;
             _bot = bot;
-            _config = config;
-            _liteDbDatabaseService = liteDbDatabaseService;
-            _databaseService = databaseService;
-            _context = context;
-        }
-
-        public async Task MigrateToSqlLite()
-        {
-            if (!File.Exists(Directory.GetCurrentDirectory() + "/database/cryptogrambot.db")) return;
-
-            var hasMigratedBefore = _databaseService.GetSetting("SQLite.Migration.Complete");
-
-            if (hasMigratedBefore != null && hasMigratedBefore.Value != "true")
-            {
-                var balanceHistories = _liteDbDatabaseService.GetAllBalances();
-
-                foreach (var balanceHistory in balanceHistories)
-                {
-                    _context.Set<BalanceHistory>().Add(balanceHistory);
-                }
-
-                var allTrades = _liteDbDatabaseService.GetAllTrades();
-                foreach (var allTrade in allTrades)
-                {
-                    _context.Set<Trade>().Add(allTrade);
-                }
-
-                var allLastChecked = _liteDbDatabaseService.GetAllLastChecked();
-                foreach (var lastChecked in allLastChecked)
-                {
-                    _context.Set<LastChecked>().Add(lastChecked);
-                }
-
-                var allProfitAndLoss = _liteDbDatabaseService.GetAllProfitAndLoss();
-                foreach (var pnl in allProfitAndLoss)
-                {
-                    _context.Set<ProfitAndLoss>().Add(pnl);
-                }
-
-                _liteDbDatabaseService.Close();
-
-                var setting = new Setting
-                {
-                    Name = "SQLite.Migration.Complete",
-                    Value = "true"
-                };
-
-                _context.Settings.Add(setting);
-
-                await _context.SaveChangesAsync();
-            }
         }
 
         public void Start(bool coinigyEnabled, bool bittrexEnabled, bool poloEnabled, bool bagManagementEnabled, bool lowBtcNotification, bool dustNotifications)

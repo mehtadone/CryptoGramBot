@@ -252,7 +252,6 @@ namespace CryptoGramBot
             var context = container.Resolve<CryptoGramBotDbContext>();
 
             DbInitializer.Initialize(context).Wait();
-            log.LogInformation("Database migrated.");
 
             startupService.Start(coinigyEnabled, bittrexEnabled, poloniexEnabled, bagEnabled, lowBtcEnabled, dustEnabled);
 

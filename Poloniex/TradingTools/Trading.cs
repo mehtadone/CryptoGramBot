@@ -105,15 +105,14 @@ namespace Poloniex.TradingTools
             var postData = new Dictionary<string, object> {
                 { "currencyPair", currencyPair },
                 { "start", Helper.DateTimeToUnixTimeStamp(startTime) },
-                { "end", Helper.DateTimeToUnixTimeStamp(endTime) }
+                { "end", Helper.DateTimeToUnixTimeStamp(endTime) },
+                { "limit", "10000"}
             };
-
             if (currencyPair == CurrencyPair.All)
             {
                 var allTrades = PostDataForAllTrades("returnTradeHistory", postData);
                 return allTrades.Any() ? allTrades.ToList() : new List<ITrade>();
             }
-
             var data = PostData<IList<Trade>>("returnTradeHistory", postData);
             return data.Any() ? data.ToList<ITrade>() : new List<ITrade>();
         }

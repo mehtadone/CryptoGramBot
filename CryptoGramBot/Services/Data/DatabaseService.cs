@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using CryptoGramBot.Data;
+﻿using CryptoGramBot.Data;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CryptoGramBot.Services
 {
@@ -119,19 +119,20 @@ namespace CryptoGramBot.Services
         public async Task<List<Trade>> AddTrades(IEnumerable<Trade> trades)
         {
             var newTrades = new List<Trade>();
-            _log.LogInformation("Adding new trades to database");
 
             foreach (var trade in trades)
             {
                 var singleOrDefault = _context.Trades.SingleOrDefault(
                     x => x.TimeStamp == trade.TimeStamp &&
-                    x.Base == trade.Base &&
-                    x.Exchange == trade.Exchange &&
-                    x.Quantity == trade.Quantity &&
-                    x.QuantityRemaining == trade.QuantityRemaining &&
-                    x.Terms == trade.Terms &&
-                    x.Cost == trade.Cost
-                    );
+                         x.Base == trade.Base &&
+                         x.Exchange == trade.Exchange &&
+                         x.Quantity == trade.Quantity &&
+                         x.QuantityRemaining == trade.QuantityRemaining &&
+                         x.Terms == trade.Terms &&
+                         x.Cost == trade.Cost &&
+                         x.ExchangeId == trade.ExchangeId
+
+                );
 
                 if (singleOrDefault == null)
                 {
@@ -211,6 +212,13 @@ namespace CryptoGramBot.Services
             return all.AsEnumerable();
         }
 
+        public List<Trade> GetAllTradesBuyFor(string currency, string exchange)
+        {
+            var collection = _context.Trades;
+            var trades = collection.Where(x => x.Terms == currency && x.Exchange == exchange && x.Side == TradeSide.Buy).AsEnumerable();
+            return trades.ToList();
+        }
+
         public IEnumerable<Trade> GetAllTradesFor(string term)
         {
             var collection = _context.Trades;
@@ -225,10 +233,10 @@ namespace CryptoGramBot.Services
 
             var histories = _lastBalances.Values.Where(x => x.DateTime.Hour == dateTime.Hour &&
                                                             x.DateTime.Day == dateTime.Day &&
-                                                             x.DateTime.Month == dateTime.Month &&
-                                                             x.DateTime.Year == dateTime.Year &&
-                                                             x.Name == name)
-                                                             .ToList();
+                                                            x.DateTime.Month == dateTime.Month &&
+                                                            x.DateTime.Year == dateTime.Year &&
+                                                            x.Name == name)
+                .ToList();
 
             if (histories.Count == 0)
             {
@@ -238,10 +246,10 @@ namespace CryptoGramBot.Services
                 var balanceHistories = collection.Where(x => x.Name == name).OrderByDescending(x => x.DateTime).ToList();
 
                 histories = balanceHistories.FindAll(x => x.DateTime.Hour == dateTime.Hour &&
-                                x.DateTime.Day == dateTime.Day &&
-                                x.DateTime.Month == dateTime.Month &&
-                                x.DateTime.Year == dateTime.Year)
-                                .ToList();
+                                                          x.DateTime.Day == dateTime.Day &&
+                                                          x.DateTime.Month == dateTime.Month &&
+                                                          x.DateTime.Year == dateTime.Year)
+                    .ToList();
 
                 if (!histories.Any())
                 {
@@ -292,7 +300,7 @@ namespace CryptoGramBot.Services
             var lastChecked = contextLastCheckeds
                 .SingleOrDefault(x => x.Exchange == key);
 
-            return lastChecked?.Timestamp ?? Constants.DateTimeUnixEpochStart;
+            return lastChecked?.Timestamp ?? DateTime.Now - TimeSpan.FromDays(30);
         }
 
         public Trade GetLastTradeForPair(string currency, string exchange, TradeSide side)
@@ -326,6 +334,15 @@ namespace CryptoGramBot.Services
             return enumerable;
         }
 
+        public WalletBalance GetWalletBalance(string currency, string exchange)
+        {
+            var balances = _context.WalletBalances
+                .Where(x => x.Currency == currency && x.Exchange == exchange)
+                .OrderByDescending(x => x.Id);
+
+            return balances.FirstOrDefault();
+        }
+
         public async Task SaveProfitAndLoss(ProfitAndLoss pnl)
         {
             _log.LogInformation($"Adding pnl for {pnl.Pair} to database");
@@ -355,7 +372,6 @@ namespace CryptoGramBot.Services
             balanceHistories.Add(balanceHistory);
             _context.BalanceHistories.Add(balanceHistory);
             _log.LogInformation($"Saved new balance in database for: {name}");
-            _log.LogInformation("Adding balance to cache");
             _lastBalances[name] = balanceHistory;
 
             await _context.SaveChangesAsync();

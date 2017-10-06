@@ -164,7 +164,7 @@ namespace CryptoGramBot
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
                 .WriteTo.RollingFile(Directory.GetCurrentDirectory() + "/logs/CryptoGramBot.log")
                 .MinimumLevel.Debug()
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
                 .CreateLogger();
         }
@@ -195,7 +195,6 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<BittrexService>();
             containerBuilder.RegisterType<PoloniexService>();
             containerBuilder.RegisterType<DatabaseService>();
-            containerBuilder.RegisterType<LiteDbDatabaseService>();
             containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
             containerBuilder.RegisterType<TelegramMessageSendingService>().SingleInstance();
             containerBuilder.RegisterType<StartupCheckingService>().SingleInstance();
@@ -254,8 +253,6 @@ namespace CryptoGramBot
 
             DbInitializer.Initialize(context).Wait();
             log.LogInformation("Database migrated.");
-
-            startupService.MigrateToSqlLite().Wait();
 
             startupService.Start(coinigyEnabled, bittrexEnabled, poloniexEnabled, bagEnabled, lowBtcEnabled, dustEnabled);
 

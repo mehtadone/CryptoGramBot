@@ -5,6 +5,7 @@ using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using CryptoGramBot.Services;
+using CryptoGramBot.Services.Exchanges;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.EventBus.Handlers.Poloniex
@@ -47,7 +48,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
 
                 var lastTradeForPair = _databaseService.GetLastTradeForPair(walletBalance.Currency, Constants.Poloniex, TradeSide.Buy);
                 if (lastTradeForPair == null) continue;
-                var currentPrice = await _poloService.GetPrice(lastTradeForPair.Terms);
+                var currentPrice = await _poloService.GetPrice(lastTradeForPair.Base, lastTradeForPair.Terms);
 
                 if (_bagConfig.Enabled)
                 {

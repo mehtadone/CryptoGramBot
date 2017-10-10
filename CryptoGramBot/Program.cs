@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using Autofac;
 using AutoMapper;
-using Bittrex;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -16,6 +15,7 @@ using CryptoGramBot.Extensions;
 using Enexure.MicroBus;
 using Autofac.Extensions.DependencyInjection;
 using CryptoGramBot.Data;
+using CryptoGramBot.Services.Exchanges;
 using CryptoGramBot.Services.Telegram;
 using Enexure.MicroBus.Autofac;
 using Microsoft.EntityFrameworkCore;
@@ -200,7 +200,6 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<StartupCheckingService>().SingleInstance();
             containerBuilder.RegisterType<CoinigyBalanceService>();
             containerBuilder.RegisterType<TelegramBot>().SingleInstance();
-            containerBuilder.RegisterType<Exchange>().As<IExchange>();
             containerBuilder.RegisterType<PriceService>().SingleInstance();
             containerBuilder.RegisterType<ProfitAndLossService>();
             containerBuilder.RegisterType<TradeExportService>();
@@ -258,7 +257,7 @@ namespace CryptoGramBot
             while (true)
             {
                 Console.ReadKey();
-            };//This wont stop app
+            }; //This wont stop app
         }
     }
 }

@@ -9,13 +9,12 @@ using CryptoGramBot.Models;
 using Microsoft.Extensions.Logging;
 using Poloniex;
 using Poloniex.General;
-using Poloniex.TradingTools;
 using Poloniex.WalletTools;
 using Deposit = CryptoGramBot.Models.Deposit;
 using Trade = CryptoGramBot.Models.Trade;
 using Withdrawal = CryptoGramBot.Models.Withdrawal;
 
-namespace CryptoGramBot.Services
+namespace CryptoGramBot.Services.Exchanges
 {
     public class PoloniexService : IExchangeService
     {
@@ -55,7 +54,7 @@ namespace CryptoGramBot.Services
             {
                 if (balance.BtcAmount == 0) continue;
 
-                var price = await GetPrice(balance.Currency);
+                var price = await GetPrice("BTC", balance.Currency);
                 var boughtPrice = 0m;
 
                 var lastTradeForPair1 = _databaseService.GetLastTradeForPair(balance.Currency, Constants.Poloniex, TradeSide.Buy);
@@ -135,7 +134,7 @@ namespace CryptoGramBot.Services
             return poloniexToTrades;
         }
 
-        public async Task<decimal> GetPrice(string terms)
+        public async Task<decimal> GetPrice(string baseCcy, string terms)
         {
             switch (terms)
             {

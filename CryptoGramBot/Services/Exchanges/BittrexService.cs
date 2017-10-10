@@ -4,22 +4,19 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using Bittrex;
+using BittrexSharp;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
-using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
 using OpenOrder = CryptoGramBot.Models.OpenOrder;
 
-namespace CryptoGramBot.Services
+namespace CryptoGramBot.Services.Exchanges
 {
     public class BittrexService : IExchangeService
     {
-        private readonly IMicroBus _bus;
-        private readonly BittrexConfig _config;
         private readonly DatabaseService _databaseService;
-        private readonly IExchange _exchange;
+        private readonly Bittrex _exchange;
         private readonly ILogger<BittrexService> _log;
         private readonly PriceService _priceService;
 
@@ -27,25 +24,14 @@ namespace CryptoGramBot.Services
             BittrexConfig config,
             DatabaseService databaseService,
             PriceService priceService,
-            IExchange exchange,
-            ILogger<BittrexService> log,
-            IMicroBus bus)
+            ILogger<BittrexService> log)
         {
-            _config = config;
+            var config1 = config;
             _databaseService = databaseService;
             _priceService = priceService;
-            _exchange = exchange;
             _log = log;
-            _bus = bus;
-            var context = new ExchangeContext
-            {
-                QuoteCurrency = "BTC",
-                Simulate = false,
-                ApiKey = config.Key,
-                Secret = config.Secret
-            };
 
-            exchange.Initialise(context);
+            _exchange = new Bittrex(config1.Key, config1.Secret);
         }
 
         public async Task<BalanceInformation> GetBalance()
@@ -67,7 +53,7 @@ namespace CryptoGramBot.Services
             {
                 if (balance.Balance == 0) continue;
 
-                var marketPrice = await GetPrice(balance.Currency);
+                var marketPrice = await GetPrice("BTC", balance.Currency);
 
                 decimal price;
                 decimal btcAmount;
@@ -127,7 +113,7 @@ namespace CryptoGramBot.Services
 
         public async Task<List<Deposit>> GetNewDeposits()
         {
-            var list = await _exchange.GetDeposits();
+            var list = await _exchange.GetDepositHistory();
 
             var localDesposits = list.Select(Mapper.Map<Deposit>).ToList();
             var newDeposits = await _databaseService.AddDeposits(localDesposits, Constants.Bittrex);
@@ -148,7 +134,7 @@ namespace CryptoGramBot.Services
 
         public async Task<List<Withdrawal>> GetNewWithdrawals()
         {
-            var list = await _exchange.GetWithdrawals();
+            var list = await _exchange.GetWithdrawalHistory();
 
             var localWithdrawals = list.Select(Mapper.Map<Withdrawal>).ToList();
 
@@ -164,7 +150,7 @@ namespace CryptoGramBot.Services
             return bittrexToTrades;
         }
 
-        public async Task<decimal> GetPrice(string terms)
+        public async Task<decimal> GetPrice(string baseCcy, string terms)
         {
             // USDT is not terms. But this bittrex library I'm using doesnt let me set it so checking via another method for the time being.
             switch (terms)
@@ -179,7 +165,7 @@ namespace CryptoGramBot.Services
                     return 0;
             }
 
-            var ticker = await _exchange.GetTicker(terms);
+            var ticker = await _exchange.GetTicker(baseCcy, terms);
             var price = ticker.Last.ToString();
             decimal priceAsDecimal;
             try

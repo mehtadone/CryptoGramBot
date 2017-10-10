@@ -5,7 +5,7 @@ using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
-using CryptoGramBot.Services;
+using CryptoGramBot.Services.Exchanges;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.EventBus.Handlers.Bittrex

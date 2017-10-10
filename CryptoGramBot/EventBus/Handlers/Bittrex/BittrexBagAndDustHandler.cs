@@ -5,6 +5,7 @@ using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using CryptoGramBot.Services;
+using CryptoGramBot.Services.Exchanges;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.EventBus.Handlers
@@ -49,7 +50,7 @@ namespace CryptoGramBot.EventBus.Handlers
 
                 var lastTradeForPair = _databaseService.GetLastTradeForPair(walletBalance.Currency, Constants.Bittrex, TradeSide.Buy);
                 if (lastTradeForPair == null) continue;
-                var currentPrice = await _bittrexService.GetPrice(lastTradeForPair.Terms);
+                var currentPrice = await _bittrexService.GetPrice(lastTradeForPair.Base, lastTradeForPair.Terms);
 
                 if (_bagConfig.Enabled)
                 {

@@ -9,11 +9,12 @@ namespace CryptoGramBot.Services
     {
         Task<List<Deposit>> GetNewDeposits();
 
+        Task<List<OpenOrder>> GetNewOpenOrders(DateTime lastChecked);
+
         Task<List<Withdrawal>> GetNewWithdrawals();
 
         Task<List<Trade>> GetOrderHistory(DateTime lastChecked);
 
-        Task<decimal> GetPrice(string terms);
-        Task<List<OpenOrder>> GetNewOpenOrders(DateTime lastChecked);
+        Task<decimal> GetPrice(string baseCCy, string terms);
     }
 }

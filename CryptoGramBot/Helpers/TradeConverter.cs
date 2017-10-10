@@ -4,15 +4,13 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using AutoMapper;
-using Bittrex;
-using Bittrex.Data;
-using CryptoGramBot.Helpers;
+using BittrexSharp.Domain;
 using CsvHelper;
 using CryptoGramBot.Models;
 using Poloniex.TradingTools;
 using Poloniex.WalletTools;
-using Remotion.Linq.Parsing.ExpressionVisitors.Transformation.PredefinedTransformations;
 using OpenOrder = CryptoGramBot.Models.OpenOrder;
+using Order = Poloniex.TradingTools.Order;
 using OrderType = Poloniex.General.OrderType;
 using Trade = CryptoGramBot.Models.Trade;
 
@@ -28,7 +26,7 @@ namespace CryptoGramBot.Helpers
             csv.Configuration.HasHeaderRecord = true;
             csv.Configuration.IsHeaderCaseSensitive = false;
 
-            var tradeList = new List<CompletedOrder>();
+            var tradeList = new List<HistoricOrder>();
             while (csv.Read())
             {
                 var completedOrder = ConvertBittrexCsvToCompletedOrder(csv.CurrentRecord);
@@ -38,7 +36,7 @@ namespace CryptoGramBot.Helpers
             return BittrexToTrades(tradeList);
         }
 
-        public static List<OpenOrder> BittrexToOpenOrders(IEnumerable<Bittrex.OpenOrder> bittrexOrders)
+        public static List<OpenOrder> BittrexToOpenOrders(IEnumerable<BittrexSharp.Domain.OpenOrder> bittrexOrders)
         {
             var list = new List<OpenOrder>();
 
@@ -48,7 +46,7 @@ namespace CryptoGramBot.Helpers
                 order.Exchange = Constants.Bittrex;
                 order.Price = openOrder.Limit;
 
-                order.Side = openOrder.OrderType == OpenOrderType.LIMIT_BUY ? TradeSide.Buy : TradeSide.Sell;
+                order.Side = openOrder.OrderType == BittrexSharp.Domain.OrderType.Buy ? TradeSide.Buy : TradeSide.Sell;
 
                 var ccy = openOrder.Exchange.Split('-');
                 order.Base = ccy[0];
@@ -60,7 +58,7 @@ namespace CryptoGramBot.Helpers
             return list;
         }
 
-        public static List<Trade> BittrexToTrades(IEnumerable<CompletedOrder> bittrexTrades)
+        public static List<Trade> BittrexToTrades(IEnumerable<HistoricOrder> bittrexTrades)
         {
             var tradeList = new List<Trade>();
 
@@ -69,7 +67,7 @@ namespace CryptoGramBot.Helpers
                 var trade = Mapper.Map<Trade>(completedOrder);
                 trade.Exchange = Constants.Bittrex;
 
-                trade.Side = completedOrder.OrderType == OpenOrderType.LIMIT_BUY ? TradeSide.Buy : TradeSide.Sell;
+                trade.Side = completedOrder.OrderType == BittrexSharp.Domain.OrderType.Buy ? TradeSide.Buy : TradeSide.Sell;
 
                 if (trade.Side == TradeSide.Buy)
                 {
@@ -90,7 +88,7 @@ namespace CryptoGramBot.Helpers
             return tradeList;
         }
 
-        public static List<WalletBalance> BittrexToWalletBalances(GetBalancesResponse response)
+        public static List<WalletBalance> BittrexToWalletBalances(IEnumerable<CurrencyBalance> response)
         {
             var walletBalances = new List<WalletBalance>();
 
@@ -194,9 +192,9 @@ namespace CryptoGramBot.Helpers
             return walletBalances;
         }
 
-        private static CompletedOrder ConvertBittrexCsvToCompletedOrder(IReadOnlyList<string> csvCurrentRecord)
+        private static HistoricOrder ConvertBittrexCsvToCompletedOrder(IReadOnlyList<string> csvCurrentRecord)
         {
-            var newOrder = new CompletedOrder
+            var newOrder = new HistoricOrder()
             {
                 OrderUuid = csvCurrentRecord[0],
                 Exchange = csvCurrentRecord[1],
@@ -204,10 +202,17 @@ namespace CryptoGramBot.Helpers
                 Limit = decimal.Parse(csvCurrentRecord[4]),
                 Commission = decimal.Parse(csvCurrentRecord[5]),
                 Price = decimal.Parse(csvCurrentRecord[6]),
-                TimeStamp = DateTime.Parse(csvCurrentRecord[8], CultureInfo.CreateSpecificCulture("en-US"))
+                Timestamp = DateTime.Parse(csvCurrentRecord[8], CultureInfo.CreateSpecificCulture("en-US"))
             };
-            Enum.TryParse(csvCurrentRecord[2], true, out OpenOrderType orderSide);
-            newOrder.OrderType = orderSide;
+
+            if (csvCurrentRecord[2] == "LIMIT_BUY")
+            {
+                newOrder.OrderType = BittrexSharp.Domain.OrderType.Buy;
+            }
+            else if (csvCurrentRecord[2] == "LIMIT_SELL")
+            {
+                newOrder.OrderType = BittrexSharp.Domain.OrderType.Sell;
+            }
 
             return newOrder;
         }

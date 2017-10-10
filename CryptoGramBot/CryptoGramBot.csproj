@@ -48,7 +48,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Bittrex\Bittrex.csproj" />
+		<ProjectReference Include="..\BittrexSharp\BittrexSharp.csproj" />
 		<ProjectReference Include="..\Poloniex\Poloniex.csproj" />
 	</ItemGroup>
 

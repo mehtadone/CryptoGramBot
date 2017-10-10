@@ -38,6 +38,7 @@ namespace CryptoGramBot.Extensions
             {
                 busBuilder.RegisterEventHandler<NewTradesCheckEvent, PoloniexNewOrderCheckHandler>();
                 busBuilder.RegisterEventHandler<BalanceCheckEvent, PoloniexBalanceCheckHandler>();
+                busBuilder.RegisterCommandHandler<ResetPoloniexTrades, PoloniexResetAllTradesHandler>();
             }
 
             if (bittrexEnabled)

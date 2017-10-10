@@ -181,6 +181,14 @@ namespace CryptoGramBot.Services
             return list;
         }
 
+        public async Task DeleteAllTrades(string exchange)
+        {
+            _log.LogInformation($"Deleting trades for {exchange}");
+            var trades = _context.Trades.Where(x => x.Exchange == exchange).ToList();
+            _context.Trades.RemoveRange(trades);
+            await _context.SaveChangesAsync();
+        }
+
         public IEnumerable<BalanceHistory> GetAllBalances()
         {
             var all = _context.BalanceHistories;

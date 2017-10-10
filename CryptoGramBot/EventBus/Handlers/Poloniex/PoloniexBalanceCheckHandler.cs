@@ -6,7 +6,7 @@ using CryptoGramBot.Helpers;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
+namespace CryptoGramBot.EventBus.Handlers.Poloniex
 {
     public class PoloniexBalanceCheckHandler : IEventHandler<BalanceCheckEvent>
     {

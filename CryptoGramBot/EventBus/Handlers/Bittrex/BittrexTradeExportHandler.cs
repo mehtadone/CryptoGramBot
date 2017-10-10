@@ -37,6 +37,7 @@ namespace CryptoGramBot.EventBus.Handlers
             {
                 var file = await _bot.Bot.GetFileAsync(command.FileId);
                 var trades = TradeConverter.BittrexFileToTrades(file.FileStream);
+                await _databaseService.DeleteAllTrades(Constants.Bittrex);
                 var newTrades = await _databaseService.AddTrades(trades);
                 await _bus.SendAsync(new SendMessageCommand($"{newTrades.Count} new bittrex trades added."));
             }

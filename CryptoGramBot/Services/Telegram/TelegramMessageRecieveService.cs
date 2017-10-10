@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Commands;
 using CryptoGramBot.EventBus.Handlers;
+using CryptoGramBot.EventBus.Handlers.Poloniex;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using Enexure.MicroBus;
@@ -126,6 +127,10 @@ namespace CryptoGramBot.Services.Telegram
             else if (message.StartsWith(TelegramCommands.BittrexTradeExportUpload))
             {
                 await _sendingService.BittrexTradeImport();
+            }
+            else if (message.StartsWith(TelegramCommands.PoloniexTradeReset))
+            {
+                await _bus.SendAsync(new ResetPoloniexTrades());
             }
             else
             {

@@ -51,7 +51,8 @@ namespace CryptoGramBot.EventBus.Handlers
             if (_poloniexConfig.Enabled)
             {
                 usage = usage + "\n<strong>Poloniex commands</strong>\n" +
-                        $"{TelegramCommands.PoloniexBalanceInfo} - poloniex account summary\n";
+                        $"{TelegramCommands.PoloniexBalanceInfo} - poloniex account summary\n" +
+                        $"{TelegramCommands.PoloniexTradeReset} - reset trades database from poloniex";
             }
 
             _log.LogInformation("Sending help message");

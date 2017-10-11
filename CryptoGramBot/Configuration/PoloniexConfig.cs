@@ -3,6 +3,7 @@
     public class PoloniexConfig : IConfig
     {
         public bool BuyNotifications { get; set; }
+        public string DailyNotifications { get; set; }
         public bool DepositNotification { get; set; }
         public bool Enabled { get; set; }
         public string Key { get; set; }

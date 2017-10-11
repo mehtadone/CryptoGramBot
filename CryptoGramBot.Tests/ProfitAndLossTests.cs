@@ -29,11 +29,11 @@ namespace CryptoGramBot.Tests
         [Test]
         public void TestPnL()
         {
-            var profitAndLoss = ProfitCalculator.GetProfitAndLossForPair(_trades, "BTC", "LTC");
+            var profitAndLoss = ProfitCalculator.GetProfitAndLossForPair(_trades, new Currency { Base = "BTC", Terms = "LTC" });
 
             Assert.AreEqual(150, profitAndLoss.QuantityBought);
             Assert.AreEqual(100, profitAndLoss.QuantitySold);
-            Assert.AreEqual(0.01M, profitAndLoss.Profit);
+            Assert.AreEqual(-0.016666666666666666666666665m, profitAndLoss.Profit);
             Assert.AreEqual(0.0001333333333333333333333333M, profitAndLoss.AverageBuyPrice);
             Assert.AreEqual(0.0001M, profitAndLoss.AverageSellPrice);
             Assert.AreEqual(0.002M, profitAndLoss.CommissionPaid);

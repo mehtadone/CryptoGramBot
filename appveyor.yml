@@ -27,7 +27,7 @@ on_finish :
   # any cleanup in here
 deploy:
   release: CryptoGramBot-v$(appveyor_build_version)
-  description: 'Add low BTC notification. Add deposit and withdrawal notifications from Poloniex and Bittrex. Add open order notifications. Fix bag and dust notifications on Poloniex(I think). Note that this requires new properties in appsettings.json'
+  description: 'Ability to reset Polo trades from API call. Fixed profit calculations. Shown profit on profit command is realised profit. Add profit on spreadsheet. Initial work on non BTC pairs'
   provider: GitHub
   auth_token:
     secure: esN+SKR3Mla7CRA3bD9NBK1WFuuMc7W0/MyIX8kUC9q8BXELNvSZaBQcEt7S7oTj # your encrypted token from GitHub

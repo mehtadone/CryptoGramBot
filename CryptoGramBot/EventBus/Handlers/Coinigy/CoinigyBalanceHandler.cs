@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Commands;
@@ -34,7 +35,11 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
                 await _coinigyBalanceService.GetBalance();
             }
 
-            if (@event.UserRequested && @event.Exchange == Constants.CoinigyAccountBalance)
+            var dailyBalance = _config.DailyNotifications.Split(':');
+            int.TryParse(dailyBalance[0], out int hour);
+            int.TryParse(dailyBalance[1], out int min);
+
+            if ((@event.UserRequested || _config.SendHourlyUpdates || (dailyBalance.Length == 2 && DateTime.Now.Hour == hour && DateTime.Now.Minute == min)) && @event.Exchange == Constants.CoinigyAccountBalance)
             {
                 if (@event.CoinigyAccountId.HasValue)
                 {
@@ -47,7 +52,7 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
                 }
             }
 
-            if (@event.Exchange == Constants.TotalCoinigyBalance && @event.UserRequested)
+            if (@event.Exchange == Constants.TotalCoinigyBalance && (@event.UserRequested || _config.SendHourlyUpdates || (dailyBalance.Length == 2 && DateTime.Now.Hour == hour && DateTime.Now.Minute == min)))
             {
                 await _coinigyBalanceService.GetAllBalances();
                 var balanceInformation = await _coinigyBalanceService.GetBalance();

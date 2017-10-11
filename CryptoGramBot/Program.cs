@@ -252,7 +252,7 @@ namespace CryptoGramBot
 
             DbInitializer.Initialize(context).Wait();
 
-            startupService.Start(coinigyEnabled, bittrexEnabled, poloniexEnabled, bagEnabled, lowBtcEnabled, dustEnabled);
+            startupService.Start();
 
             while (true)
             {

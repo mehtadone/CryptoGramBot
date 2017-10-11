@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using Castle.DynamicProxy;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Commands;
 using CryptoGramBot.EventBus.Events;
@@ -29,7 +31,11 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
             {
                 var balanceInformation = await _bittrexService.GetBalance();
 
-                if (_config.SendHourlyUpdates || @event.UserRequested)
+                var dailyBalance = _config.DailyNotifications.Split(':');
+                int.TryParse(dailyBalance[0], out int hour);
+                int.TryParse(dailyBalance[1], out int min);
+
+                if (_config.SendHourlyUpdates || @event.UserRequested || (dailyBalance.Length == 2 && DateTime.Now.Hour == hour && DateTime.Now.Minute == min))
                 {
                     await _bus.SendAsync(new SendBalanceInfoCommand(balanceInformation));
                 }

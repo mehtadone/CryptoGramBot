@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.DateTime;
 
 namespace CryptoGramBot.Services
 {
@@ -201,11 +202,19 @@ namespace CryptoGramBot.Services
             return all.AsEnumerable();
         }
 
-        public IEnumerable<string> GetAllPairs()
+        public IEnumerable<Currency> GetAllPairs()
         {
-            var collection = _context.Trades;
-            var distinct = collection.Select(x => x.Terms).Distinct().OrderBy(x => x);
-            return distinct;
+            var collection = _context.Trades.AsQueryable();
+            var distinct = collection.GroupBy(g => new { g.Base, g.Terms })
+                .Select(g => g.First())
+                .ToList();
+
+            return distinct.Select(trade => new Currency
+            {
+                Base = trade.Base,
+                Terms = trade.Terms
+            })
+                .ToList();
         }
 
         public IEnumerable<ProfitAndLoss> GetAllProfitAndLoss()
@@ -227,11 +236,11 @@ namespace CryptoGramBot.Services
             return trades.ToList();
         }
 
-        public IEnumerable<Trade> GetAllTradesFor(string term)
+        public List<Trade> GetAllTradesFor(Currency currency)
         {
             var collection = _context.Trades;
-            var trades = collection.Where(x => x.Terms == term).AsEnumerable();
-            return trades;
+            var trades = collection.Where(x => x.Terms == currency.Terms && x.Base == currency.Base).AsEnumerable();
+            return trades.ToList();
         }
 
         public BalanceHistory GetBalance24HoursAgo(string name)

@@ -151,15 +151,17 @@ namespace CryptoGramBot.Helpers
 
                 if (trade.Side == TradeSide.Buy)
                 {
+                    trade.Commission = Convert.ToDecimal((completedOrder.AmountQuote * 0.0025) *
+                                                         completedOrder.PricePerCoin);
+                    trade.Quantity = Convert.ToDecimal(completedOrder.AmountQuote - completedOrder.AmountQuote * 0.0025);
                     trade.Cost = baseAmount;
                 }
                 else
                 {
-                    var commission = baseAmount * 0.0025m;
-                    trade.Cost = baseAmount - commission;
+                    trade.Commission = baseAmount * 0.0025m;
+                    trade.Quantity = Convert.ToDecimal(completedOrder.AmountQuote);
+                    trade.Cost = baseAmount - trade.Commission;
                 }
-
-                trade.Quantity = Convert.ToDecimal(completedOrder.AmountQuote);
 
                 tradeList.Add(trade);
             }

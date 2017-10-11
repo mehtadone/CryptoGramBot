@@ -41,8 +41,8 @@ namespace CryptoGramBot.EventBus.Handlers
                 var message =
                     $"{DateTime.Now:g}\n" +
                     $"Profit information for <strong>{command.Pair}</strong>\n" +
-                    $"<strong>Average buy price</strong>: {profitAndLoss.AverageBuyPrice:#0.###########}\n" +
-                    $"<strong>Total PnL</strong>: {profitAndLoss.Profit} {pairsArray[0]}\n";
+                    $"<strong>Average buy price</strong>: {profitAndLoss.AverageBuyPrice:#0.######}\n" +
+                    $"<strong>Total PnL</strong>: {profitAndLoss.Profit:#0.######} {pairsArray[0]}\n";
 
                 await _bus.SendAsync(new SendMessageCommand(message));
             }

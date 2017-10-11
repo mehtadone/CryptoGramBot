@@ -7,15 +7,17 @@ namespace CryptoGramBot.Helpers
 {
     public static class ProfitCalculator
     {
-        public static ProfitAndLoss GetProfitAndLossForPair(IEnumerable<Trade> trades, string ccy1, string ccy2)
+        public static ProfitAndLoss GetProfitAndLossForPair(IEnumerable<Trade> trades, Currency currency)
         {
+            var tradeList = trades.ToList();
+
             decimal totalBought = 0;
             decimal totalSold = 0;
 
             decimal totalBuyCost = 0;
             decimal totalSellCost = 0;
             decimal commisssion = 0;
-            foreach (var trade in trades)
+            foreach (var trade in tradeList)
             {
                 if (trade.Side == TradeSide.Buy)
                 {
@@ -24,12 +26,10 @@ namespace CryptoGramBot.Helpers
                 }
 
                 if (trade.Side == TradeSide.Sell)
-                    if (trade.Side == TradeSide.Sell)
-                    {
-                        totalSold = totalSold + trade.QuantityOfTrade;
-                        totalSellCost = totalSellCost + trade.Cost;
-                    }
-
+                {
+                    totalSold = totalSold + trade.QuantityOfTrade;
+                    totalSellCost = totalSellCost + trade.Cost;
+                }
                 commisssion = commisssion + trade.Commission;
             }
 
@@ -45,13 +45,16 @@ namespace CryptoGramBot.Helpers
                 // TODO: Should log a could not divide by 0;
             }
 
+            var remaining = totalBought - totalSold;
+
             var profitAndLoss = new ProfitAndLoss
             {
                 AverageBuyPrice = averageBuy,
                 AverageSellPrice = averageSell,
-                Profit = totalBuyCost - totalSellCost,
-                Base = ccy1,
-                Terms = ccy2,
+                UnrealisedProfit = totalSellCost - totalBuyCost,
+                Profit = (totalSellCost - totalBuyCost) - (averageBuy * remaining),
+                Base = currency.Base,
+                Terms = currency.Terms,
                 QuantitySold = totalSold,
                 QuantityBought = totalBought,
                 CommissionPaid = commisssion

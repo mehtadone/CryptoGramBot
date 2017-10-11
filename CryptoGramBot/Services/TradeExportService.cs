@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using Microsoft.Extensions.Logging;
 using OfficeOpenXml;
@@ -24,11 +25,23 @@ namespace CryptoGramBot.Services
 
                 var allPairs = _databaseService.GetAllPairs();
 
-                foreach (var terms in allPairs)
-                {
-                    var excelWorksheet = xlPackage.Workbook.Worksheets.Add(terms);
+                pnlWorksheet.Cells["A1"].Value = "Base";
+                pnlWorksheet.Cells["B1"].Value = "Terms";
+                pnlWorksheet.Cells["C1"].Value = "Unrealised Profit in Base CCY";
+                pnlWorksheet.Cells["D1"].Value = "Realised Profit in Base CCY";
+                pnlWorksheet.Cells["E1"].Value = "Average Buy Price";
+                pnlWorksheet.Cells["F1"].Value = "Average Sell Price";
+                pnlWorksheet.Cells["G1"].Value = "Commission Paid";
+                pnlWorksheet.Cells["H1"].Value = "Quantity Bought";
+                pnlWorksheet.Cells["I1"].Value = "Quantity Sold";
+                pnlWorksheet.Cells["J1"].Value = "Quantity Remaining";
 
-                    var allTradesForTerms = _databaseService.GetAllTradesFor(terms);
+                int lastPairProfitRow = 2;
+                foreach (var currency in allPairs)
+                {
+                    var excelWorksheet = xlPackage.Workbook.Worksheets.Add(currency.ToString());
+
+                    var allTradesForCurrency = _databaseService.GetAllTradesFor(currency);
                     excelWorksheet.Cells["A1"].Value = "Id";
                     excelWorksheet.Cells["B1"].Value = "Timestamp";
                     excelWorksheet.Cells["C1"].Value = "Base";
@@ -45,7 +58,7 @@ namespace CryptoGramBot.Services
 
                     var i = 2;
 
-                    foreach (var trade in allTradesForTerms)
+                    foreach (var trade in allTradesForCurrency)
                     {
                         var costAbs = trade.Cost;
                         if (trade.Side == TradeSide.Buy)
@@ -69,6 +82,20 @@ namespace CryptoGramBot.Services
 
                         i++;
                     }
+
+                    ProfitAndLoss pnl = ProfitCalculator.GetProfitAndLossForPair(allTradesForCurrency, currency);
+                    pnlWorksheet.Cells["A" + lastPairProfitRow].Value = pnl.Base;
+                    pnlWorksheet.Cells["B" + lastPairProfitRow].Value = pnl.Terms;
+                    pnlWorksheet.Cells["C" + lastPairProfitRow].Value = pnl.UnrealisedProfit;
+                    pnlWorksheet.Cells["D" + lastPairProfitRow].Value = pnl.Profit;
+                    pnlWorksheet.Cells["E" + lastPairProfitRow].Value = pnl.AverageBuyPrice;
+                    pnlWorksheet.Cells["F" + lastPairProfitRow].Value = pnl.AverageSellPrice;
+                    pnlWorksheet.Cells["G" + lastPairProfitRow].Value = pnl.CommissionPaid;
+                    pnlWorksheet.Cells["H" + lastPairProfitRow].Value = pnl.QuantityBought;
+                    pnlWorksheet.Cells["I" + lastPairProfitRow].Value = pnl.QuantitySold;
+                    pnlWorksheet.Cells["J" + lastPairProfitRow].Value = pnl.Remaining;
+
+                    lastPairProfitRow++;
                 }
 
                 var path = Directory.GetCurrentDirectory() + @"\temp_trade_export.xlsx";

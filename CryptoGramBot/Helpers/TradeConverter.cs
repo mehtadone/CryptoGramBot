@@ -46,7 +46,7 @@ namespace CryptoGramBot.Helpers
                 order.Exchange = Constants.Bittrex;
                 order.Price = openOrder.Limit;
 
-                order.Side = openOrder.OrderType == BittrexSharp.Domain.OrderType.Buy ? TradeSide.Buy : TradeSide.Sell;
+                order.Side = openOrder.OrderType == "LIMIT_BUY" ? TradeSide.Buy : TradeSide.Sell;
 
                 var ccy = openOrder.Exchange.Split('-');
                 order.Base = ccy[0];
@@ -67,7 +67,7 @@ namespace CryptoGramBot.Helpers
                 var trade = Mapper.Map<Trade>(completedOrder);
                 trade.Exchange = Constants.Bittrex;
 
-                trade.Side = completedOrder.OrderType == BittrexSharp.Domain.OrderType.Buy ? TradeSide.Buy : TradeSide.Sell;
+                trade.Side = completedOrder.OrderType == "LIMIT_BUY" ? TradeSide.Buy : TradeSide.Sell;
 
                 if (trade.Side == TradeSide.Buy)
                 {

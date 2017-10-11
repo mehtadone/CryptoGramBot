@@ -6,9 +6,9 @@ A telegram bot that sends your balance updates from coinigy, send trade notifica
 
 ### Donations Welcome
 * **BTC**: 1LVtLb6Vo79nyPBp252GSJVDMPToGvjFN6
-* **DASH**: 0x20A660DB0Abb84f62c532E5881C90e0Ef0e29638
-* **ETH**: LYGuFsyHSYFpmEiW4SKPedt6KsvL2ZqeEW
-* **LTC**: XoQepSjoTEriBV7bLo1bdTVjbdy1AJW11B
+* **DASH**: XoQepSjoTEriBV7bLo1bdTVjbdy1AJW11B
+* **ETH**: 0x20A660DB0Abb84f62c532E5881C90e0Ef0e29638
+* **LTC**: LYGuFsyHSYFpmEiW4SKPedt6KsvL2ZqeEW
 
 ## Installation
 * Pre-requisites:

@@ -3,6 +3,7 @@ using CryptoGramBot.Configuration;
 using FluentScheduler;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
+using CryptoGramBot.Helpers;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.Services
@@ -58,6 +59,30 @@ namespace CryptoGramBot.Services
                     .Minutes();
             }
 
+            if (_bittrexConfig.Enabled)
+            {
+                if (!string.IsNullOrEmpty(_bittrexConfig.DailyNotifications))
+                {
+                    var dailyBalance = _bittrexConfig.DailyNotifications.Split(':');
+                    int.TryParse(dailyBalance[0], out int hour);
+                    int.TryParse(dailyBalance[1], out int min);
+
+                    registry.Schedule(() => DailyBalanceCheck(Constants.Bittrex).Wait()).ToRunEvery(1).Days().At(hour, min);
+                }
+            }
+
+            if (_poloniexConfig.Enabled)
+            {
+                if (!string.IsNullOrEmpty(_poloniexConfig.DailyNotifications))
+                {
+                    var dailyBalance = _poloniexConfig.DailyNotifications.Split(':');
+                    int.TryParse(dailyBalance[0], out int hour);
+                    int.TryParse(dailyBalance[1], out int min);
+
+                    registry.Schedule(() => DailyBalanceCheck(Constants.Poloniex).Wait()).ToRunEvery(1).Days().At(hour, min);
+                }
+            }
+
             if (_bittrexConfig.Enabled || _poloniexConfig.Enabled || _coinigyConfig.Enabled)
             {
                 registry.Schedule(() => CheckBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
@@ -91,6 +116,12 @@ namespace CryptoGramBot.Services
         private async Task CheckForBags()
         {
             await _bus.PublishAsync(new BagAndDustEvent());
+        }
+
+        private async Task DailyBalanceCheck(string exchange)
+        {
+            var balanceCheckEvent = new BalanceCheckEvent(true, exchange);
+            await _bus.PublishAsync(balanceCheckEvent);
         }
 
         private async Task GetNewOrders()

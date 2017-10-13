@@ -146,7 +146,7 @@ namespace CryptoGramBot.Services.Exchanges
         public async Task<List<Trade>> GetOrderHistory(DateTime lastChecked)
         {
             var response = await _exchange.GetOrderHistory();
-            var bittrexToTrades = TradeConverter.BittrexToTrades(response);
+            var bittrexToTrades = TradeConverter.BittrexToTrades(response, _log);
             return bittrexToTrades;
         }
 

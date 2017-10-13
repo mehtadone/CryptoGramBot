@@ -7,6 +7,7 @@ using AutoMapper;
 using BittrexSharp.Domain;
 using CsvHelper;
 using CryptoGramBot.Models;
+using Microsoft.Extensions.Logging;
 using Poloniex.TradingTools;
 using Poloniex.WalletTools;
 using OpenOrder = CryptoGramBot.Models.OpenOrder;
@@ -18,7 +19,7 @@ namespace CryptoGramBot.Helpers
 {
     public static class TradeConverter
     {
-        public static List<Trade> BittrexFileToTrades(Stream csvExport)
+        public static List<Trade> BittrexFileToTrades(Stream csvExport, ILogger log)
         {
             TextReader fileReader = new StreamReader(csvExport, Encoding.Unicode);
 
@@ -33,7 +34,7 @@ namespace CryptoGramBot.Helpers
                 tradeList.Add(completedOrder);
             }
 
-            return BittrexToTrades(tradeList);
+            return BittrexToTrades(tradeList, log);
         }
 
         public static List<OpenOrder> BittrexToOpenOrders(IEnumerable<BittrexSharp.Domain.OpenOrder> bittrexOrders)
@@ -58,7 +59,7 @@ namespace CryptoGramBot.Helpers
             return list;
         }
 
-        public static List<Trade> BittrexToTrades(IEnumerable<HistoricOrder> bittrexTrades)
+        public static List<Trade> BittrexToTrades(IEnumerable<HistoricOrder> bittrexTrades, ILogger logger)
         {
             var tradeList = new List<Trade>();
 
@@ -67,15 +68,19 @@ namespace CryptoGramBot.Helpers
                 var trade = Mapper.Map<Trade>(completedOrder);
                 trade.Exchange = Constants.Bittrex;
 
-                trade.Side = completedOrder.OrderType == "LIMIT_BUY" ? TradeSide.Buy : TradeSide.Sell;
+                trade.Side = completedOrder.OrderType.Trim() == "LIMIT_BUY" ? TradeSide.Buy : TradeSide.Sell;
 
                 if (trade.Side == TradeSide.Buy)
                 {
                     trade.Cost = completedOrder.Price + completedOrder.Commission;
                 }
-                else
+                else if (trade.Side == TradeSide.Sell)
                 {
                     trade.Cost = completedOrder.Price - completedOrder.Commission;
+                }
+                else
+                {
+                    logger.LogError($"SOMETHING NEEDS FIXING: TRADE SIDE IS {completedOrder.OrderType}");
                 }
 
                 var ccy = completedOrder.Exchange.Split('-');

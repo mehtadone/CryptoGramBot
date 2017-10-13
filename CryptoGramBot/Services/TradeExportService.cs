@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using Microsoft.Extensions.Logging;
@@ -21,9 +23,16 @@ namespace CryptoGramBot.Services
         {
             using (var xlPackage = new ExcelPackage())
             {
-                var pnlWorksheet = xlPackage.Workbook.Worksheets.Add("Profit and Loss");
+                var pnlDict = new Dictionary<string, List<ProfitAndLoss>>();
+
+                var pnlWorksheet = xlPackage.Workbook.Worksheets.Add("Pair PnL");
+                var totalPnlWorksheet = xlPackage.Workbook.Worksheets.Add("Total PnL");
 
                 var allPairs = _databaseService.GetAllPairs();
+
+                totalPnlWorksheet.Cells["A1"].Value = "Coin";
+                totalPnlWorksheet.Cells["B1"].Value = "Unrealised Profit";
+                totalPnlWorksheet.Cells["C1"].Value = "Realised Profit";
 
                 pnlWorksheet.Cells["A1"].Value = "Base";
                 pnlWorksheet.Cells["B1"].Value = "Terms";
@@ -95,7 +104,36 @@ namespace CryptoGramBot.Services
                     pnlWorksheet.Cells["I" + lastPairProfitRow].Value = pnl.QuantitySold;
                     pnlWorksheet.Cells["J" + lastPairProfitRow].Value = pnl.Remaining;
 
+                    if (pnlDict.Keys.Contains(pnl.Base))
+                    {
+                        pnlDict[pnl.Base].Add(pnl);
+                    }
+                    else
+                    {
+                        var list = new List<ProfitAndLoss> { pnl };
+                        pnlDict[pnl.Base] = list;
+                    }
+
                     lastPairProfitRow++;
+                }
+
+                int rowNumber = 2;
+                foreach (var pnlPair in pnlDict)
+                {
+                    decimal realisedPnl = 0m;
+                    decimal unrelaisedPnl = 0m;
+
+                    foreach (var profitAndLoss in pnlPair.Value)
+                    {
+                        realisedPnl = realisedPnl + profitAndLoss.Profit;
+                        unrelaisedPnl = realisedPnl + profitAndLoss.UnrealisedProfit;
+                    }
+
+                    totalPnlWorksheet.Cells["A" + rowNumber].Value = pnlPair.Key;
+                    totalPnlWorksheet.Cells["B" + rowNumber].Value = unrelaisedPnl;
+                    totalPnlWorksheet.Cells["C" + rowNumber].Value = realisedPnl;
+
+                    rowNumber++;
                 }
 
                 var path = Directory.GetCurrentDirectory() + @"\temp_trade_export.xlsx";

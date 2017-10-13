@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -24,9 +25,9 @@ namespace CryptoGramBot.Services
             _databaseService = databaseService;
         }
 
-        public async Task<decimal> GetDollarAmount(decimal btcAmount)
+        public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
         {
-            var price = await GetBtcPrice();
+            var price = await GetPrice(baseCcy);
             return Math.Round(price * btcAmount, 2);
         }
 
@@ -50,14 +51,14 @@ namespace CryptoGramBot.Services
             return price;
         }
 
-        private async Task<decimal> GetBtcPrice()
+        private async Task<decimal> GetPrice(string baseCcy)
         {
             if (_lastChecked > DateTime.Now - TimeSpan.FromMinutes(15))
             {
                 return _price;
             }
 
-            string url = "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD,EUR";
+            string url = $"https://min-api.cryptocompare.com/data/price?fsym={baseCcy}&tsyms=USD,EUR";
             using (var httpClient = new HttpClient())
             {
                 using (var response = await httpClient.GetAsync(url))

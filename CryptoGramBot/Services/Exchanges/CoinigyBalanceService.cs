@@ -28,7 +28,7 @@ namespace CryptoGramBot.Services
 
             var hour24Balance = _databaseService.GetBalance24HoursAgo(selectedAccount.AuthId);
             var balanceCurrent = await _coinigyApiService.GetBtcBalance(selectedAccount.AuthId);
-            var dollarAmount = await _priceService.GetDollarAmount(balanceCurrent);
+            var dollarAmount = await _priceService.GetDollarAmount("BTC", balanceCurrent);
 
             // Add to database. Should move these "Add to database" as an event which is called whenever a balance is queried
             var currentBalance = await _databaseService.AddBalance(balanceCurrent, dollarAmount, selectedAccount.AuthId);
@@ -58,7 +58,7 @@ namespace CryptoGramBot.Services
         {
             var hour24Balance = _databaseService.GetBalance24HoursAgo(accountName);
             var balanceCurrent = await _coinigyApiService.GetBtcBalance();
-            var dollarAmount = await _priceService.GetDollarAmount(balanceCurrent);
+            var dollarAmount = await _priceService.GetDollarAmount("BTC", balanceCurrent);
 
             var currentBalance = await _databaseService.AddBalance(balanceCurrent, dollarAmount, accountName);
             return new BalanceInformation(currentBalance, hour24Balance, accountName);
@@ -68,7 +68,7 @@ namespace CryptoGramBot.Services
         {
             var hour24Balance = _databaseService.GetBalance24HoursAgo(Constants.TotalCoinigyBalance);
             var balanceCurrent = await _coinigyApiService.GetBtcBalance();
-            var dollarAmount = await _priceService.GetDollarAmount(balanceCurrent);
+            var dollarAmount = await _priceService.GetDollarAmount("BTC", balanceCurrent);
 
             var currentBalance = await _databaseService.AddBalance(balanceCurrent, dollarAmount, Constants.TotalCoinigyBalance);
             return new BalanceInformation(currentBalance, hour24Balance, Constants.TotalCoinigyBalance);

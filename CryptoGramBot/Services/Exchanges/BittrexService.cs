@@ -104,7 +104,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
 
             var lastBalance = _databaseService.GetBalance24HoursAgo(Constants.Bittrex);
-            var dollarAmount = await _priceService.GetDollarAmount(totalBtcBalance);
+            var dollarAmount = await _priceService.GetDollarAmount("BTC", totalBtcBalance);
             var currentBalance = await _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Bittrex);
             await _databaseService.AddWalletBalances(bittrexBalances);
 
@@ -156,10 +156,10 @@ namespace CryptoGramBot.Services.Exchanges
             switch (terms)
             {
                 case "USD":
-                    return await _priceService.GetDollarAmount(1);
+                    return await _priceService.GetDollarAmount(baseCcy, 1);
 
                 case "USDT":
-                    return await _priceService.GetDollarAmount(1);
+                    return await _priceService.GetDollarAmount(baseCcy, 1);
 
                 case "BTC":
                     return 0;

@@ -42,10 +42,6 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
                     var accountInfo = await _coinigyBalanceService.GetAccountBalance(@event.CoinigyAccountId.Value);
                     await _bus.SendAsync(new SendBalanceInfoCommand(accountInfo));
                 }
-                else
-                {
-                    await _bus.SendAsync(new SendHelpMessageCommand());
-                }
             }
 
             if (@event.Exchange == Constants.TotalCoinigyBalance && (@event.UserRequested || _config.SendHourlyUpdates))

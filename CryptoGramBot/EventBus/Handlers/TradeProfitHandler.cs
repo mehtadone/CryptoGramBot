@@ -34,7 +34,7 @@ namespace CryptoGramBot.EventBus.Handlers
             if (profit.HasValue && totalCost.HasValue)
             {
                 decimal? btcProfit = query.SellReturns - totalCost.Value;
-                decimal? dollarProfit = await _priceService.GetDollarAmount(btcProfit.Value);
+                decimal? dollarProfit = await _priceService.GetDollarAmount(query.BaseCcy, btcProfit.Value);
                 return new TradesProfitResponse(profit, btcProfit, dollarProfit, lastBought);
             }
 

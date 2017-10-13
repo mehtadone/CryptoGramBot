@@ -77,6 +77,7 @@ This app needs to be run all the time to have the bot running. I might look at c
 * Open order notifications
 * Deposit and withdrawal notification
 * Low BTC notifications
+* Reset polo trades through a command
 
 ## Todo
 * Show deposits and withdrawals to show accurate profit and loss. 

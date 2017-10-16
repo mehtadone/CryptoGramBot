@@ -207,7 +207,7 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<TelegramBittrexFileUploadService>();
             containerBuilder.RegisterType<TelegramPairProfitService>();
 
-            var assembly = Directory.GetFiles(Assembly.GetExecutingAssembly().Location, "*.dll")
+            var assembly = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.dll")
                                     .SingleOrDefault(a => a.Contains("CryptoGramBag"));
             if (assembly != null)
             {

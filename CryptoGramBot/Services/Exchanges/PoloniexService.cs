@@ -148,26 +148,19 @@ namespace CryptoGramBot.Services.Exchanges
                     return 0;
             }
 
-            // REALLY?? There is no simple getTicker on the polo client???
-            var price = await _priceService.GetPriceInBtc(terms);
-
-            decimal priceAsDecimal;
             try
             {
+                // REALLY?? There is no simple getTicker on the polo client???
+                var price = await _priceService.GetPriceInBtc(terms);
+
+                decimal priceAsDecimal;
                 priceAsDecimal = Convert.ToDecimal(price);
+                return priceAsDecimal;
             }
             catch (Exception)
             {
-                try
-                {
-                    priceAsDecimal = await _priceService.GetPriceInBtc(terms);
-                }
-                catch (Exception)
-                {
-                    return 0;
-                }
+                return 0;
             }
-            return priceAsDecimal;
         }
 
         private async Task<IDepositWithdrawalList> GetDepositsAndWithdrawals(Setting checkedBefore)

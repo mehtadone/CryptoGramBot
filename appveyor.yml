@@ -27,7 +27,7 @@ on_finish :
   # any cleanup in here
 deploy:
   release: CryptoGramBot-v$(appveyor_build_version)
-  description: 'Ability to reset Polo trades from API call. Fixed profit calculations. Shown profit on profit command is realised profit. Add profit on spreadsheet. Initial work on non BTC pairs'
+  description: 'Fix an issue when a bittrex market gets delisted'
   provider: GitHub
   auth_token:
     secure: esN+SKR3Mla7CRA3bD9NBK1WFuuMc7W0/MyIX8kUC9q8BXELNvSZaBQcEt7S7oTj # your encrypted token from GitHub

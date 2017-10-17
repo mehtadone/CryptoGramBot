@@ -59,35 +59,45 @@ namespace CryptoGramBot.Services.Exchanges
                 decimal btcAmount;
                 decimal boughtPrice = 0m;
 
-                switch (balance.Currency)
+                if (marketPrice == 0)
                 {
-                    case "BTC":
-                        btcAmount = balance.Balance;
-                        price = 1;
-                        boughtPrice = 1;
-                        break;
+                    btcAmount = 0m;
+                    price = 0m;
+                }
+                else
+                {
+                    switch (balance.Currency)
+                    {
+                        case "BTC":
+                            btcAmount = balance.Balance;
+                            price = 1;
+                            boughtPrice = 1;
+                            break;
 
-                    case "USDT":
-                        price = marketPrice;
-                        btcAmount = (balance.Balance / price);
-                        var lastTradeForPair =
-                            _databaseService.GetLastTradeForPair(balance.Currency, Constants.Bittrex, TradeSide.Buy);
-                        if (lastTradeForPair != null)
-                        {
-                            boughtPrice = lastTradeForPair.Limit;
-                        }
-                        break;
+                        case "USDT":
+                            price = marketPrice;
+                            btcAmount = (balance.Balance / price);
+                            var lastTradeForPair =
+                                _databaseService.GetLastTradeForPair(balance.Currency, Constants.Bittrex,
+                                    TradeSide.Buy);
+                            if (lastTradeForPair != null)
+                            {
+                                boughtPrice = lastTradeForPair.Limit;
+                            }
+                            break;
 
-                    default:
-                        price = marketPrice;
-                        btcAmount = (price * balance.Balance);
-                        var lastTradeForPair1 =
-                            _databaseService.GetLastTradeForPair(balance.Currency, Constants.Bittrex, TradeSide.Buy);
-                        if (lastTradeForPair1 != null)
-                        {
-                            boughtPrice = lastTradeForPair1.Limit;
-                        }
-                        break;
+                        default:
+                            price = marketPrice;
+                            btcAmount = (price * balance.Balance);
+                            var lastTradeForPair1 =
+                                _databaseService.GetLastTradeForPair(balance.Currency, Constants.Bittrex,
+                                    TradeSide.Buy);
+                            if (lastTradeForPair1 != null)
+                            {
+                                boughtPrice = lastTradeForPair1.Limit;
+                            }
+                            break;
+                    }
                 }
                 try
                 {
@@ -165,25 +175,25 @@ namespace CryptoGramBot.Services.Exchanges
                     return 0;
             }
 
-            var ticker = await _exchange.GetTicker(baseCcy, terms);
-            var price = ticker.Last.ToString();
-            decimal priceAsDecimal;
             try
             {
-                priceAsDecimal = decimal.Parse(price, NumberStyles.Float);
+                var ticker = await _exchange.GetTicker(baseCcy, terms);
+                var price = ticker.Last.ToString();
+                var priceAsDecimal = decimal.Parse(price, NumberStyles.Float);
+                return priceAsDecimal;
             }
             catch (Exception)
             {
                 try
                 {
-                    priceAsDecimal = await _priceService.GetPriceInBtc(terms);
+                    var priceAsDecimal = await _priceService.GetPriceInBtc(terms);
+                    return priceAsDecimal;
                 }
                 catch (Exception)
                 {
                     return 0;
                 }
             }
-            return priceAsDecimal;
         }
     }
 }

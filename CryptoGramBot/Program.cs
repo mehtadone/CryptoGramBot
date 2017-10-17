@@ -20,6 +20,7 @@ using CryptoGramBot.Services.Telegram;
 using Enexure.MicroBus.Autofac;
 using Microsoft.EntityFrameworkCore;
 using IConfigurationProvider = Microsoft.Extensions.Configuration.IConfigurationProvider;
+using System.Reflection;
 
 namespace CryptoGramBot
 {
@@ -205,6 +206,16 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<TradeExportService>();
             containerBuilder.RegisterType<TelegramBittrexFileUploadService>();
             containerBuilder.RegisterType<TelegramPairProfitService>();
+
+            var assembly = Directory.GetFiles(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "*.dll")
+                                    .SingleOrDefault(a => a.Contains("CryptoGramBag"));
+            if (assembly != null)
+            {
+                var asm = Assembly.LoadFrom(assembly);
+                containerBuilder.RegisterAssemblyTypes(asm)
+                                .Where(t => t == typeof(IPlugin))
+                                .AsImplementedInterfaces();
+            }
 
             return containerBuilder;
         }

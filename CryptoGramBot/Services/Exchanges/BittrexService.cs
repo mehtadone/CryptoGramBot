@@ -59,7 +59,7 @@ namespace CryptoGramBot.Services.Exchanges
                 decimal btcAmount;
                 decimal boughtPrice = 0m;
 
-                if (marketPrice == 0)
+                if (marketPrice == 0 && balance.Currency != "BTC")
                 {
                     btcAmount = 0m;
                     price = 0m;

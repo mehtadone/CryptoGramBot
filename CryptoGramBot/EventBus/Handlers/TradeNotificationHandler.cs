@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using CryptoGramBot.Configuration;
 using CryptoGramBot.Models;
 using Enexure.MicroBus;
 
@@ -18,10 +19,12 @@ namespace CryptoGramBot.EventBus.Handlers
     public class TradeNotificationHandler : ICommandHandler<TradeNotificationCommand>
     {
         private readonly IMicroBus _bus;
+        private readonly GeneralConfig _config;
 
-        public TradeNotificationHandler(IMicroBus bus)
+        public TradeNotificationHandler(IMicroBus bus, GeneralConfig config)
         {
             _bus = bus;
+            _config = config;
         }
 
         public async Task Handle(TradeNotificationCommand command)
@@ -40,10 +43,10 @@ namespace CryptoGramBot.EventBus.Handlers
                 profitPercentage = tradesProfitResponse.ProfitPercentage;
                 btcProfit = tradesProfitResponse.BtcProfit;
                 dollarProfit = tradesProfitResponse.DollarProfit;
-                lastBought = tradesProfitResponse.LastBoughtTime;
+                lastBought = tradesProfitResponse.LastBoughtTime + TimeSpan.FromHours(_config.TimeOffset);
             }
 
-            var message = $"{newTrade.TimeStamp:g}\n" +
+            var message = $"{newTrade.TimeStamp + TimeSpan.FromHours(_config.TimeOffset):g}\n" +
                           $"New {newTrade.Exchange} order\n" +
                           $"<strong>{newTrade.Side} {newTrade.Base}-{newTrade.Terms}</strong>\n" +
                           $"Total: {newTrade.Cost:##0.###########} {newTrade.Base}\n" +

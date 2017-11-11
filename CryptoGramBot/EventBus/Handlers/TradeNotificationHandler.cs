@@ -50,7 +50,7 @@ namespace CryptoGramBot.EventBus.Handlers
                           $"New {newTrade.Exchange} order\n" +
                           $"<strong>{newTrade.Side} {newTrade.Base}-{newTrade.Terms}</strong>\n" +
                           $"Quantity: {newTrade.QuantityOfTrade}\n" +
-                          $"Rate: {newTrade.Limit:##0.##############} {newTrade.Base}" +
+                          $"Rate: {newTrade.Limit:##0.##############} {newTrade.Base}\n" +
                           $"Total: {newTrade.Cost:##0.###########} {newTrade.Base}\n";
 
             if (profitPercentage.HasValue && btcProfit.HasValue && dollarProfit.HasValue)

@@ -49,6 +49,7 @@ namespace CryptoGramBot.EventBus.Handlers
             var message = $"{newTrade.TimeStamp + TimeSpan.FromHours(_config.TimeOffset):g}\n" +
                           $"New {newTrade.Exchange} order\n" +
                           $"<strong>{newTrade.Side} {newTrade.Base}-{newTrade.Terms}</strong>\n" +
+                          $"Quantity: {newTrade.QuantityOfTrade}" +
                           $"Total: {newTrade.Cost:##0.###########} {newTrade.Base}\n" +
                           $"Rate: {newTrade.Limit:##0.##############} {newTrade.Base}";
 

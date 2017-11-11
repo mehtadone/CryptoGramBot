@@ -48,11 +48,11 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
 
         private async Task SendAndCheckNotifications(FindNewTradesResponse newTradesResponse)
         {
-            if (newTradesResponse.NewTrades.Count() > 10)
+            if (newTradesResponse.NewTrades.Count() > 29)
             {
                 await _bus.SendAsync(
                     new SendMessageCommand(
-                        "There are more than 10 Poloniex trades to send. Not going to send them to avoid spamming you"));
+                        "There are more than 30 Poloniex trades to send. Not going to send them to avoid spamming you"));
                 return;
             }
 

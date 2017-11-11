@@ -39,11 +39,11 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
             var i = 0;
             if (!_config.BuyNotifications && !_config.SellNotifications) return;
 
-            if (newTradesResponse.NewTrades.Count() > 10)
+            if (newTradesResponse.NewTrades.Count() > 29)
             {
                 await _bus.SendAsync(
                     new SendMessageCommand(
-                        "There are more than 10 Bittrex trades to send. Not going to send them to avoid spamming you"));
+                        "There are more than 30 Bittrex trades to send. Not going to send them to avoid spamming you"));
                 return;
             }
 

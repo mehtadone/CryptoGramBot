@@ -51,13 +51,13 @@ namespace CryptoGramBot.EventBus.Handlers
                           $"<strong>{newTrade.Side} {newTrade.Base}-{newTrade.Terms}</strong>\n" +
                           $"Quantity: {newTrade.QuantityOfTrade}\n" +
                           $"Rate: {newTrade.Limit:##0.##############} {newTrade.Base}\n" +
-                          $"Total: {newTrade.Cost:##0.###########} {newTrade.Base}\n";
+                          $"Total: {newTrade.Cost:##0.###########} {newTrade.Base}";
 
             if (profitPercentage.HasValue && btcProfit.HasValue && dollarProfit.HasValue)
             {
                 message = message + $"\nProfit: {btcProfit.Value:##0.########} {newTrade.Base} (${dollarProfit.Value:###0.##})\n"
                     + $"Bought on: {lastBought:g}\n"
-                    + $"Percentage: {profitPercentage.Value}%";
+                    + $"<strong>Percentage: {profitPercentage.Value}%</strong>";
             }
 
             await _bus.SendAsync(new SendMessageCommand(message));

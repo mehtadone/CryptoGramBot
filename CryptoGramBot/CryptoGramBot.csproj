@@ -11,7 +11,9 @@
 		<Authors>mehtadone@gmail.com</Authors>
 		<PackageProjectUrl>https://github.com/mehtadone/CryptoGramBot</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/mehtadone/CryptoGramBot</RepositoryUrl>
+		<ServerGarbageCollection>false</ServerGarbageCollection>
 		<RepositoryType>Github</RepositoryType>
+		<RuntimeIdentifiers>win8-arm;ubuntu.14.04-arm;ubuntu.16.04-arm</RuntimeIdentifiers>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -36,6 +38,7 @@
 		<PackageReference Include="Serilog.Sinks.Console" Version="3.0.1" />
 		<PackageReference Include="Serilog.Sinks.File" Version="3.2.0" />
 		<PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
+		<PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="1.1.8" />
 		<PackageReference Include="Telegram.Bot" Version="13.2.1" />
 	</ItemGroup>
 
@@ -60,7 +63,7 @@
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Update="logs\dummy.txt">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
 

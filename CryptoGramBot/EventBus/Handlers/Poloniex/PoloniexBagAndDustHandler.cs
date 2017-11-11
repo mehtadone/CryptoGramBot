@@ -46,18 +46,23 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                     }
                 }
 
-                var lastTradeForPair = _databaseService.GetLastTradeForPair(walletBalance.Currency, Constants.Poloniex, TradeSide.Buy);
-                if (lastTradeForPair == null) continue;
-                var currentPrice = await _poloService.GetPrice(lastTradeForPair.Base, lastTradeForPair.Terms);
-
-                if (_bagConfig.Enabled)
+                if (walletBalance.Currency != "BTC" && walletBalance.Currency != "USDT" &&
+                    walletBalance.Currency != "USD")
                 {
-                    await BagManagement(currentPrice, lastTradeForPair, walletBalance);
-                }
+                    var lastTradeForPair =
+                        _databaseService.GetLastTradeForPair(walletBalance.Currency, Constants.Poloniex, TradeSide.Buy);
+                    if (lastTradeForPair == null) continue;
+                    var currentPrice = await _poloService.GetPrice(lastTradeForPair.Base, lastTradeForPair.Terms);
 
-                if (_dustConfig.Enabled)
-                {
-                    await DustManagement(walletBalance);
+                    if (_bagConfig.Enabled)
+                    {
+                        await BagManagement(currentPrice, lastTradeForPair, walletBalance);
+                    }
+
+                    if (_dustConfig.Enabled)
+                    {
+                        await DustManagement(walletBalance);
+                    }
                 }
             }
         }

@@ -8,25 +8,23 @@ using CryptoGramBot.Services;
 using CryptoGramBot.Services.Exchanges;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus.Handlers
+namespace CryptoGramBot.EventBus.Handlers.Bittrex
 {
     public class BittrexBagAndDustHandler : IEventHandler<BagAndDustEvent>
     {
         private readonly BagConfig _bagConfig;
-        private readonly BittrexConfig _bittrexConfig;
         private readonly BittrexService _bittrexService;
         private readonly IMicroBus _bus;
         private readonly DatabaseService _databaseService;
         private readonly DustConfig _dustConfig;
         private readonly LowBtcConfig _lowBtcConfig;
 
-        public BittrexBagAndDustHandler(IMicroBus bus, BittrexService bittrexService, DatabaseService databaseService, BagConfig bagConfig, BittrexConfig bittrexConfig, DustConfig dustConfig, LowBtcConfig lowBtcConfig)
+        public BittrexBagAndDustHandler(IMicroBus bus, BittrexService bittrexService, DatabaseService databaseService, BagConfig bagConfig, DustConfig dustConfig, LowBtcConfig lowBtcConfig)
         {
             _bus = bus;
             _bittrexService = bittrexService;
             _databaseService = databaseService;
             _bagConfig = bagConfig;
-            _bittrexConfig = bittrexConfig;
             _dustConfig = dustConfig;
             _lowBtcConfig = lowBtcConfig;
         }
@@ -48,18 +46,23 @@ namespace CryptoGramBot.EventBus.Handlers
                     }
                 }
 
-                var lastTradeForPair = _databaseService.GetLastTradeForPair(walletBalance.Currency, Constants.Bittrex, TradeSide.Buy);
-                if (lastTradeForPair == null) continue;
-                var currentPrice = await _bittrexService.GetPrice(lastTradeForPair.Base, lastTradeForPair.Terms);
-
-                if (_bagConfig.Enabled)
+                if (walletBalance.Currency != "BTC" && walletBalance.Currency != "USDT" &&
+                    walletBalance.Currency != "USD")
                 {
-                    await BagManagement(currentPrice, lastTradeForPair, walletBalance);
-                }
+                    var lastTradeForPair =
+                        _databaseService.GetLastTradeForPair(walletBalance.Currency, Constants.Bittrex, TradeSide.Buy);
+                    if (lastTradeForPair == null) continue;
+                    var currentPrice = await _bittrexService.GetPrice(lastTradeForPair.Base, lastTradeForPair.Terms);
 
-                if (_dustConfig.Enabled)
-                {
-                    await DustManagement(walletBalance);
+                    if (_bagConfig.Enabled)
+                    {
+                        await BagManagement(currentPrice, lastTradeForPair, walletBalance);
+                    }
+
+                    if (_dustConfig.Enabled)
+                    {
+                        await DustManagement(walletBalance);
+                    }
                 }
             }
         }

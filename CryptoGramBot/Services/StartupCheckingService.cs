@@ -55,7 +55,7 @@ namespace CryptoGramBot.Services
 
                 registry.Schedule(() => GetNewOrders().Wait())
                     .ToRunNow()
-                    .AndEvery(5)
+                    .AndEvery(1)
                     .Minutes();
             }
 

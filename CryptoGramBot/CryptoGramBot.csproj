@@ -11,7 +11,6 @@
 		<Authors>mehtadone@gmail.com</Authors>
 		<PackageProjectUrl>https://github.com/mehtadone/CryptoGramBot</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/mehtadone/CryptoGramBot</RepositoryUrl>
-		<ServerGarbageCollection>false</ServerGarbageCollection>
 		<RepositoryType>Github</RepositoryType>
 		<RuntimeIdentifiers>win8-arm;ubuntu.14.04-arm;ubuntu.16.04-arm</RuntimeIdentifiers>
 	</PropertyGroup>

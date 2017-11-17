@@ -21,6 +21,7 @@ namespace CryptoGramBot
                 var config = configurationBuilder.Build();
 
                 Log.Logger = new LoggerConfiguration()
+                                            .WriteTo.Console(theme: AnsiConsoleTheme.Code)
                     .WriteTo.RollingFile(Directory.GetCurrentDirectory() + "/logs/CryptoGramBot.log")
                     .MinimumLevel.Debug()
                     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)

@@ -82,7 +82,11 @@ namespace BittrexSharp
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
             var result = JsonConvert.DeserializeObject<BittrexResponse>(content);
-            if (!result.Success) throw new Exception("Request failed: " + result.Message);
+            if (!result.Success)
+            {
+                //  throw new Exception("Request failed: " + result.Message);
+                return null;
+            }
             return result.Result;
         }
 
@@ -244,7 +248,8 @@ namespace BittrexSharp
                 { "market", marketName }
             };
             var jsonResponse = await request(HttpMethod.Get, uri, parameters, false);
-            var ticker = jsonResponse.ToObject<Ticker>();
+
+            var ticker = jsonResponse?.ToObject<Ticker>();
             if (ticker == null) return null;
             ticker.MarketName = marketName;
             return ticker;

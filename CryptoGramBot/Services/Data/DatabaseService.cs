@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml.FormulaParsing.Excel.Functions.DateTime;
 
 namespace CryptoGramBot.Services
@@ -37,11 +38,6 @@ namespace CryptoGramBot.Services
             await SaveBalance(balanceHistory, name);
 
             return balanceHistory;
-        }
-
-        public void AddCoinigyAccounts(Dictionary<int, CoinigyAccount> coinigyAccounts)
-        {
-            //            throw new NotImplementedException();
         }
 
         public async Task<List<Deposit>> AddDeposits(List<Deposit> deposits, string exchange)
@@ -185,29 +181,29 @@ namespace CryptoGramBot.Services
         public async Task DeleteAllTrades(string exchange)
         {
             _log.LogInformation($"Deleting trades for {exchange}");
-            var trades = _context.Trades.Where(x => x.Exchange == exchange).ToList();
+            var trades = await _context.Trades.Where(x => x.Exchange == exchange).ToListAsync();
             _context.Trades.RemoveRange(trades);
             await _context.SaveChangesAsync();
         }
 
-        public IEnumerable<BalanceHistory> GetAllBalances()
+        public async Task<IEnumerable<BalanceHistory>> GetAllBalances()
         {
-            var all = _context.BalanceHistories;
-            return all.AsEnumerable();
+            var all = await _context.BalanceHistories.ToListAsync();
+            return all;
         }
 
-        public IEnumerable<LastChecked> GetAllLastChecked()
+        public async Task<IEnumerable<LastChecked>> GetAllLastChecked()
         {
-            var all = _context.LastCheckeds;
-            return all.AsEnumerable();
+            var all = await _context.LastCheckeds.ToListAsync();
+            return all;
         }
 
-        public IEnumerable<Currency> GetAllPairs()
+        public async Task<IEnumerable<Currency>> GetAllPairs()
         {
             var collection = _context.Trades.AsQueryable();
-            var distinct = collection.GroupBy(g => new { g.Base, g.Terms })
+            var distinct = await collection.GroupBy(g => new { g.Base, g.Terms })
                 .Select(g => g.First())
-                .ToList();
+                .ToListAsync();
 
             return distinct.Select(trade => new Currency
             {
@@ -217,24 +213,24 @@ namespace CryptoGramBot.Services
                 .ToList();
         }
 
-        public IEnumerable<ProfitAndLoss> GetAllProfitAndLoss()
+        public async Task<IEnumerable<ProfitAndLoss>> GetAllProfitAndLoss()
         {
-            var all = _context.ProfitAndLosses;
-            return all.AsEnumerable();
+            var all = await _context.ProfitAndLosses.ToListAsync();
+            return all;
         }
 
-        public IEnumerable<Trade> GetAllTrades()
+        public async Task<IEnumerable<Trade>> GetAllTrades()
         {
-            var all = _context.Trades;
-            return all.AsEnumerable();
+            var all = await _context.Trades.ToListAsync();
+            return all;
         }
 
-        public List<Trade> GetAllTradesBuyFor(string currency, string exchange)
-        {
-            var collection = _context.Trades;
-            var trades = collection.Where(x => x.Terms == currency && x.Exchange == exchange && x.Side == TradeSide.Buy).AsEnumerable();
-            return trades.ToList();
-        }
+        //        public async Task<List<Trade>> GetAllTradesBuyFor(string currency, string exchange)
+        //        {
+        //            var collection = _context.Trades;
+        //            var trades = await collection.Where(x => x.Terms == currency && x.Exchange == exchange && x.Side == TradeSide.Buy).ToListAsync();
+        //            return trades;
+        //        }
 
         public List<Trade> GetAllTradesFor(Currency currency)
         {
@@ -243,7 +239,7 @@ namespace CryptoGramBot.Services
             return trades.ToList();
         }
 
-        public BalanceHistory GetBalance24HoursAgo(string name)
+        public async Task<BalanceHistory> GetBalance24HoursAgo(string name)
         {
             var dateTime = DateTime.Now - TimeSpan.FromHours(24);
             BalanceHistory hour24Balance;
@@ -260,7 +256,7 @@ namespace CryptoGramBot.Services
                 _log.LogInformation($"Retrieving 24 hour balance from database for: {name}");
 
                 var collection = _context.BalanceHistories;
-                var balanceHistories = collection.Where(x => x.Name == name).OrderByDescending(x => x.DateTime).ToList();
+                var balanceHistories = await collection.Where(x => x.Name == name).OrderByDescending(x => x.DateTime).ToListAsync();
 
                 histories = balanceHistories.FindAll(x => x.DateTime.Hour == dateTime.Hour &&
                                                           x.DateTime.Day == dateTime.Day &&
@@ -287,28 +283,39 @@ namespace CryptoGramBot.Services
             return hour24Balance;
         }
 
-        public List<Trade> GetBuysForPairAndQuantity(decimal sellPrice, decimal quantity, string baseCcy, string terms)
+        public async Task<decimal> GetBuyAveragePrice(string ccy1, string ccy2, string exchange, decimal quantity)
         {
             var contextTrades = _context.Trades;
-            var enumerable = contextTrades
-                .Where(x => x.Base == baseCcy && x.Terms == terms)
-                .AsEnumerable();
+            var onlyBuys = await contextTrades
+                .Where(x => x.Base == ccy1 && x.Terms == ccy2 && x.Exchange == exchange && x.Side == TradeSide.Buy)
+                .OrderByDescending(x => x.TimeStamp)
+                .ToListAsync();
 
-            var onlyBuys = enumerable.Where(x => x.Side == TradeSide.Buy);
+            var price = ProfitCalculator.GetAveragePrice(onlyBuys, quantity);
 
-            var tradesForPair = onlyBuys.OrderByDescending(x => x.TimeStamp);
+            return price;
+        }
 
-            var trades = new List<Trade>();
+        //
+        //        public async Task<List<Trade>> GetBuysForPairAndQuantity(decimal sellPrice, string baseCcy, string terms)
+        //        {
+        //            var contextTrades = _context.Trades;
+        //            var onlyBuys = await contextTrades
+        //                .Where(x => x.Base == baseCcy && x.Terms == terms && x.Side == TradeSide.Buy)
+        //                .OrderByDescending(x => x.TimeStamp)
+        //                .ToListAsync();
+        //
+        //            return onlyBuys;
+        //        }
 
-            var quanityChecked = 0m;
-            foreach (var trade in tradesForPair)
-            {
-                if (quanityChecked >= quantity) continue;
+        public async Task<DateTime?> GetLastBoughtAsync(string queryBaseCcy, string queryTerms, string exchange)
+        {
+            var lastBought = await _context.Trades.Where(x => x.Base == queryBaseCcy && x.Terms == queryTerms && x.Exchange == exchange)
+                .OrderByDescending(x => x.TimeStamp)
+                .Select(x => x.TimeStamp)
+                .FirstOrDefaultAsync();
 
-                trades.Add(trade);
-                quanityChecked = quanityChecked + trade.QuantityOfTrade;
-            }
-            return trades;
+            return lastBought;
         }
 
         public DateTime GetLastChecked(string key)
@@ -320,20 +327,6 @@ namespace CryptoGramBot.Services
             return lastChecked?.Timestamp ?? DateTime.Now - TimeSpan.FromDays(30);
         }
 
-        public Trade GetLastTradeForPair(string currency, string exchange, TradeSide side)
-        {
-            var contextTrades = _context.Trades;
-            var enumerable = contextTrades
-                .Where(x => x.Terms == currency && x.Exchange == exchange)
-                .AsEnumerable()
-                .OrderByDescending(x => x.TimeStamp);
-
-            var onlyBuys = enumerable.Where(x => x.Side == TradeSide.Buy);
-            var lastTrade = onlyBuys.FirstOrDefault();
-
-            return lastTrade;
-        }
-
         public Setting GetSetting(string name)
         {
             var allSettings = _context.Settings;
@@ -341,12 +334,12 @@ namespace CryptoGramBot.Services
             return singleOrDefault;
         }
 
-        public IEnumerable<Trade> GetTradesForPair(string ccy1, string ccy2)
+        public async Task<IEnumerable<Trade>> GetTradesForPair(string ccy1, string ccy2)
         {
             var contextTrades = _context.Trades;
-            var enumerable = contextTrades
+            var enumerable = await contextTrades
                 .Where(x => x.Base == ccy1 && x.Terms == ccy2)
-                .AsEnumerable();
+                .ToListAsync();
 
             return enumerable;
         }

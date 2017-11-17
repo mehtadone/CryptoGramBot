@@ -18,6 +18,7 @@ namespace CryptoGramBot.Services.Exchanges
     {
         private readonly DatabaseService _databaseService;
         private readonly Bittrex _exchange;
+        private readonly GeneralConfig _generalConfig;
         private readonly ILogger<BittrexService> _log;
         private readonly PriceService _priceService;
 
@@ -25,11 +26,13 @@ namespace CryptoGramBot.Services.Exchanges
             BittrexConfig config,
             DatabaseService databaseService,
             PriceService priceService,
+            GeneralConfig generalConfig,
             ILogger<BittrexService> log)
         {
             var config1 = config;
             _databaseService = databaseService;
             _priceService = priceService;
+            _generalConfig = generalConfig;
             _log = log;
 
             _exchange = new Bittrex(config1.Key, config1.Secret);
@@ -54,55 +57,32 @@ namespace CryptoGramBot.Services.Exchanges
             {
                 if (balance.Balance == 0) continue;
 
-                var marketPrice = await GetPrice("BTC", balance.Currency);
-
                 decimal price;
                 decimal btcAmount;
-                decimal boughtPrice = 0m;
+                decimal averagePrice = 0m;
 
-                if (marketPrice == 0 && balance.Currency != "BTC")
+                if (balance.Currency == _generalConfig.TradingCurrency)
                 {
-                    btcAmount = 0m;
+                    btcAmount = balance.Balance;
+                    price = 0m;
+                }
+                else if (balance.Currency == "USDT")
+                {
+                    var marketPrice = await _priceService.GetPrice("USDT", _generalConfig.TradingCurrency);
+                    btcAmount = balance.Balance / marketPrice;
                     price = 0m;
                 }
                 else
                 {
-                    switch (balance.Currency)
-                    {
-                        case "BTC":
-                            btcAmount = balance.Balance;
-                            price = 1;
-                            boughtPrice = 1;
-                            break;
-
-                        case "USDT":
-                            price = marketPrice;
-                            btcAmount = (balance.Balance / price);
-                            var lastTradeForPair =
-                                _databaseService.GetLastTradeForPair(balance.Currency, Constants.Bittrex,
-                                    TradeSide.Buy);
-                            if (lastTradeForPair != null)
-                            {
-                                boughtPrice = lastTradeForPair.Limit;
-                            }
-                            break;
-
-                        default:
-                            price = marketPrice;
-                            btcAmount = (price * balance.Balance);
-                            var lastTradeForPair1 =
-                                _databaseService.GetLastTradeForPair(balance.Currency, Constants.Bittrex,
-                                    TradeSide.Buy);
-                            if (lastTradeForPair1 != null)
-                            {
-                                boughtPrice = lastTradeForPair1.Limit;
-                            }
-                            break;
-                    }
+                    var marketPrice = await _priceService.GetPrice(_generalConfig.TradingCurrency, balance.Currency);
+                    price = marketPrice;
+                    btcAmount = (price * balance.Balance);
+                    averagePrice =
+                        await _databaseService.GetBuyAveragePrice(_generalConfig.TradingCurrency, balance.Currency, Constants.Bittrex, balance.Balance);
                 }
                 try
                 {
-                    balance.PercentageChange = ProfitCalculator.PriceDifference(price, boughtPrice);
+                    balance.PercentageChange = ProfitCalculator.PriceDifference(price, averagePrice);
                 }
                 catch
                 {
@@ -114,8 +94,10 @@ namespace CryptoGramBot.Services.Exchanges
                 totalBtcBalance = totalBtcBalance + balance.BtcAmount;
             }
 
-            var lastBalance = _databaseService.GetBalance24HoursAgo(Constants.Bittrex);
-            var dollarAmount = await _priceService.GetDollarAmount("BTC", totalBtcBalance);
+            var lastBalance = await _databaseService.GetBalance24HoursAgo(Constants.Bittrex);
+
+            var dollarAmount = await _priceService.GetDollarAmount(_generalConfig.TradingCurrency, totalBtcBalance);
+
             var currentBalance = await _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Bittrex);
             await _databaseService.AddWalletBalances(bittrexBalances);
 
@@ -159,42 +141,6 @@ namespace CryptoGramBot.Services.Exchanges
             var response = await _exchange.GetOrderHistory();
             var bittrexToTrades = TradeConverter.BittrexToTrades(response, _log);
             return bittrexToTrades;
-        }
-
-        public async Task<decimal> GetPrice(string baseCcy, string terms)
-        {
-            // USDT is not terms. But this bittrex library I'm using doesnt let me set it so checking via another method for the time being.
-            switch (terms)
-            {
-                case "USD":
-                    return await _priceService.GetDollarAmount(baseCcy, 1);
-
-                case "USDT":
-                    return await _priceService.GetDollarAmount(baseCcy, 1);
-
-                case "BTC":
-                    return 0;
-            }
-
-            try
-            {
-                var ticker = await _exchange.GetTicker(baseCcy, terms);
-                var price = ticker.Last.ToString();
-                var priceAsDecimal = decimal.Parse(price, NumberStyles.Float);
-                return priceAsDecimal;
-            }
-            catch (Exception)
-            {
-                try
-                {
-                    var priceAsDecimal = await _priceService.GetPriceInBtc(terms);
-                    return priceAsDecimal;
-                }
-                catch (Exception)
-                {
-                    return 0;
-                }
-            }
         }
     }
 }

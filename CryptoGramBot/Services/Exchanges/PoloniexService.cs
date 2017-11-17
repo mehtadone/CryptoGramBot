@@ -20,6 +20,7 @@ namespace CryptoGramBot.Services.Exchanges
     public class PoloniexService : IExchangeService
     {
         private readonly DatabaseService _databaseService;
+        private readonly GeneralConfig _generalConfig;
         private readonly ILogger<PoloniexService> _log;
         private readonly PoloniexClient _poloniexClient;
         private readonly PriceService _priceService;
@@ -28,10 +29,12 @@ namespace CryptoGramBot.Services.Exchanges
             PoloniexConfig poloniexConfig,
             ILogger<PoloniexService> log,
             DatabaseService databaseService,
+            GeneralConfig generalConfig,
             PriceService priceService)
         {
             _log = log;
             _databaseService = databaseService;
+            _generalConfig = generalConfig;
             _priceService = priceService;
             _poloniexClient = new PoloniexClient(poloniexConfig.Key, poloniexConfig.Secret);
         }
@@ -53,32 +56,47 @@ namespace CryptoGramBot.Services.Exchanges
             var totalBtcBalance = 0m;
             foreach (var balance in poloniexToWalletBalances)
             {
-                if (balance.BtcAmount == 0) continue;
+                if (balance.Balance == 0) continue;
 
-                var price = await GetPrice("BTC", balance.Currency);
-                var boughtPrice = 0m;
+                decimal price;
+                decimal btcAmount;
+                decimal averagePrice = 0m;
 
-                var lastTradeForPair1 = _databaseService.GetLastTradeForPair(balance.Currency, Constants.Poloniex, TradeSide.Buy);
-                if (lastTradeForPair1 != null)
+                if (balance.Currency == _generalConfig.TradingCurrency)
                 {
-                    boughtPrice = lastTradeForPair1.Limit;
+                    btcAmount = balance.Balance;
+                    price = 0m;
                 }
-
+                else if (balance.Currency == "USDT")
+                {
+                    var marketPrice = await _priceService.GetPrice("USDT", _generalConfig.TradingCurrency);
+                    btcAmount = balance.Balance * marketPrice;
+                    price = 0m;
+                }
+                else
+                {
+                    var marketPrice = await _priceService.GetPrice(_generalConfig.TradingCurrency, balance.Currency);
+                    price = marketPrice;
+                    btcAmount = (price * balance.Balance);
+                    averagePrice =
+                        await _databaseService.GetBuyAveragePrice(_generalConfig.TradingCurrency, balance.Currency, Constants.Poloniex, balance.Balance);
+                }
                 try
                 {
-                    balance.PercentageChange = ProfitCalculator.PriceDifference(price, boughtPrice);
+                    balance.PercentageChange = ProfitCalculator.PriceDifference(price, averagePrice);
                 }
                 catch
                 {
                     // There maybe a divide by 0 issue if we couldn't find the last trade. Its fine. Just print zero
                     balance.PercentageChange = 0;
                 }
+                balance.BtcAmount = btcAmount;
                 balance.Price = price;
                 totalBtcBalance = totalBtcBalance + balance.BtcAmount;
             }
 
-            var lastBalance = _databaseService.GetBalance24HoursAgo(Constants.Poloniex);
-            var dollarAmount = await _priceService.GetDollarAmount("BTC", totalBtcBalance);
+            var lastBalance = await _databaseService.GetBalance24HoursAgo(Constants.Poloniex);
+            var dollarAmount = await _priceService.GetDollarAmount(_generalConfig.TradingCurrency, totalBtcBalance);
             var currentBalance = await _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Poloniex);
             await _databaseService.AddWalletBalances(poloniexToWalletBalances);
 
@@ -133,35 +151,6 @@ namespace CryptoGramBot.Services.Exchanges
             var poloniexToTrades = TradeConverter.PoloniexToTrades(tradesAsyncResult, feeInfo);
 
             return poloniexToTrades;
-        }
-
-        public async Task<decimal> GetPrice(string baseCcy, string terms)
-        {
-            switch (terms)
-            {
-                case "USD":
-                    return await _priceService.GetDollarAmount(baseCcy, 1);
-
-                case "USDT":
-                    return await _priceService.GetDollarAmount(baseCcy, 1);
-
-                case "BTC":
-                    return 0;
-            }
-
-            try
-            {
-                // REALLY?? There is no simple getTicker on the polo client???
-                var price = await _priceService.GetPriceInBtc(terms);
-
-                decimal priceAsDecimal;
-                priceAsDecimal = Convert.ToDecimal(price);
-                return priceAsDecimal;
-            }
-            catch (Exception)
-            {
-                return 0;
-            }
         }
 
         private async Task<IDepositWithdrawalList> GetDepositsAndWithdrawals(Setting checkedBefore)

@@ -14,7 +14,5 @@ namespace CryptoGramBot.Services
         Task<List<Withdrawal>> GetNewWithdrawals();
 
         Task<List<Trade>> GetOrderHistory(DateTime lastChecked);
-
-        Task<decimal> GetPrice(string baseCCy, string terms);
     }
 }

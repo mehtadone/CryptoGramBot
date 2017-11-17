@@ -21,7 +21,7 @@ namespace CryptoGramBot.EventBus.Handlers
 
         public async Task Handle(ExcelExportCommand command)
         {
-            var tradeExport = _tradeExportService.GetTradeExport();
+            var tradeExport = await _tradeExportService.GetTradeExport();
             await _bus.SendAsync(new SendFileCommand("TradeExport.xlsx", tradeExport.OpenRead()));
             tradeExport.Delete();
         }

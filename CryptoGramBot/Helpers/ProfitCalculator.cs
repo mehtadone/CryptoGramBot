@@ -7,6 +7,42 @@ namespace CryptoGramBot.Helpers
 {
     public static class ProfitCalculator
     {
+        public static decimal GetAveragePrice(List<Trade> onlyBuys, decimal quantity)
+        {
+            if (!onlyBuys.Any())
+            {
+                return 0m;
+            }
+
+            decimal cost = 0m;
+            decimal quanitityRemaining = quantity;
+
+            foreach (var trade in onlyBuys)
+            {
+                if (quanitityRemaining == 0) break;
+
+                if (quanitityRemaining - trade.QuantityOfTrade <= 0)
+                {
+                    //test for partials
+                    var price = trade.Cost / trade.QuantityOfTrade;
+                    cost = cost + (quanitityRemaining * price);
+                    quanitityRemaining = 0;
+                }
+                else
+                {
+                    quanitityRemaining = quanitityRemaining - trade.QuantityOfTrade;
+                    cost = cost + trade.Cost;
+                }
+            }
+
+            if (quanitityRemaining != 0)
+            {
+                cost = cost + (quanitityRemaining * (onlyBuys.First().Cost / onlyBuys.First().QuantityOfTrade));
+            }
+
+            return cost / quantity;
+        }
+
         public static ProfitAndLoss GetProfitAndLossForPair(IEnumerable<Trade> trades, Currency currency)
         {
             var tradeList = trades.ToList();
@@ -63,40 +99,11 @@ namespace CryptoGramBot.Helpers
             return profitAndLoss;
         }
 
-        public static void GetProfitForTrade(List<Trade> trades, decimal sellReturns, decimal quantity, out decimal? totalCost, out decimal? profit, out DateTime dateTime)
+        public static decimal GetProfitForSell(decimal sellReturns, decimal quantitiy, decimal averageBuyPrice, decimal totalCost)
         {
-            var quantityChecked = 0m;
-            var totalcost = 0m;
-
-            dateTime = trades.First().TimeStamp;
-
-            foreach (var trade in trades)
-            {
-                if (quantityChecked >= quantity) break;
-
-                if (quantityChecked + trade.QuantityOfTrade > quantity)
-                {
-                    var quantityLeft = quantity - quantityChecked;
-                    var cost = trade.Limit * quantityLeft;
-                    totalcost = totalcost + cost;
-                    quantityChecked = quantityChecked + quantityLeft;
-                }
-                else if (trade.QuantityOfTrade <= quantity)
-                {
-                    totalcost = totalcost + trade.Cost;
-                    quantityChecked = quantityChecked + trade.QuantityOfTrade;
-                }
-            }
-
-            if (quantityChecked == 0m)
-            {
-                profit = null;
-                totalCost = null;
-                return;
-            }
-
-            profit = Math.Round((sellReturns - totalcost) / totalcost * 100, 3, MidpointRounding.ToEven);
-            totalCost = totalcost;
+            var profit = Math.Round((sellReturns - (averageBuyPrice * quantitiy)) / totalCost * 100, 3,
+                MidpointRounding.ToEven);
+            return profit;
         }
 
         public static decimal PriceDifference(decimal currentPrice, decimal limit)

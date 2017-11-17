@@ -25,8 +25,7 @@ namespace CryptoGramBot.EventBus.Handlers
 
         public async Task Handle(GetCoinigyAccountCommand command)
         {
-            var coinigyAccounts = await _coinigyApiService.GetAccounts();
-            _databaseService.AddCoinigyAccounts(coinigyAccounts);
+            await _coinigyApiService.GetAccounts();
         }
     }
 }

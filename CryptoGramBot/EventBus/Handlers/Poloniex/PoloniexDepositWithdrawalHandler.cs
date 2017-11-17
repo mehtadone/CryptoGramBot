@@ -16,6 +16,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         private readonly IMicroBus _bus;
         private readonly PoloniexConfig _config;
         private readonly DatabaseService _databaseService;
+        private readonly GeneralConfig _generalConfig;
         private readonly PoloniexService _poloniexService;
         private readonly PriceService _priceService;
 
@@ -24,12 +25,14 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
             PoloniexConfig config,
             DatabaseService databaseService,
             PriceService priceService,
+            GeneralConfig generalConfig,
             IMicroBus bus)
         {
             _poloniexService = poloniexService;
             _config = config;
             _databaseService = databaseService;
             _priceService = priceService;
+            _generalConfig = generalConfig;
             _bus = bus;
         }
 
@@ -49,7 +52,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                         break;
                     }
 
-                    var priceInBtc = await _priceService.GetPriceInBtc(deposit.Currency);
+                    var priceInBtc = await _priceService.GetPrice(_generalConfig.TradingCurrency, deposit.Currency);
                     var btcAmount = priceInBtc * Convert.ToDecimal(deposit.Amount);
                     await SendDepositNotification(deposit, btcAmount);
                     i++;
@@ -70,7 +73,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                         break;
                     }
 
-                    var priceInBtc = await _priceService.GetPriceInBtc(withdrawal.Currency);
+                    var priceInBtc = await _priceService.GetPrice(_generalConfig.TradingCurrency, withdrawal.Currency);
                     var btcAmount = priceInBtc * Convert.ToDecimal(withdrawal.Amount);
                     await SendWithdrawalNotification(withdrawal, btcAmount);
                     i++;
@@ -84,7 +87,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                 $"{deposit.Time:g}\n" +
                 $"<strong>{Constants.Poloniex} Deposit of {deposit.Currency}</strong>\n" +
                 $"<strong>Currency: {deposit.Currency}</strong>\n" +
-                $"Amount: {deposit.Amount} ({btcAmount:##0.####} BTC)\n";
+                $"Amount: {deposit.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})\n";
             await _bus.SendAsync(new SendMessageCommand(message));
         }
 
@@ -93,7 +96,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
             var message =
                 $"{withdrawal.Time:g}\n" +
                 $"<strong>{Constants.Poloniex} Withdrawal of {withdrawal.Currency}</strong>\n" +
-                $"Amount: {withdrawal.Amount} ({btcAmount:##0.####} BTC)\n";
+                $"Amount: {withdrawal.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})\n";
             await _bus.SendAsync(new SendMessageCommand(message));
         }
     }

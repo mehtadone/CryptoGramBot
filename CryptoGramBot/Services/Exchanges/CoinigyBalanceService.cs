@@ -27,7 +27,7 @@ namespace CryptoGramBot.Services
             var accounts = await _coinigyApiService.GetAccounts();
             var selectedAccount = accounts[accountId];
 
-            var hour24Balance = _databaseService.GetBalance24HoursAgo(selectedAccount.AuthId);
+            var hour24Balance = await _databaseService.GetBalance24HoursAgo(selectedAccount.AuthId);
             var balanceCurrent = await _coinigyApiService.GetBtcBalance(selectedAccount.AuthId);
             var dollarAmount = await _priceService.GetDollarAmount("BTC", balanceCurrent);
 
@@ -57,7 +57,7 @@ namespace CryptoGramBot.Services
 
         public async Task<BalanceInformation> GetBalance(string accountName)
         {
-            var hour24Balance = _databaseService.GetBalance24HoursAgo(accountName);
+            var hour24Balance = await _databaseService.GetBalance24HoursAgo(accountName);
             var balanceCurrent = await _coinigyApiService.GetBtcBalance();
             var dollarAmount = await _priceService.GetDollarAmount("BTC", balanceCurrent);
 
@@ -67,7 +67,7 @@ namespace CryptoGramBot.Services
 
         public async Task<BalanceInformation> GetBalance()
         {
-            var hour24Balance = _databaseService.GetBalance24HoursAgo(Constants.TotalCoinigyBalance);
+            var hour24Balance = await _databaseService.GetBalance24HoursAgo(Constants.TotalCoinigyBalance);
             var balanceCurrent = await _coinigyApiService.GetBtcBalance();
             var dollarAmount = await _priceService.GetDollarAmount("BTC", balanceCurrent);
 

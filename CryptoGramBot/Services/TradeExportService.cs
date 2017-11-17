@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using Microsoft.Extensions.Logging;
@@ -19,7 +20,7 @@ namespace CryptoGramBot.Services
             _databaseService = databaseService;
         }
 
-        public FileInfo GetTradeExport()
+        public async Task<FileInfo> GetTradeExport()
         {
             using (var xlPackage = new ExcelPackage())
             {
@@ -28,7 +29,7 @@ namespace CryptoGramBot.Services
                 var pnlWorksheet = xlPackage.Workbook.Worksheets.Add("Pair PnL");
                 var totalPnlWorksheet = xlPackage.Workbook.Worksheets.Add("Total PnL");
 
-                var allPairs = _databaseService.GetAllPairs();
+                var allPairs = await _databaseService.GetAllPairs();
 
                 totalPnlWorksheet.Cells["A1"].Value = "Coin";
                 totalPnlWorksheet.Cells["B1"].Value = "Unrealised Profit";

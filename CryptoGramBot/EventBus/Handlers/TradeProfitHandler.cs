@@ -23,37 +23,37 @@ namespace CryptoGramBot.EventBus.Handlers
 
         public async Task<TradesProfitResponse> Handle(TradeProfitQuery query)
         {
-            var tradesForPairAndQuantity = _databaseService.GetBuysForPairAndQuantity(query.SellReturns, query.Quantity, query.BaseCcy, query.Terms);
+            var averagePrice = await _databaseService.GetBuyAveragePrice(query.BaseCcy, query.Terms, query.Exchange, query.Quantity);
 
-            if (tradesForPairAndQuantity.Count == 0)
+            if (averagePrice == 0m)
             {
                 return new TradesProfitResponse(null, null, null, null);
             }
 
-            ProfitCalculator.GetProfitForTrade(tradesForPairAndQuantity, query.SellReturns, query.Quantity, out decimal? totalCost, out decimal? profit, out DateTime lastBought);
+            var totalCost = averagePrice * query.Quantity;
+            var profit = ProfitCalculator.GetProfitForSell(query.SellReturns, query.Quantity, averagePrice, totalCost);
 
-            if (profit.HasValue && totalCost.HasValue)
-            {
-                decimal? btcProfit = query.SellReturns - totalCost.Value;
-                decimal? dollarProfit = await _priceService.GetDollarAmount(query.BaseCcy, btcProfit.Value);
-                return new TradesProfitResponse(profit, btcProfit, dollarProfit, lastBought);
-            }
+            var lastBought = await _databaseService.GetLastBoughtAsync(query.BaseCcy, query.Terms, query.Exchange);
 
-            return new TradesProfitResponse(null, null, null, null);
+            decimal? btcProfit = query.SellReturns - totalCost;
+            decimal? dollarProfit = await _priceService.GetDollarAmount(query.BaseCcy, btcProfit.Value);
+            return new TradesProfitResponse(profit, btcProfit, dollarProfit, lastBought);
         }
     }
 
     public class TradeProfitQuery : IQuery<TradeProfitQuery, TradesProfitResponse>
     {
-        public TradeProfitQuery(decimal sellReturns, decimal quantity, string baseCcy, string terms)
+        public TradeProfitQuery(decimal sellReturns, decimal quantity, string baseCcy, string terms, string exchange)
         {
             SellReturns = sellReturns;
             Quantity = quantity;
             BaseCcy = baseCcy;
             Terms = terms;
+            Exchange = exchange;
         }
 
         public string BaseCcy { get; }
+        public string Exchange { get; }
         public decimal Quantity { get; }
         public decimal SellReturns { get; }
         public string Terms { get; }

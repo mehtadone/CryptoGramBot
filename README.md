@@ -40,9 +40,9 @@ list_coinigy_accounts - list coinigy account names
 total_coinigy - total balance from all acounts
 
 upload_bittrex_trades - upload bittrex order export
-trex_btc_balance - bittrex account summary
+trex_balance - bittrex account summary
 
-polo_btc_balance - poloniex account summary
+polo_balance - poloniex account summary
 polo_reset_trades - reset trades database from poloniex
 ```
 7. Clear history on your telegram bot to pick up the commands

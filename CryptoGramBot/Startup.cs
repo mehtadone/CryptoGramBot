@@ -112,7 +112,7 @@ namespace CryptoGramBot
             containerBuilder.RegisterMicroBus(busBuilder);
             var container = containerBuilder.Build();
 
-            var loggerFactory = container.Resolve<ILoggerFactory>().AddSerilog();
+            var loggerFactory = container.Resolve<ILoggerFactory>();
             var log = loggerFactory.CreateLogger<Program>();
 
             log.LogInformation($"Services\nCoinigy: {coinigyEnabled}\nBittrex: {bittrexEnabled}\nPoloniex: {poloniexEnabled}\nBag Management: {bagEnabled}\nDust Notifications: {dustEnabled}\nLow BTC Notifications: {lowBtcEnabled}");

@@ -30,7 +30,7 @@ deploy:
   description: 'Fix partial buy calculations. Change to web app to improve performance. Try fix non BTC trading. NOTE: two new properties will have to be added in appsettings.json, ServerUrls and TradingCurrency'
   provider: GitHub
   auth_token:
-    secure: esN+SKR3Mla7CRA3bD9NBK1WFuuMc7W0/MyIX8kUC9q8BXELNvSZaBQcEt7S7oTj # your encrypted token from GitHub
+    secure: rMxVtVrce2Oh6Jf2V6c2FDAyJR4/L0ZFpxGl0ntx0g3cHwcqQvWvD4AW0VfIwFBs # your encrypted token from GitHub
   artifact: /.*\.zip/            # upload all zip packages to release assets
   draft: false
   prerelease: true

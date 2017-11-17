@@ -187,6 +187,7 @@ namespace CryptoGramBot.Helpers
                         Currency = balance.Key,
                         BtcAmount = Convert.ToDecimal(balance.Value.BitcoinValue),
                         Available = Convert.ToDecimal(balance.Value.QuoteAvailable),
+                        Balance = Convert.ToDecimal(balance.Value.QuoteAvailable),
                         Pending = Convert.ToDecimal(balance.Value.QuoteOnOrders),
                         Exchange = Constants.Poloniex,
                         Timestamp = DateTime.Now

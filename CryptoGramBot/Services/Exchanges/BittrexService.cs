@@ -8,6 +8,7 @@ using BittrexSharp;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
+using CryptoGramBot.Services.Pricing;
 using Microsoft.Extensions.Logging;
 using OpenOrder = CryptoGramBot.Models.OpenOrder;
 

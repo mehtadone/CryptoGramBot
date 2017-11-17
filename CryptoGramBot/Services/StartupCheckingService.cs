@@ -43,7 +43,7 @@ namespace CryptoGramBot.Services
             _lowBtcConfig = lowBtcConfig;
         }
 
-        public void Start()
+        public async Task Start()
         {
             // Needs to be called here as if we use DI, the config has not been binded yet
             _bot.StartBot(_telegramConfig);
@@ -97,7 +97,7 @@ namespace CryptoGramBot.Services
 
             if (_coinigyConfig.Enabled)
             {
-                _bus.SendAsync(new GetCoinigyAccountCommand());
+                await _bus.SendAsync(new GetCoinigyAccountCommand());
             }
 
             JobManager.Initialize(registry);

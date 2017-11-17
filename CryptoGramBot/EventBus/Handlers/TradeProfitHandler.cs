@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Services;
+using CryptoGramBot.Services.Pricing;
 
 namespace CryptoGramBot.EventBus.Handlers
 {

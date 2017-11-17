@@ -1,78 +1,51 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Globalization;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using CryptoGramBot.Helpers;
-using CryptoGramBot.Models;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using BittrexSharp;
 
-namespace CryptoGramBot.Services
+namespace CryptoGramBot.Services.Pricing
 {
     public class PriceService
     {
-        private readonly DatabaseService _databaseService;
-        private DateTime _lastChecked = DateTime.MinValue;
-        private decimal _price;
-
-        public PriceService(DatabaseService databaseService)
-        {
-            _databaseService = databaseService;
-        }
-
         public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
         {
-            var price = await GetPrice(baseCcy);
+            var price = await GetPrice("USDT", baseCcy);
             return Math.Round(price * btcAmount, 2);
         }
 
         public async Task<decimal> GetPriceInBtc(string terms)
         {
-            string url = $"https://min-api.cryptocompare.com/data/price?fsym={terms}&tsyms=BTC";
-            decimal price;
-            using (var httpClient = new HttpClient())
+            var apiKey = "...";
+            var apiSecret = "...";
+            var bittrex = new Bittrex(apiKey, apiSecret);
+
+            var tcik = await bittrex.GetTicker("BTC", terms);
+
+            if (tcik.Last.HasValue)
             {
-                using (var response = await httpClient.GetAsync(url))
-                {
-                    if (response.StatusCode != HttpStatusCode.OK) return _price;
-
-                    var json = await response.Content.ReadAsStringAsync();
-                    var jObject = JObject.Parse(json);
-                    var stringPrice = jObject["BTC"].ToString();
-                    price = decimal.Parse(stringPrice, NumberStyles.Float);
-                }
+                return tcik.Last.Value;
             }
-
-            return price;
+            else
+            {
+                return 0;
+            }
         }
 
-        private async Task<decimal> GetPrice(string baseCcy)
+        private async Task<decimal> GetPrice(string baseCcy, string termsCurrency)
         {
-            if (_lastChecked > DateTime.Now - TimeSpan.FromMinutes(15))
-            {
-                return _price;
-            }
+            var apiKey = "...";
+            var apiSecret = "...";
+            var bittrex = new Bittrex(apiKey, apiSecret);
 
-            string url = $"https://min-api.cryptocompare.com/data/price?fsym={baseCcy}&tsyms=USD,EUR";
-            using (var httpClient = new HttpClient())
-            {
-                using (var response = await httpClient.GetAsync(url))
-                {
-                    if (response.StatusCode != HttpStatusCode.OK) return _price;
+            var tcik = await bittrex.GetTicker(baseCcy, termsCurrency);
 
-                    var json = await response.Content.ReadAsStringAsync();
-                    var jObject = JObject.Parse(json);
-                    var stringPrice = jObject["USD"].ToString();
-                    _price = decimal.Parse(stringPrice);
-                    _lastChecked = DateTime.Now;
-                }
+            if (tcik.Last.HasValue)
+            {
+                return tcik.Last.Value;
             }
-            return _price;
+            else
+            {
+                return 0;
+            }
         }
     }
 }

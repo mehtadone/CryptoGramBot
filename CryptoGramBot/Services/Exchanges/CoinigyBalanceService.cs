@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
+using CryptoGramBot.Services.Pricing;
 
 namespace CryptoGramBot.Services
 {

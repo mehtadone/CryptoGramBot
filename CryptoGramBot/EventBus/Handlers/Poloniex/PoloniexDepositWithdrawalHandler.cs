@@ -6,6 +6,7 @@ using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using CryptoGramBot.Services;
 using CryptoGramBot.Services.Exchanges;
+using CryptoGramBot.Services.Pricing;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.EventBus.Handlers.Poloniex

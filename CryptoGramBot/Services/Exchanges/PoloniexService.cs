@@ -6,6 +6,7 @@ using AutoMapper;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
+using CryptoGramBot.Services.Pricing;
 using Microsoft.Extensions.Logging;
 using Poloniex;
 using Poloniex.General;

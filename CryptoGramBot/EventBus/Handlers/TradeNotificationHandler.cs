@@ -44,7 +44,7 @@ namespace CryptoGramBot.EventBus.Handlers
                 btcProfit = tradesProfitResponse.BtcProfit;
                 dollarProfit = tradesProfitResponse.DollarProfit;
                 lastBought = tradesProfitResponse.LastBoughtTime + TimeSpan.FromHours(_config.TimeOffset);
-            }
+      //      }   move this close bracket so we only notify about Sell orders
 
             var message = $"{newTrade.TimeStamp + TimeSpan.FromHours(_config.TimeOffset):g}\n" +
                           $"New {newTrade.Exchange} order\n" +
@@ -61,6 +61,7 @@ namespace CryptoGramBot.EventBus.Handlers
             }
 
             await _bus.SendAsync(new SendMessageCommand(message));
+            }  // the new close bracket
         }
     }
 }

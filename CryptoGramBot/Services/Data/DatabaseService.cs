@@ -310,7 +310,7 @@ namespace CryptoGramBot.Services
 
         public async Task<DateTime?> GetLastBoughtAsync(string queryBaseCcy, string queryTerms, string exchange)
         {
-            var lastBought = await _context.Trades.Where(x => x.Base == queryBaseCcy && x.Terms == queryTerms && x.Exchange == exchange)
+            var lastBought = await _context.Trades.Where(x => x.Base == queryBaseCcy && x.Terms == queryTerms && x.Exchange == exchange && x.Side == TradeSide.Buy)
                 .OrderByDescending(x => x.TimeStamp)
                 .Select(x => x.TimeStamp)
                 .FirstOrDefaultAsync();

@@ -63,7 +63,7 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
                     walletBalance.Currency != "USD")
                 {
                     var averagePrice = await _databaseService.GetBuyAveragePrice(_generalConfig.TradingCurrency, walletBalance.Currency, Constants.Poloniex, walletBalance.Available);
-                    var currentPrice = await _priceService.GetPrice(_generalConfig.TradingCurrency, walletBalance.Currency);
+                    var currentPrice = await _bittrexService.GetPrice(_generalConfig.TradingCurrency, walletBalance.Currency);
 
                     if (_bagConfig.Enabled)
                     {

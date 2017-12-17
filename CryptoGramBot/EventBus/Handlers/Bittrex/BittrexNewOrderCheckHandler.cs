@@ -36,7 +36,6 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
 
         private async Task SendAndCheckNotifications(FindNewTradesResponse newTradesResponse)
         {
-            var i = 0;
             if (!_config.BuyNotifications && !_config.SellNotifications) return;
 
             if (newTradesResponse.NewTrades.Count() > 29)

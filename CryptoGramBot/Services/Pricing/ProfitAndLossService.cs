@@ -27,7 +27,8 @@ namespace CryptoGramBot.Services
             var tradesForPair = await _databaseService.GetTradesForPair(ccy1, ccy2);
             var profitAndLoss = ProfitCalculator.GetProfitAndLossForPair(tradesForPair, new Currency { Base = ccy1, Terms = ccy2 });
 
-            var dollarAmount = await _priceService.GetDollarAmount(ccy1, profitAndLoss.Profit);
+            // TODO: Ideally use each trade's exchange to get dollar amounts
+            var dollarAmount = await _priceService.GetDollarAmount(ccy1, profitAndLoss.Profit, Constants.Bittrex);
 
             profitAndLoss.DollarProfit = dollarAmount;
 

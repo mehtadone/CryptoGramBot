@@ -5,10 +5,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using BittrexSharp;
+using BittrexSharp.Domain;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
-using CryptoGramBot.Services.Pricing;
 using Microsoft.Extensions.Logging;
 using OpenOrder = CryptoGramBot.Models.OpenOrder;
 
@@ -20,18 +20,15 @@ namespace CryptoGramBot.Services.Exchanges
         private readonly Bittrex _exchange;
         private readonly GeneralConfig _generalConfig;
         private readonly ILogger<BittrexService> _log;
-        private readonly PriceService _priceService;
 
         public BittrexService(
             BittrexConfig config,
             DatabaseService databaseService,
-            PriceService priceService,
             GeneralConfig generalConfig,
             ILogger<BittrexService> log)
         {
             var config1 = config;
             _databaseService = databaseService;
-            _priceService = priceService;
             _generalConfig = generalConfig;
             _log = log;
 
@@ -68,13 +65,13 @@ namespace CryptoGramBot.Services.Exchanges
                 }
                 else if (balance.Currency == "USDT")
                 {
-                    var marketPrice = await _priceService.GetPrice("USDT", _generalConfig.TradingCurrency);
+                    var marketPrice = await GetPrice("USDT", _generalConfig.TradingCurrency);
                     btcAmount = balance.Balance / marketPrice;
                     price = 0m;
                 }
                 else
                 {
-                    var marketPrice = await _priceService.GetPrice(_generalConfig.TradingCurrency, balance.Currency);
+                    var marketPrice = await GetPrice(_generalConfig.TradingCurrency, balance.Currency);
                     price = marketPrice;
                     btcAmount = (price * balance.Balance);
                     averagePrice =
@@ -96,7 +93,7 @@ namespace CryptoGramBot.Services.Exchanges
 
             var lastBalance = await _databaseService.GetBalance24HoursAgo(Constants.Bittrex);
 
-            var dollarAmount = await _priceService.GetDollarAmount(_generalConfig.TradingCurrency, totalBtcBalance);
+            var dollarAmount = await GetDollarAmount(_generalConfig.TradingCurrency, totalBtcBalance);
 
             var currentBalance = await _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Bittrex);
             await _databaseService.AddWalletBalances(bittrexBalances);
@@ -136,11 +133,61 @@ namespace CryptoGramBot.Services.Exchanges
             return newWithdrawals;
         }
 
-        public async Task<List<Trade>> GetOrderHistory(DateTime lastChecked)
+        public async Task<List<CryptoGramBot.Models.Trade>> GetOrderHistory(DateTime lastChecked)
         {
             var response = await _exchange.GetOrderHistory();
             var bittrexToTrades = TradeConverter.BittrexToTrades(response, _log);
             return bittrexToTrades;
+        }
+
+        public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
+        {
+            if (baseCcy == "USDT")
+            {
+                return Math.Round(btcAmount, 2);
+            }
+
+            var price = await GetPrice("USDT", baseCcy);
+            return Math.Round(price * btcAmount, 2);
+        }
+
+        public async Task<decimal> GetPrice(string baseCcy, string termsCurrency)
+        {
+            Ticker tcik = null;
+            try
+            {
+                tcik = await _exchange.GetTicker(baseCcy, termsCurrency);
+            }
+            catch (Exception e)
+            {
+                _log.LogError("Error in getting ticker from bittrex: " + e.Message);
+            }
+
+            if (tcik != null && tcik.Last.HasValue)
+            {
+                return tcik.Last.Value;
+            }
+
+            var btcPrice = await _exchange.GetTicker("BTC", termsCurrency);
+
+            if (btcPrice?.Last != null)
+            {
+                var btcBasePrice = await _exchange.GetTicker("BTC", baseCcy);
+                if (btcBasePrice?.Last != null)
+                {
+                    return btcPrice.Last.Value * btcBasePrice.Last.Value;
+                }
+                else
+                {
+                    var baseBtcPrice = await _exchange.GetTicker(baseCcy, "BTC");
+
+                    if (baseBtcPrice?.Last != null)
+                    {
+                        return baseBtcPrice.Last.Value * btcPrice.Last.Value;
+                    }
+                }
+            }
+            return 0;
         }
     }
 }

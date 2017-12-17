@@ -1,65 +1,55 @@
 ﻿using System;
 using System.Threading.Tasks;
-using BittrexSharp;
-using BittrexSharp.Domain;
-using SQLitePCL;
+using CryptoGramBot.Helpers;
+using CryptoGramBot.Services.Exchanges;
 
 namespace CryptoGramBot.Services.Pricing
 {
     public class PriceService
     {
-        public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
-        {
-            if (baseCcy == "USDT")
-            {
-                return Math.Round(btcAmount, 2);
-            }
+        private readonly BittrexService _bittrexService;
+        private readonly PoloniexService _poloniexService;
 
-            var price = await GetPrice("USDT", baseCcy);
-            return Math.Round(price * btcAmount, 2);
+        public PriceService(BittrexService bittrexService, PoloniexService poloniexService)
+        {
+            _bittrexService = bittrexService;
+            _poloniexService = poloniexService;
         }
 
-        public async Task<decimal> GetPrice(string baseCcy, string termsCurrency)
+        public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount, string exchange)
         {
-            var apiKey = "...";
-            var apiSecret = "...";
-            var bittrex = new Bittrex(apiKey, apiSecret);
+            decimal price = 0;
 
-            Ticker tcik = null;
-            try
+            switch (exchange)
             {
-                tcik = await bittrex.GetTicker(baseCcy, termsCurrency);
-            }
-            catch (Exception ex)
-            {
-                // should log
-            }
+                case Constants.Bittrex:
+                    price = await _bittrexService.GetDollarAmount(baseCcy, btcAmount);
+                    break;
 
-            if (tcik != null && tcik.Last.HasValue)
-            {
-                return tcik.Last.Value;
+                case Constants.Poloniex:
+                    price = await _poloniexService.GetDollarAmount(baseCcy, btcAmount);
+                    break;
             }
 
-            var btcPrice = await bittrex.GetTicker("BTC", termsCurrency);
+            return price;
+        }
 
-            if (btcPrice?.Last != null)
+        public async Task<decimal> GetPrice(string baseCcy, string termsCurrency, string exchange)
+        {
+            decimal price = 0;
+
+            switch (exchange)
             {
-                var btcBasePrice = await bittrex.GetTicker("BTC", baseCcy);
-                if (btcBasePrice?.Last != null)
-                {
-                    return btcPrice.Last.Value * btcBasePrice.Last.Value;
-                }
-                else
-                {
-                    var baseBtcPrice = await bittrex.GetTicker(baseCcy, "BTC");
+                case Constants.Bittrex:
+                    price = await _bittrexService.GetPrice(baseCcy, termsCurrency);
+                    break;
 
-                    if (baseBtcPrice?.Last != null)
-                    {
-                        return baseBtcPrice.Last.Value * btcPrice.Last.Value;
-                    }
-                }
+                case Constants.Poloniex:
+                    price = await _poloniexService.GetPrice(baseCcy, termsCurrency);
+                    break;
             }
-            return 0;
+
+            return price;
         }
     }
 }

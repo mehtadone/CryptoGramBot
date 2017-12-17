@@ -36,7 +36,7 @@ namespace CryptoGramBot.EventBus.Handlers
             var lastBought = await _databaseService.GetLastBoughtAsync(query.BaseCcy, query.Terms, query.Exchange);
 
             decimal? btcProfit = query.SellReturns - totalCost;
-            decimal? dollarProfit = await _priceService.GetDollarAmount(query.BaseCcy, btcProfit.Value);
+            decimal? dollarProfit = await _priceService.GetDollarAmount(query.BaseCcy, btcProfit.Value, query.Exchange);
             return new TradesProfitResponse(profit, btcProfit, dollarProfit, lastBought);
         }
     }

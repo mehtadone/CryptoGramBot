@@ -43,7 +43,6 @@
 
 	<ItemGroup>
 		<Folder Include="database\">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Folder>
 		<Folder Include="images\" />
 		<Folder Include="Properties\" />

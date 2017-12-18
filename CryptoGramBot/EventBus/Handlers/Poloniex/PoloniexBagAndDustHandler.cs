@@ -64,7 +64,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                 {
                     var averagePrice = await _databaseService.GetBuyAveragePrice(_generalConfig.TradingCurrency, walletBalance.Currency, Constants.Poloniex, walletBalance.Available);
 
-                    var currentPrice = await _priceService.GetPrice(_generalConfig.TradingCurrency, walletBalance.Currency);
+                    var currentPrice = await _poloService.GetPrice(_generalConfig.TradingCurrency, walletBalance.Currency);
 
                     if (_bagConfig.Enabled)
                     {

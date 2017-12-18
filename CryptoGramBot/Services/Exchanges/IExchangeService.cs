@@ -5,7 +5,7 @@ using CryptoGramBot.Models;
 
 namespace CryptoGramBot.Services
 {
-    public interface IExchangeService : IBalanceService
+    public interface IExchangeService : IBalanceService, IPriceService
     {
         Task<List<Deposit>> GetNewDeposits();
 

@@ -52,7 +52,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                         break;
                     }
 
-                    var priceInBtc = await _priceService.GetPrice(_generalConfig.TradingCurrency, deposit.Currency);
+                    var priceInBtc = await _poloniexService.GetPrice(_generalConfig.TradingCurrency, deposit.Currency);
                     var btcAmount = priceInBtc * Convert.ToDecimal(deposit.Amount);
                     await SendDepositNotification(deposit, btcAmount);
                     i++;
@@ -73,7 +73,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                         break;
                     }
 
-                    var priceInBtc = await _priceService.GetPrice(_generalConfig.TradingCurrency, withdrawal.Currency);
+                    var priceInBtc = await _poloniexService.GetPrice(_generalConfig.TradingCurrency, withdrawal.Currency);
                     var btcAmount = priceInBtc * Convert.ToDecimal(withdrawal.Amount);
                     await SendWithdrawalNotification(withdrawal, btcAmount);
                     i++;

@@ -6,10 +6,10 @@ using AutoMapper;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
-using CryptoGramBot.Services.Pricing;
 using Microsoft.Extensions.Logging;
 using Poloniex;
 using Poloniex.General;
+using Poloniex.MarketTools;
 using Poloniex.WalletTools;
 using Deposit = CryptoGramBot.Models.Deposit;
 using Trade = CryptoGramBot.Models.Trade;
@@ -23,19 +23,16 @@ namespace CryptoGramBot.Services.Exchanges
         private readonly GeneralConfig _generalConfig;
         private readonly ILogger<PoloniexService> _log;
         private readonly PoloniexClient _poloniexClient;
-        private readonly PriceService _priceService;
 
         public PoloniexService(
             PoloniexConfig poloniexConfig,
             ILogger<PoloniexService> log,
             DatabaseService databaseService,
-            GeneralConfig generalConfig,
-            PriceService priceService)
+            GeneralConfig generalConfig)
         {
             _log = log;
             _databaseService = databaseService;
             _generalConfig = generalConfig;
-            _priceService = priceService;
             _poloniexClient = new PoloniexClient(poloniexConfig.Key, poloniexConfig.Secret);
         }
 
@@ -69,13 +66,13 @@ namespace CryptoGramBot.Services.Exchanges
                 }
                 else if (balance.Currency == "USDT")
                 {
-                    var marketPrice = await _priceService.GetPrice("USDT", _generalConfig.TradingCurrency);
+                    var marketPrice = await GetPrice("USDT", _generalConfig.TradingCurrency);
                     btcAmount = balance.Balance * marketPrice;
                     price = 0m;
                 }
                 else
                 {
-                    var marketPrice = await _priceService.GetPrice(_generalConfig.TradingCurrency, balance.Currency);
+                    var marketPrice = await GetPrice(_generalConfig.TradingCurrency, balance.Currency);
                     price = marketPrice;
                     btcAmount = (price * balance.Balance);
                     averagePrice =
@@ -96,7 +93,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
 
             var lastBalance = await _databaseService.GetBalance24HoursAgo(Constants.Poloniex);
-            var dollarAmount = await _priceService.GetDollarAmount(_generalConfig.TradingCurrency, totalBtcBalance);
+            var dollarAmount = await GetDollarAmount(_generalConfig.TradingCurrency, totalBtcBalance);
             var currentBalance = await _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Poloniex);
             await _databaseService.AddWalletBalances(poloniexToWalletBalances);
 
@@ -151,6 +148,62 @@ namespace CryptoGramBot.Services.Exchanges
             var poloniexToTrades = TradeConverter.PoloniexToTrades(tradesAsyncResult, feeInfo);
 
             return poloniexToTrades;
+        }
+
+        public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
+        {
+            if (baseCcy == "USDT")
+            {
+                return Math.Round(btcAmount, 2);
+            }
+
+            var price = await GetPrice("USDT", baseCcy);
+            return Math.Round(price * btcAmount, 2);
+        }
+
+        public async Task<decimal> GetPrice(string baseCcy, string termsCurrency)
+        {
+            IDictionary<CurrencyPair, IMarketData> ccyPairsData = null;
+
+            try
+            {
+                ccyPairsData = await _poloniexClient.Markets.GetSummaryAsync();
+            }
+            catch (Exception e)
+            {
+                _log.LogError("Error in getting market summary from poloniex: " + e.Message);
+                return 0;
+            }
+
+            var ccyPair = new CurrencyPair(baseCcy, termsCurrency);
+            IMarketData mktData = null;
+            if (ccyPairsData.TryGetValue(ccyPair, out mktData))
+            {
+                return (decimal)mktData.PriceLast;
+            }
+
+            var btcPricePair = new CurrencyPair("BTC", termsCurrency);
+            IMarketData btcPriceData = null;
+            if (ccyPairsData.TryGetValue(btcPricePair, out btcPriceData))
+            {
+                var btcBasePricePair = new CurrencyPair("BTC", baseCcy);
+                IMarketData btcBasePriceData = null;
+                if (ccyPairsData.TryGetValue(btcBasePricePair, out btcBasePriceData))
+                {
+                    return (decimal)(btcPriceData.PriceLast * btcBasePriceData.PriceLast);
+                }
+                else
+                {
+                    var baseBtcPricePair = new CurrencyPair(baseCcy, "BTC");
+                    IMarketData baseBtcPriceData = null;
+                    if (ccyPairsData.TryGetValue(baseBtcPricePair, out baseBtcPriceData))
+                    {
+                        return (decimal)(baseBtcPriceData.PriceLast * btcPriceData.PriceLast);
+                    }
+                }
+            }
+
+            return 0;
         }
 
         private async Task<IDepositWithdrawalList> GetDepositsAndWithdrawals(Setting checkedBefore)

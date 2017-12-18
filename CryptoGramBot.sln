@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoGramBot", "CryptoGramBot\CryptoGramBot.csproj", "{2DC29AB7-C1F6-47E9-AAD3-5F7E76BB303A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoGramBot", "CryptoGramBot\CryptoGramBot.csproj", "{2DC29AB7-C1F6-47E9-AAD3-5F7E76BB303A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoGramBot.Tests", "CryptoGramBot.Tests\CryptoGramBot.Tests.csproj", "{5289CC2B-8A92-44EB-B3EF-65E85CA8021C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoGramBot.Tests", "CryptoGramBot.Tests\CryptoGramBot.Tests.csproj", "{5289CC2B-8A92-44EB-B3EF-65E85CA8021C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Poloniex", "Poloniex\Poloniex.csproj", "{1AE0BB62-ADC7-4216-9742-2083565EFF66}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Poloniex", "Poloniex\Poloniex.csproj", "{1AE0BB62-ADC7-4216-9742-2083565EFF66}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BittrexSharp", "BittrexSharp\BittrexSharp.csproj", "{ADAF9416-F974-4F56-93A3-92CF844F9BB7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BittrexSharp", "BittrexSharp\BittrexSharp.csproj", "{ADAF9416-F974-4F56-93A3-92CF844F9BB7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

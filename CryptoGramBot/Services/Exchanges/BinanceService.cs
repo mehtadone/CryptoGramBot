@@ -62,17 +62,17 @@ namespace CryptoGramBot.Services.Exchanges
                 }
                 else if (balance.Currency == "USDT")
                 {
-                    var marketPrice = await _priceService.GetPrice("USDT", _generalConfig.TradingCurrency);
+                    var marketPrice = await _priceService.GetPrice("USDT", _generalConfig.TradingCurrency, Constants.Binance);
                     btcAmount = balance.Balance / marketPrice;
                     price = 0m;
                 }
                 else
                 {
-                    var marketPrice = await _priceService.GetPrice(_generalConfig.TradingCurrency, balance.Currency);
+                    var marketPrice = await _priceService.GetPrice(_generalConfig.TradingCurrency, balance.Currency, Constants.Binance);
                     price = marketPrice;
                     btcAmount = (price * balance.Balance);
                     averagePrice =
-                        await _databaseService.GetBuyAveragePrice(_generalConfig.TradingCurrency, balance.Currency, Constants.Bittrex, balance.Balance);
+                        await _databaseService.GetBuyAveragePrice(_generalConfig.TradingCurrency, balance.Currency, Constants.Binance, balance.Balance);
                 }
                 try
                 {
@@ -90,12 +90,17 @@ namespace CryptoGramBot.Services.Exchanges
 
             var lastBalance = await _databaseService.GetBalance24HoursAgo(Constants.Bittrex);
 
-            var dollarAmount = await _priceService.GetDollarAmount(_generalConfig.TradingCurrency, totalBtcBalance);
+            var dollarAmount = await _priceService.GetDollarAmount(_generalConfig.TradingCurrency, totalBtcBalance, Constants.Binance);
 
             var currentBalance = await _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Bittrex);
             await _databaseService.AddWalletBalances(balances);
 
             return new BalanceInformation(currentBalance, lastBalance, Constants.Bittrex, balances);
+        }
+
+        public Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
+        {
+            throw new NotImplementedException();
         }
 
         public Task<List<Deposit>> GetNewDeposits()
@@ -120,6 +125,11 @@ namespace CryptoGramBot.Services.Exchanges
             //            var api = GetApi();
             //            api.GetAccountTrades(new AllTradesRequest())
             return Task.FromResult(new List<Trade>());
+        }
+
+        public Task<decimal> GetPrice(string baseCcy, string termsCurrency)
+        {
+            throw new NotImplementedException();
         }
 
         private BinanceClient GetApi()

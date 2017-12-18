@@ -51,8 +51,18 @@ namespace CryptoGramBot.Services.Telegram
             _bot.OnInlineResultChosen += BotOnChosenInlineResultReceived;
             _bot.OnReceiveError += BotOnReceiveError;
 
-            var me = _bot.GetMeAsync().Result;
-            Console.Title = me.Username;
+            try
+            {
+                var me = _bot.GetMeAsync().Result;
+                Console.Title = me.Username;
+            }
+            catch (Exception ex)
+            {
+                // Running from a job-launcher (such as PM2) can cause exceptions when setting the Title,
+                // as there is no console window - just treat as a warning.
+                _log.LogWarning($"Failed to set Console title - could be running in background: {ex}");
+            }
+
             _bot.StartReceiving();
         }
 

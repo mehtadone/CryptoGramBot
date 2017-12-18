@@ -50,8 +50,8 @@ namespace CryptoGramBot.Services
         public string GetAuthIdFor(string name)
         {
             _log.LogInformation($"Getting authId for {name}");
-            var singleOrDefault = _coinigyAccounts.Values.SingleOrDefault(x => x.Name == name);
-            return singleOrDefault.AuthId;
+            var coinigyAuthId = _coinigyAccounts.Values.FirstOrDefault(x => x.Name == name);
+            return coinigyAuthId.AuthId;
         }
 
         public async Task<decimal> GetBtcBalance(string authId)

@@ -13,7 +13,7 @@ namespace CryptoGramBot.Extensions
 {
     public static class MessageBusExtension
     {
-        public static BusBuilder ConfigureCore(this BusBuilder busBuilder, bool coinigyEnabled, bool bittrexEnabled, bool poloniexEnabled, bool bagEnabled, bool dustEnabled)
+        public static BusBuilder ConfigureCore(this BusBuilder busBuilder, bool coinigyEnabled, bool bittrexEnabled, bool poloniexEnabled, bool binanceEnabled, bool bagEnabled, bool dustEnabled)
         {
             busBuilder.RegisterCommandHandler<SendMessageCommand, SendMessageHandler>();
             busBuilder.RegisterCommandHandler<SendFileCommand, SendFileHandler>();

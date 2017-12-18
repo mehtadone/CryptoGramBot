@@ -49,14 +49,14 @@ namespace CryptoGramBot.Services
             foreach (var deposit in deposits)
             {
                 deposit.Exchange = exchange;
-                var singleOrDefault = context.SingleOrDefault(x => x.Currency == deposit.Currency &&
+                var foundDeposit = context.FirstOrDefault(x => x.Currency == deposit.Currency &&
                                                                    x.Time == deposit.Time &&
                                                                    x.Exchange == deposit.Exchange &&
                                                                    x.Address == deposit.Address &&
                                                                    x.Amount == deposit.Amount &&
                                                                    x.TransactionId == deposit.TransactionId);
 
-                if (singleOrDefault == null)
+                if (foundDeposit == null)
                 {
                     context.Add(deposit);
                     list.Add(deposit);
@@ -70,7 +70,7 @@ namespace CryptoGramBot.Services
         public async Task AddLastChecked(string key, DateTime timestamp)
         {
             var lastCheckeds = _context.LastCheckeds;
-            var lastChecked = lastCheckeds.SingleOrDefault(x => x.Exchange == key);
+            var lastChecked = lastCheckeds.FirstOrDefault(x => x.Exchange == key);
 
             if (lastChecked == null)
             {
@@ -96,13 +96,13 @@ namespace CryptoGramBot.Services
             var list = new List<OpenOrder>();
             foreach (var openOrder in orders)
             {
-                var singleOrDefault = context.SingleOrDefault(x => x.Terms == openOrder.Terms &&
+                var foundOpenOrder = context.FirstOrDefault(x => x.Terms == openOrder.Terms &&
                                                                    x.Base == openOrder.Base &&
                                                                    x.Exchange == openOrder.Exchange &&
                                                                    x.OrderUuid == openOrder.OrderUuid &&
                                                                    x.Price == openOrder.Price);
 
-                if (singleOrDefault == null)
+                if (foundOpenOrder == null)
                 {
                     context.Add(openOrder);
                     list.Add(openOrder);
@@ -119,7 +119,7 @@ namespace CryptoGramBot.Services
 
             foreach (var trade in trades)
             {
-                var singleOrDefault = _context.Trades.SingleOrDefault(
+                var foundTrade = _context.Trades.FirstOrDefault(
                     x => x.TimeStamp == trade.TimeStamp &&
                          x.Base == trade.Base &&
                          x.Exchange == trade.Exchange &&
@@ -131,7 +131,7 @@ namespace CryptoGramBot.Services
 
                 );
 
-                if (singleOrDefault == null)
+                if (foundTrade == null)
                 {
                     _context.Trades.Add(trade);
                     newTrades.Add(trade);
@@ -160,14 +160,14 @@ namespace CryptoGramBot.Services
             foreach (var withdrawal in withdrawals)
             {
                 withdrawal.Exchange = exchange;
-                var singleOrDefault = context.SingleOrDefault(x => x.Currency == withdrawal.Currency &&
+                var foundWithdrawal = context.FirstOrDefault(x => x.Currency == withdrawal.Currency &&
                                                                    x.Time == withdrawal.Time &&
                                                                    x.Exchange == withdrawal.Exchange &&
                                                                    x.Address == withdrawal.Address &&
                                                                    x.Amount == withdrawal.Amount &&
                                                                    x.TransactionId == withdrawal.TransactionId);
 
-                if (singleOrDefault == null)
+                if (foundWithdrawal == null)
                 {
                     context.Add(withdrawal);
                     list.Add(withdrawal);
@@ -322,7 +322,7 @@ namespace CryptoGramBot.Services
         {
             var contextLastCheckeds = _context.LastCheckeds;
             var lastChecked = contextLastCheckeds
-                .SingleOrDefault(x => x.Exchange == key);
+                .FirstOrDefault(x => x.Exchange == key);
 
             return lastChecked?.Timestamp ?? DateTime.Now - TimeSpan.FromDays(30);
         }
@@ -330,8 +330,8 @@ namespace CryptoGramBot.Services
         public Setting GetSetting(string name)
         {
             var allSettings = _context.Settings;
-            var singleOrDefault = allSettings.SingleOrDefault(x => x.Name == name);
-            return singleOrDefault;
+            var setting = allSettings.FirstOrDefault(x => x.Name == name);
+            return setting;
         }
 
         public async Task<IEnumerable<Trade>> GetTradesForPair(string ccy1, string ccy2)
@@ -367,9 +367,9 @@ namespace CryptoGramBot.Services
         {
             var contextSettings = _context.Settings;
 
-            var singleOrDefault = contextSettings.SingleOrDefault(x => x.Name == setting.Name);
+            var foundSetting = contextSettings.FirstOrDefault(x => x.Name == setting.Name);
 
-            if (singleOrDefault == null)
+            if (foundSetting == null)
             {
                 _context.Settings.Add(setting);
             }

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using AutoMapper;
+using BinanceExchange.API.Models.Response;
 using BittrexSharp.Domain;
 using CsvHelper;
 using CryptoGramBot.Models;
@@ -19,6 +20,32 @@ namespace CryptoGramBot.Helpers
 {
     public static class TradeConverter
     {
+        public static List<WalletBalance> BinanceToWalletBalances(List<BalanceResponse> accountInfoBalances)
+        {
+            var walletBalances = new List<WalletBalance>();
+
+            foreach (var balance in accountInfoBalances)
+            {
+                if (balance.Locked + balance.Free > 0)
+                {
+                    var walletBalance = new WalletBalance
+                    {
+                        Currency = balance.Asset,
+                        //                        BtcAmount = Convert.ToDecimal(balance.Value.BitcoinValue),
+                        Available = balance.Free,
+                        Balance = balance.Free + balance.Locked,
+                        Pending = balance.Locked,
+                        Exchange = Constants.Binance,
+                        Timestamp = DateTime.Now
+                    };
+
+                    walletBalances.Add(walletBalance);
+                }
+            }
+
+            return walletBalances;
+        }
+
         public static List<Trade> BittrexFileToTrades(Stream csvExport, ILogger log)
         {
             TextReader fileReader = new StreamReader(csvExport, Encoding.Unicode);

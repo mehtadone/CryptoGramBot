@@ -18,7 +18,7 @@ A telegram bot that sends your balance updates from coinigy, send trade notifica
 2. Open a new chat to your bot and talk to him. Say hi. He won't respond just yet. 
 
 3. If you would like to add commands, do this now. See Bot Commands below. Note they will only show on a new chat with the bot or by clearing history and clicking "/start"
-4. Open a chat to this [bot](https://t.me/get_id_bot). This should show you your chat id.
+4. Open a chat to this [bot](https://t.me/MyTelegramID_bot). This should show you your chat id.
 5. Download the lastest version of the zip from [here](https://github.com/mehtadone/CryptoGramBot/releases) and unzip to a folder. Download CryptoGramBot.zip and not the source files if you want to run without building. 
 6. Fill in your config in appsettings.json. Bot ID is WITHOUT Bot and choose whether you want enable each service (true or false).  NOTE: Create a new API key at your exchange, do not use an existing API key.
 7. Give CryptoGramBot the correct execute permissions via chmod if on linux

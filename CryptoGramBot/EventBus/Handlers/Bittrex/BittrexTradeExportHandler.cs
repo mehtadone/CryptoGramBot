@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
@@ -42,11 +43,11 @@ namespace CryptoGramBot.EventBus.Handlers
                 var trades = TradeConverter.BittrexFileToTrades(file.FileStream, _log);
                 await _databaseService.DeleteAllTrades(Constants.Bittrex);
                 var newTrades = await _databaseService.AddTrades(trades);
-                await _bus.SendAsync(new SendMessageCommand($"{newTrades.Count} new bittrex trades added."));
+                await _bus.SendAsync(new SendMessageCommand(new StringBuilder($"{newTrades.Count} new bittrex trades added.")));
             }
             catch (Exception)
             {
-                await _bus.SendAsync(new SendMessageCommand("Could not process file."));
+                await _bus.SendAsync(new SendMessageCommand(new StringBuilder("Could not process file.")));
             }
         }
     }

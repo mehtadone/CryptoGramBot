@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Text;
+using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using Enexure.MicroBus;
@@ -30,34 +31,39 @@ namespace CryptoGramBot.EventBus.Handlers
 
         public async Task Handle(SendHelpMessageCommand command)
         {
-            var usage = "<strong>Help</strong>\n\n" +
-                        "<strong>Common commands</strong>\n" +
-                        $"{TelegramCommands.CommonExcel} - an excel export of all trades\n" +
-                        $"{TelegramCommands.CommonPairProfit} - profit information for pair\n";
+            var sb = new StringBuilder();
+            sb.AppendLine("<strong>Help</strong>");
+            sb.AppendLine();
+            sb.AppendLine("<strong>Common commands</strong>");
+            sb.AppendLine($"{TelegramCommands.CommonExcel} - an excel export of all trades");
+            sb.AppendLine($"{TelegramCommands.CommonPairProfit} - profit information for pair");
 
             if (_coinigyConfig.Enabled)
             {
-                usage = usage + "\n<strong>Coinigy commands</strong>\n" +
-                        $"{TelegramCommands.CoinigyAccountList} - coinigy accounts and their balance\n" +
-                        $"{TelegramCommands.CoinigyTotalBalance} - total balance from all acounts\n";
+                sb.AppendLine("\n<strong>Coinigy commands</strong>)");
+                sb.AppendLine();
+                sb.AppendLine($"{TelegramCommands.CoinigyAccountList} - coinigy accounts and their balance");
+                sb.AppendLine($"{TelegramCommands.CoinigyTotalBalance} - total balance from all acounts");
             }
 
             if (_bittrexConfig.Enabled)
             {
-                usage = usage + "\n<strong>Bittrex commands</strong>\n" +
-                        $"{TelegramCommands.BittrexTradeExportUpload} - upload bittrex order export\n" +
-                        $"{TelegramCommands.BittrexBalanceInfo} - bittrex account summary\n";
+                sb.AppendLine("<strong>Bittrex commands</strong>");
+                sb.AppendLine();
+                sb.AppendLine($"{TelegramCommands.BittrexTradeExportUpload} - upload bittrex order export");
+                sb.AppendLine($"{TelegramCommands.BittrexBalanceInfo} - bittrex account summary");
             }
             if (_poloniexConfig.Enabled)
             {
-                usage = usage + "\n<strong>Poloniex commands</strong>\n" +
-                        $"{TelegramCommands.PoloniexBalanceInfo} - poloniex account summary\n" +
-                        $"{TelegramCommands.PoloniexTradeReset} - reset trades database from poloniex";
+                sb.AppendLine("\n<strong>Poloniex commands</strong>");
+                sb.AppendLine();
+                sb.AppendLine($"{TelegramCommands.PoloniexBalanceInfo} - poloniex account summary");
+                sb.AppendLine($"{TelegramCommands.PoloniexTradeReset} - reset trades database from poloniex");
             }
 
             _log.LogInformation("Sending help message");
 
-            await _bus.SendAsync(new SendMessageCommand(usage));
+            await _bus.SendAsync(new SendMessageCommand(sb));
         }
     }
 

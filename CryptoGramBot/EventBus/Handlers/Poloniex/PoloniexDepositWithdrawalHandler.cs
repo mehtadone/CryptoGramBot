@@ -1,12 +1,11 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
-using CryptoGramBot.Services;
 using CryptoGramBot.Services.Exchanges;
-using CryptoGramBot.Services.Pricing;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.EventBus.Handlers.Poloniex
@@ -15,23 +14,17 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
     {
         private readonly IMicroBus _bus;
         private readonly PoloniexConfig _config;
-        private readonly DatabaseService _databaseService;
         private readonly GeneralConfig _generalConfig;
         private readonly PoloniexService _poloniexService;
-        private readonly PriceService _priceService;
 
         public PoloniexDepositWithdrawalHandler(
             PoloniexService poloniexService,
             PoloniexConfig config,
-            DatabaseService databaseService,
-            PriceService priceService,
             GeneralConfig generalConfig,
             IMicroBus bus)
         {
             _poloniexService = poloniexService;
             _config = config;
-            _databaseService = databaseService;
-            _priceService = priceService;
             _generalConfig = generalConfig;
             _bus = bus;
         }
@@ -47,7 +40,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                 {
                     if (i > 3)
                     {
-                        var message = $"{deposits.Count - i} deposit can be sent but not going to as to avoid spamming";
+                        var message = new StringBuilder($"{deposits.Count - i} deposit can be sent but not going to as to avoid spamming");
                         await _bus.SendAsync(new SendMessageCommand(message));
                         break;
                     }
@@ -68,7 +61,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                 {
                     if (i > 3)
                     {
-                        var message = $"{withdrawals.Count - i} withdrawals can be sent but not going to as to avoid spamming";
+                        var message = new StringBuilder($"{withdrawals.Count - i} withdrawals can be sent but not going to as to avoid spamming");
                         await _bus.SendAsync(new SendMessageCommand(message));
                         break;
                     }
@@ -83,21 +76,22 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
 
         private async Task SendDepositNotification(Deposit deposit, decimal btcAmount)
         {
-            var message =
-                $"{deposit.Time:g}\n" +
-                $"<strong>{Constants.Poloniex} Deposit of {deposit.Currency}</strong>\n" +
-                $"<strong>Currency: {deposit.Currency}</strong>\n" +
-                $"Amount: {deposit.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})\n";
-            await _bus.SendAsync(new SendMessageCommand(message));
+            var sb = new StringBuilder();
+            sb.AppendLine($"{deposit.Time:g}");
+            sb.AppendLine($"<strong>{Constants.Poloniex} Deposit of {deposit.Currency}</strong>");
+            sb.AppendLine($"<strong>Currency: {deposit.Currency}</strong>");
+            sb.AppendLine($"Amount: {deposit.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})");
+
+            await _bus.SendAsync(new SendMessageCommand(sb));
         }
 
         private async Task SendWithdrawalNotification(Withdrawal withdrawal, decimal btcAmount)
         {
-            var message =
-                $"{withdrawal.Time:g}\n" +
-                $"<strong>{Constants.Poloniex} Withdrawal of {withdrawal.Currency}</strong>\n" +
-                $"Amount: {withdrawal.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})\n";
-            await _bus.SendAsync(new SendMessageCommand(message));
+            var sb = new StringBuilder();
+            sb.AppendLine($"{withdrawal.Time:g}");
+            sb.AppendLine($"<strong>{Constants.Poloniex} Withdrawal of {withdrawal.Currency}</strong>");
+            sb.AppendLine($"Amount: {withdrawal.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})");
+            await _bus.SendAsync(new SendMessageCommand(sb));
         }
     }
 }

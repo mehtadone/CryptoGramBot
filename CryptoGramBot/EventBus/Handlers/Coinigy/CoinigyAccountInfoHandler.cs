@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
@@ -23,9 +24,19 @@ namespace CryptoGramBot.EventBus.Handlers
         public async Task Handle(SendCoinigyAccountInfoCommand command)
         {
             var accountList = await _coinigyBalanceService.GetAccounts();
-            var message = accountList.Aggregate($"{DateTime.Now:g}\n" + "Connected accounts on Coinigy are: \n", (current, acc) => current + "/acc_" + acc.Key + " - " + acc.Value.Name + "\n");
+            var sb = new StringBuilder();
+            sb.AppendLine($"{DateTime.Now:g}");
+            sb.AppendLine("Connected accounts on Coinigy are:");
+            foreach (var pair in accountList)
+            {
+                sb.Append("/acc_");
+                sb.Append(pair.Key.ToString());
+                sb.Append(" - ");
+                sb.Append(pair.Value.Name);
+                sb.AppendLine();
+            }
             _log.LogInformation("Sending the account list");
-            await _bus.SendAsync(new SendMessageCommand(message));
+            await _bus.SendAsync(new SendMessageCommand(sb));
         }
     }
 

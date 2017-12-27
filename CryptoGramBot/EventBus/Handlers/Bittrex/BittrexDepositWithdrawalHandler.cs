@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Events;
@@ -47,7 +48,7 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
                 {
                     if (i > 3)
                     {
-                        var message = $"{deposits.Count - i} deposits can be sent but not going as to avoid spamming";
+                        var message = new StringBuilder($"{deposits.Count - i} deposits can be sent but not going as to avoid spamming");
                         await _bus.SendAsync(new SendMessageCommand(message));
                         break;
                     }
@@ -68,7 +69,7 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
                 {
                     if (i > 3)
                     {
-                        var message = $"{withdrawals.Count - i} withdrawals can be sent but not going as to avoid spamming";
+                        var message = new StringBuilder($"{withdrawals.Count - i} withdrawals can be sent but not going as to avoid spamming");
                         await _bus.SendAsync(new SendMessageCommand(message));
                         break;
                     }
@@ -83,21 +84,22 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
 
         private async Task SendDepositNotification(Deposit deposit, decimal btcAmount)
         {
-            var message =
-                $"{deposit.Time:g}\n" +
-                $"<strong>{Constants.Bittrex} Deposit of {deposit.Currency}</strong>\n" +
-                $"<strong>Currency: {deposit.Currency}</strong>\n" +
-                $"Amount: {deposit.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})\n";
-            await _bus.SendAsync(new SendMessageCommand(message));
+            var sb = new StringBuilder();
+            sb.AppendLine($"{deposit.Time:g}");
+            sb.AppendLine($"<strong>{Constants.Bittrex} Deposit of {deposit.Currency}</strong>");
+            sb.AppendLine($"<strong>Currency: {deposit.Currency}</strong>");
+            sb.AppendLine($"Amount: {deposit.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})");
+
+            await _bus.SendAsync(new SendMessageCommand(sb));
         }
 
         private async Task SendWithdrawalNotification(Withdrawal withdrawal, decimal btcAmount)
         {
-            var message =
-                $"{withdrawal.Time:g}\n" +
-                $"<strong>{Constants.Bittrex} Withdrawal of {withdrawal.Currency}</strong>\n" +
-                $"Amount: {withdrawal.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})\n";
-            await _bus.SendAsync(new SendMessageCommand(message));
+            var sb = new StringBuilder();
+            sb.AppendLine($"{withdrawal.Time:g}");
+            sb.AppendLine($"<strong>{Constants.Bittrex} Withdrawal of {withdrawal.Currency}</strong>");
+            sb.AppendLine($"Amount: {withdrawal.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})");
+            await _bus.SendAsync(new SendMessageCommand(sb));
         }
     }
 }

@@ -1,21 +1,19 @@
-﻿using System;
+﻿using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
-using Serilog;
-using Telegram.Bot.Types.Enums;
 
 namespace CryptoGramBot.EventBus.Handlers
 {
     public class SendMessageCommand : ICommand
     {
-        public SendMessageCommand(string message)
+        public SendMessageCommand(StringBuilder message)
         {
             Message = message;
         }
 
-        public string Message { get; }
+        public StringBuilder Message { get; }
     }
 
     public class SendMessageHandler : ICommandHandler<SendMessageCommand>
@@ -35,12 +33,12 @@ namespace CryptoGramBot.EventBus.Handlers
 
             if (message.Length <= 4094)
             {
-                await _bot.SendHtmlMessage(_bot.ChatId, message);
+                await _bot.SendHtmlMessage(_bot.ChatId, message.ToString());
             }
             else
             {
                 var newMessage = string.Empty;
-                var strings = message.Split("\n");
+                var strings = message.ToString().Split("\n");
 
                 foreach (var s in strings)
                 {

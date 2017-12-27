@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Models;
@@ -46,21 +47,23 @@ namespace CryptoGramBot.EventBus.Handlers
                 lastBought = tradesProfitResponse.LastBoughtTime + TimeSpan.FromHours(_config.TimeOffset);
             }
 
-            var message = $"{newTrade.TimeStamp + TimeSpan.FromHours(_config.TimeOffset):g}\n" +
-                          $"New {newTrade.Exchange} order\n" +
-                          $"<strong>{newTrade.Side} {newTrade.Base}-{newTrade.Terms}</strong>\n" +
-                          $"Quantity: {newTrade.QuantityOfTrade}\n" +
-                          $"Rate: {newTrade.Limit:##0.##############} {newTrade.Base}\n" +
-                          $"Total: {newTrade.Cost:##0.###########} {newTrade.Base}";
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"{newTrade.TimeStamp + TimeSpan.FromHours(_config.TimeOffset):g}");
+            sb.AppendLine($"New {newTrade.Exchange} order");
+            sb.AppendLine($"<strong>{newTrade.Side} {newTrade.Base}-{newTrade.Terms}</strong>");
+            sb.AppendLine($"Quantity: {newTrade.QuantityOfTrade}");
+            sb.AppendLine($"Rate: {newTrade.Limit:##0.##############} {newTrade.Base}");
+            sb.AppendLine($"Total: {newTrade.Cost:##0.###########} {newTrade.Base}");
 
             if (profitPercentage.HasValue && btcProfit.HasValue && dollarProfit.HasValue)
             {
-                message = message + $"\nProfit: {btcProfit.Value:##0.########} {newTrade.Base} (${dollarProfit.Value:###0.##})\n"
-                    + $"Bought on: {lastBought:g}\n"
-                    + $"<strong>Percentage: {profitPercentage.Value}%</strong>";
+                sb.AppendLine($"Profit: {btcProfit.Value:##0.########} {newTrade.Base} (${dollarProfit.Value:###0.##})");
+                sb.AppendLine($"Bought on: {lastBought:g}");
+                sb.AppendLine($"<strong>Percentage: {profitPercentage.Value}%</strong>");
             }
 
-            await _bus.SendAsync(new SendMessageCommand(message));
+            await _bus.SendAsync(new SendMessageCommand(sb));
         }
     }
 }

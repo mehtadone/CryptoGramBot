@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Text;
+using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using FluentScheduler;
 using CryptoGramBot.EventBus.Events;
@@ -133,7 +134,7 @@ namespace CryptoGramBot.Services
         private async Task SendStartupMessage()
         {
             const string message = "<strong>Welcome to CryptoGramBot. I am currently querying for your trade history. Type /help for commands.</strong>\n";
-            await _bus.SendAsync(new SendMessageCommand(message));
+            await _bus.SendAsync(new SendMessageCommand(new StringBuilder(message)));
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Text;
+using System.Threading.Tasks;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Services;
 using CryptoGramBot.Services.Exchanges;
@@ -24,7 +25,9 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
             var trades = await _poloniexService.GetOrderHistory(Constants.DateTimeUnixEpochStart);
             await _databaseService.DeleteAllTrades(Constants.Poloniex);
             await _databaseService.AddTrades(trades);
-            await _bus.SendAsync(new SendMessageCommand($"I've reset your trades with {trades.Count} trades from polo."));
+            await _bus.SendAsync(
+                new SendMessageCommand(
+                    new StringBuilder($"I've reset your trades with {trades.Count} trades from polo.")));
         }
     }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.EventBus;
 using CryptoGramBot.EventBus.Events;
@@ -32,7 +33,7 @@ namespace CryptoGramBot.Services.Telegram
         public async Task BittrexTradeImport()
         {
             BittrexFileUploadState.Waiting = true;
-            await _bus.SendAsync(new SendMessageCommand("Please upload bittrex trade export"));
+            await _bus.SendAsync(new SendMessageCommand(new StringBuilder("Please upload bittrex trade export")));
         }
 
         public async Task CoinigyAccountBalance(string message)

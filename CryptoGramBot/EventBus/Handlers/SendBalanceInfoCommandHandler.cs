@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Commands;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
 
-namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
+namespace CryptoGramBot.EventBus.Handlers
 {
     public class SendBalanceInfoCommandHandler : ICommandHandler<SendBalanceInfoCommand>
     {
@@ -22,6 +23,7 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
 
         public async Task Handle(SendBalanceInfoCommand requestedCommand)
         {
+            var sb = new StringBuilder();
             var accountName = requestedCommand.BalanceInformation.AccountName;
             var current = requestedCommand.BalanceInformation.CurrentBalance;
             var lastBalance = requestedCommand.BalanceInformation.PreviousBalance;
@@ -32,8 +34,12 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
             var previousFormat = string.Format("<strong>{0,-13}</strong>{1,-25}\n", "Previous:", $" {lastBalance.Balance:##0.####} {_generalConfig.TradingCurrency} (${lastBalance.DollarAmount})");
             var differenceFormat = string.Format("<strong>{0,-13}</strong>{1,-25}\n", "Difference:", $"{(current.Balance - lastBalance.Balance):##0.####} {_generalConfig.TradingCurrency} (${Math.Round(current.DollarAmount - lastBalance.DollarAmount, 2)})");
 
-            var message = $"<strong>24 Hour Summary</strong> for <strong>{accountName}</strong>\n\n" +
-                          timeFormat + currentFormat + previousFormat + differenceFormat;
+            sb.AppendLine($"<strong>24 Hour Summary</strong> for <strong>{accountName}</strong>");
+            sb.AppendLine();
+            sb.Append(timeFormat);
+            sb.Append(currentFormat);
+            sb.Append(previousFormat);
+            sb.Append(differenceFormat);
 
             try
             {
@@ -43,25 +49,24 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
 
                 var percentageFormat = string.Format("<strong>{0,-13}</strong>{1,-25}\n", "Change:", $"  {percentage}% {_generalConfig.TradingCurrency} ({dollarPercentage}% USD)");
 
-                message = message + percentageFormat;
+                sb.Append(percentageFormat);
             }
             catch (Exception)
             {
-                await _bus.SendAsync(new SendMessageCommand($"Could not calculate percentages. Probably because we don't have 24 hours of data yet"));
+                await _bus.SendAsync(new SendMessageCommand(new StringBuilder($"Could not calculate percentages. Probably because we don't have 24 hours of data yet")));
             }
 
             if (walletBalances != null)
             {
-                message = message + "\n<strong>Wallet information</strong> (with % change since last bought)\n\n";
+                sb.AppendLine("\n<strong>Wallet information</strong> (with % change since last bought)\n");
 
                 foreach (var walletBalance in walletBalances)
                 {
-                    message =
-                        message + string.Format("<strong>{0, -10}</strong> {1,-15} {2,10}\n", walletBalance.Currency, $"{walletBalance.BtcAmount:##0.0###} {_generalConfig.TradingCurrency}", $"{walletBalance.PercentageChange}%");
+                    sb.AppendLine(string.Format("<strong>{0, -10}</strong> {1,-15} {2,10}", walletBalance.Currency, $"{walletBalance.BtcAmount:##0.0###} {_generalConfig.TradingCurrency}", $"{walletBalance.PercentageChange}%"));
                 }
             }
 
-            await _bus.SendAsync(new SendMessageCommand(message));
+            await _bus.SendAsync(new SendMessageCommand(sb));
         }
     }
 }

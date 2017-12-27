@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Commands;
@@ -95,7 +96,7 @@ namespace CryptoGramBot.Services.Telegram
             catch (Exception ex)
             {
                 _log.LogError($"Woops. {ex}");
-                await _bus.SendAsync(new SendMessageCommand("Could not process your command. Check your logs"));
+                await _bus.SendAsync(new SendMessageCommand(new StringBuilder("Could not process your command. Check your logs")));
             }
         }
 

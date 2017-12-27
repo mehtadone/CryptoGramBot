@@ -28,7 +28,7 @@ namespace CryptoGramBot.Services.Telegram
             _log.LogInformation($"Am I waiting for the file? = {BittrexFileUploadState.Waiting}");
             if (document == null)
             {
-                await _bus.SendAsync(new SendMessageCommand("Did not receive a file"));
+                await _bus.SendAsync(new SendMessageCommand(new StringBuilder("Did not receive a file")));
                 BittrexFileUploadState.Reset();
                 return true;
             }

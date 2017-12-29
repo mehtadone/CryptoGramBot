@@ -1,12 +1,17 @@
-﻿using System;
+﻿using Jojatekok.PoloniexAPI.MarketTools;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Poloniex.General;
 
-namespace Poloniex.MarketTools
+namespace Jojatekok.PoloniexAPI
 {
     public interface IMarkets
     {
+        /// <summary>Fetches the best priced orders for all markets.</summary>
+        /// <param name="depth">The number of orders to fetch from each side.</param>
+        /// <returns>A <see cref="IDictionary{TKey,TValue}"/> containing <see cref="IOrderBook"/> data hashed by <see cref="CurrencyPair"/>.</returns>
+        Task<IDictionary<CurrencyPair, IOrderBook>> GetAllOpenOrdersAsync(uint depth = 50);
+
         /// <summary>Fetches the chart data which Poloniex uses for their candlestick graphs for a market view of a given time period.</summary>
         /// <param name="currencyPair">The currency pair, which consists of the currency being traded on the market, and the base's code.</param>
         /// <param name="period">The sampling frequency of the chart.</param>

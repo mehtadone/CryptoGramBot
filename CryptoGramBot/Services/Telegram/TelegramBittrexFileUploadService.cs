@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CryptoGramBot.EventBus.Handlers;
+using CryptoGramBot.EventBus.Handlers.Bittrex;
+using CryptoGramBot.Helpers;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot.Types;
@@ -28,7 +26,9 @@ namespace CryptoGramBot.Services.Telegram
             _log.LogInformation($"Am I waiting for the file? = {BittrexFileUploadState.Waiting}");
             if (document == null)
             {
-                await _bus.SendAsync(new SendMessageCommand(new StringBuilder("Did not receive a file")));
+                var message = new StringBuffer();
+                message.Append(StringContants.DidNotRecieveFile);
+                await _bus.SendAsync(new SendMessageCommand(message));
                 BittrexFileUploadState.Reset();
                 return true;
             }

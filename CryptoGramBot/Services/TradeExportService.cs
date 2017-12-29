@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
+using CryptoGramBot.Services.Data;
 using Microsoft.Extensions.Logging;
 using OfficeOpenXml;
 

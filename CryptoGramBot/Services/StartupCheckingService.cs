@@ -1,9 +1,9 @@
-﻿using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using FluentScheduler;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
+using CryptoGramBot.EventBus.Handlers.Coinigy;
 using CryptoGramBot.Helpers;
 using Enexure.MicroBus;
 
@@ -44,7 +44,7 @@ namespace CryptoGramBot.Services
             _lowBtcConfig = lowBtcConfig;
         }
 
-        public async Task Start()
+        public void Start()
         {
             // Needs to be called here as if we use DI, the config has not been binded yet
             _bot.StartBot(_telegramConfig);
@@ -52,11 +52,8 @@ namespace CryptoGramBot.Services
             var registry = new Registry();
             if (_bittrexConfig.Enabled || _poloniexConfig.Enabled)
             {
-                SendStartupMessage().Wait();
-
                 registry.Schedule(() => GetNewOrders().Wait())
-                    .ToRunNow()
-                    .AndEvery(1)
+                    .ToRunEvery(1)
                     .Minutes();
             }
 
@@ -86,7 +83,8 @@ namespace CryptoGramBot.Services
 
             if (_bittrexConfig.Enabled || _poloniexConfig.Enabled || _coinigyConfig.Enabled)
             {
-                registry.Schedule(() => CheckBalances().Wait()).ToRunNow().AndEvery(1).Hours().At(0);
+                registry.Schedule(() => CheckBalances().Wait()).ToRunEvery(1).Hours().At(0);
+                registry.Schedule(() => CheckBalances().Wait()).ToRunOnceIn(30).Seconds();
                 registry.Schedule(() => CheckDepositAndWithdrawals().Wait()).ToRunEvery(2).Minutes();
             }
 
@@ -98,10 +96,12 @@ namespace CryptoGramBot.Services
 
             if (_coinigyConfig.Enabled)
             {
-                await _bus.SendAsync(new GetCoinigyAccountCommand());
+                registry.Schedule(() => GetCoinigyAccounts().Wait()).ToRunOnceIn(3).Minutes();
             }
 
             JobManager.Initialize(registry);
+
+            SendStartupMessage().Wait();
         }
 
         private async Task CheckBalances()
@@ -125,6 +125,11 @@ namespace CryptoGramBot.Services
             await _bus.PublishAsync(balanceCheckEvent);
         }
 
+        private async Task GetCoinigyAccounts()
+        {
+            await _bus.SendAsync(new GetCoinigyAccountCommand());
+        }
+
         private async Task GetNewOrders()
         {
             await _bus.PublishAsync(new NewTradesCheckEvent());
@@ -133,8 +138,9 @@ namespace CryptoGramBot.Services
         // Need to do this or we end may end up with 500 + messages on first run
         private async Task SendStartupMessage()
         {
-            const string message = "<strong>Welcome to CryptoGramBot. I am currently querying for your trade history. Type /help for commands.</strong>\n";
-            await _bus.SendAsync(new SendMessageCommand(new StringBuilder(message)));
+            var message = new StringBuffer();
+            message.Append(StringContants.Welcome);
+            await _bus.SendAsync(new SendMessageCommand(message));
         }
     }
 }

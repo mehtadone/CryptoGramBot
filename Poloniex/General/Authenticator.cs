@@ -1,9 +1,12 @@
-﻿using Jojatekok.PoloniexAPI;
-
-namespace Poloniex.General
+﻿namespace Jojatekok.PoloniexAPI
 {
     public class Authenticator : IAuthenticator
     {
+        private ApiWebClient ApiWebClient { get; set; }
+
+        public string PublicKey { get; set; }
+        public string PrivateKey { get; set; }
+
         internal Authenticator(ApiWebClient apiWebClient, string publicKey, string privateKey) : this(apiWebClient)
         {
             PublicKey = publicKey;
@@ -15,9 +18,5 @@ namespace Poloniex.General
         {
             ApiWebClient = apiWebClient;
         }
-
-        public string PrivateKey { get; set; }
-        public string PublicKey { get; set; }
-        private ApiWebClient ApiWebClient { get; set; }
     }
 }

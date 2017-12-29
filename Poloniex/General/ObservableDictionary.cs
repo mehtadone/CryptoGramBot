@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections;
+using System.Linq;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.ComponentModel;
-using System.Linq;
 
-namespace Poloniex.General
+namespace Jojatekok.PoloniexAPI
 {
     public class ObservableDictionary<TKey, TValue> : IDictionary<TKey, TValue>, INotifyCollectionChanged, INotifyPropertyChanged
     {
@@ -22,51 +22,30 @@ namespace Poloniex.General
         {
             Dictionary = new Dictionary<TKey, TValue>();
         }
-
         public ObservableDictionary(IDictionary<TKey, TValue> dictionary)
         {
             Dictionary = new Dictionary<TKey, TValue>(dictionary);
         }
-
         public ObservableDictionary(IEqualityComparer<TKey> comparer)
         {
             Dictionary = new Dictionary<TKey, TValue>(comparer);
         }
-
         public ObservableDictionary(int capacity)
         {
             Dictionary = new Dictionary<TKey, TValue>(capacity);
         }
-
         public ObservableDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey> comparer)
         {
             Dictionary = new Dictionary<TKey, TValue>(dictionary, comparer);
         }
-
         public ObservableDictionary(int capacity, IEqualityComparer<TKey> comparer)
         {
             Dictionary = new Dictionary<TKey, TValue>(capacity, comparer);
         }
 
-        #endregion Constructors
+        #endregion
 
         #region IDictionary<TKey, TValue> Members
-
-        public ICollection<TKey> Keys
-        {
-            get { return Dictionary.Keys; }
-        }
-
-        public ICollection<TValue> Values
-        {
-            get { return Dictionary.Values; }
-        }
-
-        public TValue this[TKey key]
-        {
-            get { return Dictionary[key]; }
-            set { Insert(key, value, false); }
-        }
 
         public void Add(TKey key, TValue value)
         {
@@ -76,6 +55,11 @@ namespace Poloniex.General
         public bool ContainsKey(TKey key)
         {
             return Dictionary.ContainsKey(key);
+        }
+
+        public ICollection<TKey> Keys
+        {
+            get { return Dictionary.Keys; }
         }
 
         public bool Remove(TKey key)
@@ -95,19 +79,20 @@ namespace Poloniex.General
             return Dictionary.TryGetValue(key, out value);
         }
 
-        #endregion IDictionary<TKey, TValue> Members
+        public ICollection<TValue> Values
+        {
+            get { return Dictionary.Values; }
+        }
+
+        public TValue this[TKey key]
+        {
+            get { return Dictionary[key]; }
+            set { Insert(key, value, false); }
+        }
+
+        #endregion
 
         #region ICollection<KeyValuePair<TKey, TValue>> Members
-
-        public int Count
-        {
-            get { return Dictionary.Count; }
-        }
-
-        public bool IsReadOnly
-        {
-            get { return Dictionary.IsReadOnly; }
-        }
 
         public void Add(KeyValuePair<TKey, TValue> item)
         {
@@ -116,8 +101,7 @@ namespace Poloniex.General
 
         public void Clear()
         {
-            if (Dictionary.Count != 0)
-            {
+            if (Dictionary.Count != 0) {
                 Dictionary.Clear();
                 OnCollectionChanged();
             }
@@ -133,12 +117,22 @@ namespace Poloniex.General
             Dictionary.CopyTo(array, arrayIndex);
         }
 
+        public int Count
+        {
+            get { return Dictionary.Count; }
+        }
+
+        public bool IsReadOnly
+        {
+            get { return Dictionary.IsReadOnly; }
+        }
+
         public bool Remove(KeyValuePair<TKey, TValue> item)
         {
             return Remove(item.Key);
         }
 
-        #endregion ICollection<KeyValuePair<TKey, TValue>> Members
+        #endregion
 
         #region IEnumerable<KeyValuePair<TKey, TValue>> Members
 
@@ -147,7 +141,7 @@ namespace Poloniex.General
             return Dictionary.GetEnumerator();
         }
 
-        #endregion IEnumerable<KeyValuePair<TKey, TValue>> Members
+        #endregion
 
         #region IEnumerable Members
 
@@ -156,40 +150,35 @@ namespace Poloniex.General
             return ((IEnumerable)Dictionary).GetEnumerator();
         }
 
-        #endregion IEnumerable Members
+        #endregion
 
         #region INotifyCollectionChanged Members
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-        #endregion INotifyCollectionChanged Members
+        #endregion
 
         #region INotifyPropertyChanged Members
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        #endregion INotifyPropertyChanged Members
+        #endregion
 
         public void AddRange(IDictionary<TKey, TValue> items)
         {
             if (items == null) throw new ArgumentNullException("items");
 
-            if (items.Count != 0)
-            {
-                if (Dictionary.Count != 0)
-                {
-                    if (items.Keys.Any(x => Dictionary.ContainsKey(x)))
-                    {
+            if (items.Count != 0) {
+                if (Dictionary.Count != 0) {
+                    if (items.Keys.Any(x => Dictionary.ContainsKey(x))) {
                         throw new ArgumentException("An item with the same key has already been added.");
                     }
 
-                    foreach (var item in items)
-                    {
+                    foreach (var item in items) {
                         Dictionary.Add(item);
                     }
-                }
-                else
-                {
+
+                } else {
                     Dictionary = new Dictionary<TKey, TValue>(items);
                 }
 
@@ -197,30 +186,36 @@ namespace Poloniex.General
             }
         }
 
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            if (PropertyChanged != null) PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-        }
-
         private void Insert(TKey key, TValue value, bool add)
         {
             if (key == null) throw new ArgumentNullException("key");
 
             TValue item;
-            if (Dictionary.TryGetValue(key, out item))
-            {
+            if (Dictionary.TryGetValue(key, out item)) {
                 if (add) throw new ArgumentException("An item with the same key has already been added.");
                 if (Equals(item, value)) return;
                 Dictionary[key] = value;
 
                 OnCollectionChanged(NotifyCollectionChangedAction.Replace, new KeyValuePair<TKey, TValue>(key, value), new KeyValuePair<TKey, TValue>(key, item));
-            }
-            else
-            {
+
+            } else {
                 Dictionary[key] = value;
 
                 OnCollectionChanged(NotifyCollectionChangedAction.Add, new KeyValuePair<TKey, TValue>(key, value));
             }
+        }
+
+        private void OnPropertyChanged()
+        {
+            OnPropertyChanged(CountString);
+            OnPropertyChanged(IndexerName);
+            OnPropertyChanged(KeysName);
+            OnPropertyChanged(ValuesName);
+        }
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            if (PropertyChanged != null) PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
         }
 
         private void OnCollectionChanged()
@@ -245,14 +240,6 @@ namespace Poloniex.General
         {
             OnPropertyChanged();
             if (CollectionChanged != null) CollectionChanged(this, new NotifyCollectionChangedEventArgs(action, newItems));
-        }
-
-        private void OnPropertyChanged()
-        {
-            OnPropertyChanged(CountString);
-            OnPropertyChanged(IndexerName);
-            OnPropertyChanged(KeysName);
-            OnPropertyChanged(ValuesName);
         }
     }
 }

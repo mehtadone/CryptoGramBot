@@ -1,15 +1,16 @@
 ﻿using System;
-using Poloniex.General;
 
-namespace Poloniex.MarketTools
+namespace Jojatekok.PoloniexAPI.MarketTools
 {
     public interface ITrade
     {
-        double AmountBase { get; }
-        double AmountQuote { get; }
-        double PricePerCoin { get; }
         DateTime Time { get; }
 
         OrderType Type { get; }
+
+        double PricePerCoin { get; }
+
+        double AmountQuote { get; }
+        double AmountBase { get; }
     }
 }

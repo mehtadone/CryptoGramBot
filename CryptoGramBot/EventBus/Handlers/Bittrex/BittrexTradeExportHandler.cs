@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
+using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
-using CryptoGramBot.Models;
-using CryptoGramBot.Services;
+using CryptoGramBot.Services.Data;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
+using Telegram.Bot;
 
-namespace CryptoGramBot.EventBus.Handlers
+namespace CryptoGramBot.EventBus.Handlers.Bittrex
 {
     public class BittrexTradeExportCommand : ICommand
     {
@@ -22,32 +21,39 @@ namespace CryptoGramBot.EventBus.Handlers
 
     public class BittrexTradeExportHandler : ICommandHandler<BittrexTradeExportCommand>
     {
-        private readonly TelegramBot _bot;
         private readonly IMicroBus _bus;
+        private readonly TelegramConfig _config;
         private readonly DatabaseService _databaseService;
         private readonly ILogger<BittrexTradeExportHandler> _log;
 
-        public BittrexTradeExportHandler(TelegramBot bot, DatabaseService databaseService, IMicroBus bus, ILogger<BittrexTradeExportHandler> log)
+        public BittrexTradeExportHandler(DatabaseService databaseService, IMicroBus bus, ILogger<BittrexTradeExportHandler> log, TelegramConfig config)
         {
-            _bot = bot;
             _databaseService = databaseService;
             _bus = bus;
             _log = log;
+            _config = config;
         }
 
         public async Task Handle(BittrexTradeExportCommand command)
         {
             try
             {
-                var file = await _bot.Bot.GetFileAsync(command.FileId);
+                var bot = new TelegramBotClient(_config.BotToken);
+                var file = await bot.GetFileAsync(command.FileId);
                 var trades = TradeConverter.BittrexFileToTrades(file.FileStream, _log);
                 await _databaseService.DeleteAllTrades(Constants.Bittrex);
                 var newTrades = await _databaseService.AddTrades(trades);
-                await _bus.SendAsync(new SendMessageCommand(new StringBuilder($"{newTrades.Count} new bittrex trades added.")));
+
+                var sb = new StringBuffer();
+                sb.Append(string.Format("{0} new bittrex trades added.", newTrades.Count));
+
+                await _bus.SendAsync(new SendMessageCommand(sb));
             }
             catch (Exception)
             {
-                await _bus.SendAsync(new SendMessageCommand(new StringBuilder("Could not process file.")));
+                var sb = new StringBuffer();
+                sb.Append(StringContants.CouldNotProcessFile);
+                await _bus.SendAsync(new SendMessageCommand(sb));
             }
         }
     }

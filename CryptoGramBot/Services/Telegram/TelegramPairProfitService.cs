@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.EventBus.Handlers;
+using CryptoGramBot.Helpers;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
 
@@ -20,7 +20,9 @@ namespace CryptoGramBot.Services.Telegram
 
         public async Task RequestedPairProfit()
         {
-            await _bus.SendAsync(new SendMessageCommand(new StringBuilder("What pair do you want to find your profits on? eg BTC-DOGE")));
+            var mess = new StringBuffer();
+            mess.Append(StringContants.WhatPairProfits);
+            await _bus.SendAsync(new SendMessageCommand(mess));
             PairProfitState.WaitingForCurrency = true;
         }
 
@@ -36,7 +38,9 @@ namespace CryptoGramBot.Services.Telegram
             }
             catch (Exception)
             {
-                await _bus.SendAsync(new SendMessageCommand(new StringBuilder($"Something went wrong. Probably because you entered in a dud currency or I have no trade details")));
+                var mess = new StringBuffer();
+                mess.Append(StringContants.PairProfitError);
+                await _bus.SendAsync(new SendMessageCommand(mess));
             }
             return PairProfitState.Reset();
         }

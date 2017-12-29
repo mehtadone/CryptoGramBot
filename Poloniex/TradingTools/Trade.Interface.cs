@@ -1,7 +1,6 @@
 ﻿using System;
-using Poloniex.MarketTools;
 
-namespace Poloniex.TradingTools
+namespace Jojatekok.PoloniexAPI.TradingTools
 {
     public interface ITrade : IOrder
     {

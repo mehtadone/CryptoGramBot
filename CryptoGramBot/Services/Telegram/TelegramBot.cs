@@ -23,15 +23,14 @@ namespace CryptoGramBot.Services
             _log = log;
         }
 
-        public TelegramBotClient Bot { get; set; }
-
         public long ChatId { get; set; }
 
-        public async Task SendHtmlMessage(long botChatId, string message)
+        public async Task SendHtmlMessage(long botChatId, string message, string botToken)
         {
             try
             {
-                await Bot.SendTextMessageAsync(botChatId, message, ParseMode.Html);
+                var bot = new TelegramBotClient(botToken);
+                await bot.SendTextMessageAsync(botChatId, message, ParseMode.Html);
             }
             catch (Exception ex)
             {
@@ -44,17 +43,16 @@ namespace CryptoGramBot.Services
         {
             try
             {
-                Bot = new TelegramBotClient(config.BotToken);
                 ChatId = config.ChatId;
+                var bot = new TelegramBotClient(config.BotToken);
+                // Start the bot so we can start receiving messages
+                _telegramMessageRecieveService.StartReceivingMessages(bot);
             }
             catch (Exception ex)
             {
                 _log.LogError("Could not start key. Invalid bot token\n" + ex.Message);
                 throw;
             }
-
-            // Start the bot so we can start receiving messages
-            _telegramMessageRecieveService.StartReceivingMessages(Bot);
         }
     }
 }

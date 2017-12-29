@@ -1,7 +1,7 @@
-﻿using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Services;
+using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Exchanges;
 using Enexure.MicroBus;
 
@@ -25,9 +25,10 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
             var trades = await _poloniexService.GetOrderHistory(Constants.DateTimeUnixEpochStart);
             await _databaseService.DeleteAllTrades(Constants.Poloniex);
             await _databaseService.AddTrades(trades);
+            var message = new StringBuffer();
+            message.Append(StringContants.PoloniexResetTrades);
             await _bus.SendAsync(
-                new SendMessageCommand(
-                    new StringBuilder($"I've reset your trades with {trades.Count} trades from polo.")));
+                new SendMessageCommand(message));
         }
     }
 

@@ -6,12 +6,9 @@
 
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-		<PackageReference Include="WampSharp" Version="1.2.6.41-beta" />
-		<PackageReference Include="WampSharp.NewtonsoftJson" Version="1.2.6.41-beta" />
-		<PackageReference Include="WampSharp.WebSockets" Version="1.2.6.41-beta" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Properties\" />
+		<Folder Include="Properties\" />
 	</ItemGroup>
 </Project>

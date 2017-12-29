@@ -1,14 +1,13 @@
-﻿using Poloniex.General;
-
-namespace Poloniex.TradingTools
+﻿namespace Jojatekok.PoloniexAPI.TradingTools
 {
     public interface IOrder
     {
-        double AmountBase { get; }
-        double AmountQuote { get; }
         ulong IdOrder { get; }
 
-        double PricePerCoin { get; }
         OrderType Type { get; }
+
+        double PricePerCoin { get; }
+        double AmountQuote { get; }
+        double AmountBase { get; }
     }
 }

@@ -2,9 +2,10 @@
 using System.Threading.Tasks;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
+using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Pricing;
 
-namespace CryptoGramBot.Services
+namespace CryptoGramBot.Services.Exchanges
 {
     public class CoinigyBalanceService : IBalanceService
     {
@@ -29,7 +30,7 @@ namespace CryptoGramBot.Services
 
             var hour24Balance = await _databaseService.GetBalance24HoursAgo(selectedAccount.AuthId);
             var balanceCurrent = await _coinigyApiService.GetBtcBalance(selectedAccount.AuthId);
-            var dollarAmount = await _priceService.GetDollarAmount("BTC", balanceCurrent, Constants.Bittrex);
+            var dollarAmount = await _priceService.GetDollarAmount(Constants.BTC, balanceCurrent, Constants.Bittrex);
 
             // Add to database. Should move these "Add to database" as an event which is called whenever a balance is queried
             var currentBalance = await _databaseService.AddBalance(balanceCurrent, dollarAmount, selectedAccount.AuthId);
@@ -59,7 +60,7 @@ namespace CryptoGramBot.Services
         {
             var hour24Balance = await _databaseService.GetBalance24HoursAgo(accountName);
             var balanceCurrent = await _coinigyApiService.GetBtcBalance();
-            var dollarAmount = await _priceService.GetDollarAmount("BTC", balanceCurrent, Constants.Bittrex);
+            var dollarAmount = await _priceService.GetDollarAmount(Constants.BTC, balanceCurrent, Constants.Bittrex);
 
             var currentBalance = await _databaseService.AddBalance(balanceCurrent, dollarAmount, accountName);
             return new BalanceInformation(currentBalance, hour24Balance, accountName);
@@ -69,7 +70,7 @@ namespace CryptoGramBot.Services
         {
             var hour24Balance = await _databaseService.GetBalance24HoursAgo(Constants.TotalCoinigyBalance);
             var balanceCurrent = await _coinigyApiService.GetBtcBalance();
-            var dollarAmount = await _priceService.GetDollarAmount("BTC", balanceCurrent, Constants.Bittrex);
+            var dollarAmount = await _priceService.GetDollarAmount(Constants.BTC, balanceCurrent, Constants.Bittrex);
 
             var currentBalance = await _databaseService.AddBalance(balanceCurrent, dollarAmount, Constants.TotalCoinigyBalance);
             return new BalanceInformation(currentBalance, hour24Balance, Constants.TotalCoinigyBalance);

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Poloniex.WalletTools
+namespace Jojatekok.PoloniexAPI.WalletTools
 {
     public interface IDepositWithdrawalList
     {

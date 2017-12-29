@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus.Handlers
+namespace CryptoGramBot.EventBus.Handlers.Coinigy
 {
     public class GetCoinigyAccountCommand : ICommand
     {
@@ -15,11 +11,9 @@ namespace CryptoGramBot.EventBus.Handlers
     public class GetCoinigyAccountHandler : ICommandHandler<GetCoinigyAccountCommand>
     {
         private readonly CoinigyApiService _coinigyApiService;
-        private readonly DatabaseService _databaseService;
 
-        public GetCoinigyAccountHandler(DatabaseService databaseService, CoinigyApiService coinigyApiService)
+        public GetCoinigyAccountHandler(CoinigyApiService coinigyApiService)
         {
-            _databaseService = databaseService;
             _coinigyApiService = coinigyApiService;
         }
 

@@ -1,4 +1,7 @@
 ﻿// Special class to represent all currency pairs. To be used in Trade / Order history queries
+
+using Jojatekok.PoloniexAPI;
+
 namespace Poloniex.General
 {
     internal sealed class AllCurrencyPairs : CurrencyPair

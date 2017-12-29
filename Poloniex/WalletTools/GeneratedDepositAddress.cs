@@ -1,21 +1,16 @@
 ﻿using Newtonsoft.Json;
 
-namespace Poloniex.WalletTools
+namespace Jojatekok.PoloniexAPI.WalletTools
 {
     public class GeneratedDepositAddress : IGeneratedDepositAddress
     {
-        [JsonProperty("response")]
-        public string Address { get; private set; }
-
-        [JsonProperty("error")]
-        public string Error { get; set; }
-
+        [JsonProperty("success")]
+        private byte IsGenerationSuccessfulInternal {
+            set { IsGenerationSuccessful = value == 1; }
+        }
         public bool IsGenerationSuccessful { get; private set; }
 
-        [JsonProperty("success")]
-        private byte IsGenerationSuccessfulInternal
-        {
-            set => IsGenerationSuccessful = value == 1;
-        }
+        [JsonProperty("response")]
+        public string Address { get; private set; }
     }
 }

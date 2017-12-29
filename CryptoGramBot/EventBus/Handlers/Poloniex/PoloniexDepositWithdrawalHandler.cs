@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Events;
@@ -38,9 +37,10 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                 var i = 0;
                 foreach (var deposit in deposits)
                 {
-                    if (i > 3)
+                    if (i > 30)
                     {
-                        var message = new StringBuilder($"{deposits.Count - i} deposit can be sent but not going to as to avoid spamming");
+                        var message = new StringBuffer();
+                        message.Append(StringContants.PoloniexMoreThan30Deposits);
                         await _bus.SendAsync(new SendMessageCommand(message));
                         break;
                     }
@@ -61,8 +61,8 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                 {
                     if (i > 3)
                     {
-                        var message = new StringBuilder($"{withdrawals.Count - i} withdrawals can be sent but not going to as to avoid spamming");
-                        await _bus.SendAsync(new SendMessageCommand(message));
+                        var message = new StringBuffer();
+                        message.Append(StringContants.PoloniexMoreThan30Withdrawals);
                         break;
                     }
 
@@ -76,21 +76,21 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
 
         private async Task SendDepositNotification(Deposit deposit, decimal btcAmount)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine($"{deposit.Time:g}");
-            sb.AppendLine($"<strong>{Constants.Poloniex} Deposit of {deposit.Currency}</strong>");
-            sb.AppendLine($"<strong>Currency: {deposit.Currency}</strong>");
-            sb.AppendLine($"Amount: {deposit.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})");
+            var sb = new StringBuffer();
+            sb.Append(string.Format("{0}", deposit.Time.ToString("g")));
+            sb.Append(string.Format("<strong>{0} Deposit of {1}</strong>", Constants.Poloniex, deposit.Currency));
+            sb.Append(string.Format("<strong>Currency: {0}</strong>", deposit.Currency));
+            sb.Append(string.Format("Amount: {0} ({1} {2})", deposit.Amount, btcAmount.ToString("##0.####"), _generalConfig.TradingCurrency));
 
             await _bus.SendAsync(new SendMessageCommand(sb));
         }
 
         private async Task SendWithdrawalNotification(Withdrawal withdrawal, decimal btcAmount)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine($"{withdrawal.Time:g}");
-            sb.AppendLine($"<strong>{Constants.Poloniex} Withdrawal of {withdrawal.Currency}</strong>");
-            sb.AppendLine($"Amount: {withdrawal.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})");
+            var sb = new StringBuffer();
+            sb.Append(string.Format("{0}", withdrawal.Time.ToString("g")));
+            sb.Append(string.Format("<strong>{0} Withdrawal of {1}</strong>", Constants.Poloniex, withdrawal.Currency));
+            sb.Append(string.Format("Amount: {0} ({1} {2})", withdrawal.Amount, btcAmount.ToString("##0.####"), _generalConfig.TradingCurrency));
             await _bus.SendAsync(new SendMessageCommand(sb));
         }
     }

@@ -1,15 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.16
+VisualStudioVersion = 15.0.27004.2009
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoGramBot", "CryptoGramBot\CryptoGramBot.csproj", "{2DC29AB7-C1F6-47E9-AAD3-5F7E76BB303A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoGramBot", "CryptoGramBot\CryptoGramBot.csproj", "{2DC29AB7-C1F6-47E9-AAD3-5F7E76BB303A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoGramBot.Tests", "CryptoGramBot.Tests\CryptoGramBot.Tests.csproj", "{5289CC2B-8A92-44EB-B3EF-65E85CA8021C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoGramBot.Tests", "CryptoGramBot.Tests\CryptoGramBot.Tests.csproj", "{5289CC2B-8A92-44EB-B3EF-65E85CA8021C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Poloniex", "Poloniex\Poloniex.csproj", "{1AE0BB62-ADC7-4216-9742-2083565EFF66}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BittrexSharp", "BittrexSharp\BittrexSharp.csproj", "{ADAF9416-F974-4F56-93A3-92CF844F9BB7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Poloniex", "Poloniex\Poloniex.csproj", "{1AE0BB62-ADC7-4216-9742-2083565EFF66}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +27,6 @@ Global
 		{1AE0BB62-ADC7-4216-9742-2083565EFF66}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1AE0BB62-ADC7-4216-9742-2083565EFF66}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1AE0BB62-ADC7-4216-9742-2083565EFF66}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ADAF9416-F974-4F56-93A3-92CF844F9BB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ADAF9416-F974-4F56-93A3-92CF844F9BB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ADAF9416-F974-4F56-93A3-92CF844F9BB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ADAF9416-F974-4F56-93A3-92CF844F9BB7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

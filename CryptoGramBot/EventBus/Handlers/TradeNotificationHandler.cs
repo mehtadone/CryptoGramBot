@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Models;
@@ -47,20 +46,20 @@ namespace CryptoGramBot.EventBus.Handlers
                 lastBought = tradesProfitResponse.LastBoughtTime + TimeSpan.FromHours(_config.TimeOffset);
             }
 
-            var sb = new StringBuilder();
+            var sb = new StringBuffer();
 
-            sb.AppendLine($"{newTrade.TimeStamp + TimeSpan.FromHours(_config.TimeOffset):g}");
-            sb.AppendLine($"New {newTrade.Exchange} order");
-            sb.AppendLine($"<strong>{newTrade.Side} {newTrade.Base}-{newTrade.Terms}</strong>");
-            sb.AppendLine($"Quantity: {newTrade.QuantityOfTrade}");
-            sb.AppendLine($"Rate: {newTrade.Limit:##0.##############} {newTrade.Base}");
-            sb.AppendLine($"Total: {newTrade.Cost:##0.###########} {newTrade.Base}");
+            sb.Append(string.Format("{0}\n", (newTrade.TimeStamp + TimeSpan.FromHours(_config.TimeOffset)).ToString("g")));
+            sb.Append(string.Format("New {0} order\n", newTrade.Exchange));
+            sb.Append(string.Format("<strong>{0} {1}-{2}</strong>\n", newTrade.Side.ToString(), newTrade.Base, newTrade.Terms));
+            sb.Append(string.Format("Quantity: {0}\n", newTrade.QuantityOfTrade));
+            sb.Append(string.Format("Rate: {0} {1}\n", newTrade.Limit.ToString("##0.##############"), newTrade.Base));
+            sb.Append(string.Format("Total: {0} {1}\n", newTrade.Cost.ToString("##0.###########"), newTrade.Base));
 
             if (profitPercentage.HasValue && btcProfit.HasValue && dollarProfit.HasValue)
             {
-                sb.AppendLine($"Profit: {btcProfit.Value:##0.########} {newTrade.Base} (${dollarProfit.Value:###0.##})");
-                sb.AppendLine($"Bought on: {lastBought:g}");
-                sb.AppendLine($"<strong>Percentage: {profitPercentage.Value}%</strong>");
+                sb.Append(string.Format("Profit: {0} {1} (${2})\n", btcProfit.Value.ToString("##0.########"), newTrade.Base, dollarProfit.Value.ToString("###0.##")));
+                sb.Append(string.Format("Bought on: {0}\n", (lastBought.Value + TimeSpan.FromHours(_config.TimeOffset)).ToString("g")));
+                sb.Append(string.Format("<strong>Percentage: {0}%</strong>\n", profitPercentage.Value));
             }
 
             await _bus.SendAsync(new SendMessageCommand(sb));

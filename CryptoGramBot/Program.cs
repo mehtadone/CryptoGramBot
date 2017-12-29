@@ -14,6 +14,14 @@ namespace CryptoGramBot
         {
             try
             {
+                Log.Logger = new LoggerConfiguration()
+                    .WriteTo.RollingFile(Directory.GetCurrentDirectory() + "/logs/CryptoGramBot.log")
+                    .MinimumLevel.Debug()
+                    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+                    .Enrich.FromLogContext()
+                    .WriteTo.Console()
+                    .CreateLogger();
+
                 var configurationBuilder = new ConfigurationBuilder();
                 configurationBuilder.SetBasePath(Path.Combine(Directory.GetCurrentDirectory()));
                 configurationBuilder.AddJsonFile("appsettings.json", false, true);
@@ -32,6 +40,7 @@ namespace CryptoGramBot
 
                 var webHost = new WebHostBuilder()
                     .UseKestrel()
+                    .UseLibuv(x => x.ThreadCount = 4)
                     .UseContentRoot(Directory.GetCurrentDirectory())
                     .UseStartup<Startup>()
                     .UseConfiguration(config)

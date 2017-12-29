@@ -1,9 +1,9 @@
-﻿namespace Poloniex.WalletTools
+﻿namespace Jojatekok.PoloniexAPI.WalletTools
 {
     public interface IBalance
     {
-        double BitcoinValue { get; }
         double QuoteAvailable { get; }
         double QuoteOnOrders { get; }
+        double BitcoinValue { get; }
     }
 }

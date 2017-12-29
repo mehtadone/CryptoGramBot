@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Poloniex.General;
 
-namespace Poloniex.WalletTools
+namespace Jojatekok.PoloniexAPI.WalletTools
 {
     public class Wallet : IWallet
     {
@@ -14,9 +12,9 @@ namespace Poloniex.WalletTools
             ApiWebClient = apiWebClient;
         }
 
-        private ApiWebClient ApiWebClient { get; }
+        private ApiWebClient ApiWebClient { get; set; }
 
-        public Task<IDictionary<string, IBalance>> GetBalancesAsync()
+        public Task<IDictionary<string, Balance>> GetBalancesAsync()
         {
             return Task.Factory.StartNew(GetBalances);
         }
@@ -46,20 +44,17 @@ namespace Poloniex.WalletTools
             return Task.Factory.StartNew(() => PostWithdrawal(currency, amount, address, paymentId));
         }
 
-        public Task<IGeneratedDepositAddress> PostWithdrawalAsync(string currency, double amount, string address)
+        public Task PostWithdrawalAsync(string currency, double amount, string address)
         {
             return Task.Factory.StartNew(() => PostWithdrawal(currency, amount, address, null));
         }
 
-        private IDictionary<string, IBalance> GetBalances()
+        private IDictionary<string, Balance> GetBalances()
         {
             var postData = new Dictionary<string, object>();
 
             var data = PostData<IDictionary<string, Balance>>("returnCompleteBalances", postData);
-            return data.ToDictionary(
-                x => x.Key,
-                x => (IBalance)x.Value
-            );
+            return data;
         }
 
         private IDictionary<string, string> GetDepositAddresses()
@@ -93,10 +88,11 @@ namespace Poloniex.WalletTools
                 { "currency", currency }
             };
 
-            return PostData<GeneratedDepositAddress>("generateNewAddress", postData);
+            var data = PostData<IGeneratedDepositAddress>("generateNewAddress", postData);
+            return data;
         }
 
-        private IGeneratedDepositAddress PostWithdrawal(string currency, double amount, string address, string paymentId)
+        private void PostWithdrawal(string currency, double amount, string address, string paymentId)
         {
             var postData = new Dictionary<string, object> {
                 { "currency", currency },
@@ -109,7 +105,7 @@ namespace Poloniex.WalletTools
                 postData.Add("paymentId", paymentId);
             }
 
-            return PostData<GeneratedDepositAddress>("withdraw", postData);
+            PostData<IGeneratedDepositAddress>("withdraw", postData);
         }
     }
 }

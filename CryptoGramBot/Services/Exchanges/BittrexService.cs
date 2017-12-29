@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
-using BittrexSharp;
-using BittrexSharp.Domain;
+using Bittrex.Net;
+using Bittrex.Net.Objects;
+using Bittrex.Net.RateLimiter;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
+using CryptoGramBot.Services.Data;
 using Microsoft.Extensions.Logging;
 using OpenOrder = CryptoGramBot.Models.OpenOrder;
 
@@ -16,8 +15,8 @@ namespace CryptoGramBot.Services.Exchanges
 {
     public class BittrexService : IExchangeService
     {
+        private readonly BittrexConfig _config;
         private readonly DatabaseService _databaseService;
-        private readonly Bittrex _exchange;
         private readonly GeneralConfig _generalConfig;
         private readonly ILogger<BittrexService> _log;
 
@@ -27,21 +26,30 @@ namespace CryptoGramBot.Services.Exchanges
             GeneralConfig generalConfig,
             ILogger<BittrexService> log)
         {
-            var config1 = config;
+            _config = config;
             _databaseService = databaseService;
             _generalConfig = generalConfig;
             _log = log;
-
-            _exchange = new Bittrex(config1.Key, config1.Secret);
         }
 
         public async Task<BalanceInformation> GetBalance()
         {
-            List<WalletBalance> bittrexBalances;
+            List<WalletBalance> bittrexBalances = new List<WalletBalance>();
             try
             {
-                var response = await _exchange.GetBalances();
-                bittrexBalances = TradeConverter.BittrexToWalletBalances(response);
+                using (var client = new BittrexClient(_config.Key, _config.Secret))
+                {
+                    var response = await client.GetBalancesAsync();
+
+                    if (response.Success)
+                    {
+                        bittrexBalances = TradeConverter.BittrexToWalletBalances(response.Result);
+                    }
+                    else
+                    {
+                        _log.LogWarning($"Bittrex returned an error {response.Error.ErrorCode} : {response.Error.ErrorMessage}");
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -101,45 +109,6 @@ namespace CryptoGramBot.Services.Exchanges
             return new BalanceInformation(currentBalance, lastBalance, Constants.Bittrex, bittrexBalances);
         }
 
-        public async Task<List<Deposit>> GetNewDeposits()
-        {
-            var list = await _exchange.GetDepositHistory();
-
-            var localDesposits = list.Select(Mapper.Map<Deposit>).ToList();
-            var newDeposits = await _databaseService.AddDeposits(localDesposits, Constants.Bittrex);
-
-            await _databaseService.AddLastChecked("Bittrex.DepositCheck", DateTime.Now);
-            return newDeposits;
-        }
-
-        public async Task<List<OpenOrder>> GetNewOpenOrders(DateTime lastChecked)
-        {
-            var openOrders = await _exchange.GetOpenOrders();
-
-            var orders = TradeConverter.BittrexToOpenOrders(openOrders);
-            var newOrders = await _databaseService.AddOpenOrders(orders);
-
-            return newOrders;
-        }
-
-        public async Task<List<Withdrawal>> GetNewWithdrawals()
-        {
-            var list = await _exchange.GetWithdrawalHistory();
-
-            var localWithdrawals = list.Select(Mapper.Map<Withdrawal>).ToList();
-
-            var newWithdrawals = await _databaseService.AddWithdrawals(localWithdrawals, Constants.Bittrex);
-            await _databaseService.AddLastChecked("Bittrex.WithdrawalCheck", DateTime.Now);
-            return newWithdrawals;
-        }
-
-        public async Task<List<CryptoGramBot.Models.Trade>> GetOrderHistory(DateTime lastChecked)
-        {
-            var response = await _exchange.GetOrderHistory();
-            var bittrexToTrades = TradeConverter.BittrexToTrades(response, _log);
-            return bittrexToTrades;
-        }
-
         public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
         {
             if (baseCcy == "USDT")
@@ -151,43 +120,180 @@ namespace CryptoGramBot.Services.Exchanges
             return Math.Round(price * btcAmount, 2);
         }
 
-        public async Task<decimal> GetPrice(string baseCcy, string termsCurrency)
+        public async Task<List<Deposit>> GetNewDeposits()
         {
-            Ticker tcik = null;
+            var list = new List<Deposit>();
+
             try
             {
-                tcik = await _exchange.GetTicker(baseCcy, termsCurrency);
+                using (var client = new BittrexClient(_config.Key, _config.Secret))
+                {
+                    var response = await client.GetDepositHistoryAsync();
+
+                    if (response.Success)
+                    {
+                        list = TradeConverter.BittrexToDeposits(response.Result);
+                    }
+                    else
+                    {
+                        _log.LogWarning($"Bittrex returned an error {response.Error.ErrorCode} : {response.Error.ErrorMessage}");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _log.LogError("Error in getting deposits from bittrex: " + e.Message);
+                throw;
+            }
+
+            var newDeposits = await _databaseService.AddDeposits(list, Constants.Bittrex);
+
+            await _databaseService.AddLastChecked("Bittrex.DepositCheck", DateTime.Now);
+            return newDeposits;
+        }
+
+        public async Task<List<OpenOrder>> GetNewOpenOrders(DateTime lastChecked)
+        {
+            var openOrders = new List<OpenOrder>();
+
+            try
+            {
+                using (var client = new BittrexClient(_config.Key, _config.Secret))
+                {
+                    var response = await client.GetOpenOrdersAsync();
+
+                    if (response.Success)
+                    {
+                        openOrders = TradeConverter.BittrexToOpenOrders(response.Result);
+                    }
+                    else
+                    {
+                        _log.LogWarning($"Bittrex returned an error {response.Error.ErrorCode} : {response.Error.ErrorMessage}");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _log.LogError("Error in getting openOrders from bittrex: " + e.Message);
+                throw;
+            }
+
+            var newOrders = await _databaseService.AddOpenOrders(openOrders);
+
+            return newOrders;
+        }
+
+        public async Task<List<Withdrawal>> GetNewWithdrawals()
+        {
+            var list = new List<Withdrawal>();
+
+            try
+            {
+                using (var client = new BittrexClient(_config.Key, _config.Secret))
+                {
+                    var response = await client.GetWithdrawalHistoryAsync();
+
+                    if (response.Success)
+                    {
+                        list = TradeConverter.BittrexToWithdrawals(response.Result);
+                    }
+                    else
+                    {
+                        _log.LogWarning($"Bittrex returned an error {response.Error.ErrorCode} : {response.Error.ErrorMessage}");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _log.LogError("Error in getting withdrawals from bittrex: " + e.Message);
+                throw;
+            }
+
+            var newWithdrawals = await _databaseService.AddWithdrawals(list, Constants.Bittrex);
+            await _databaseService.AddLastChecked("Bittrex.WithdrawalCheck", DateTime.Now);
+            return newWithdrawals;
+        }
+
+        public async Task<List<Trade>> GetOrderHistory(DateTime lastChecked)
+        {
+            var list = new List<Trade>();
+
+            try
+            {
+                using (var client = new BittrexClient(_config.Key, _config.Secret))
+                {
+                    var response = await client.GetOrderHistoryAsync();
+
+                    if (response.Success)
+                    {
+                        list = TradeConverter.BittrexToTrades(response.Result, _log);
+                    }
+                    else
+                    {
+                        _log.LogWarning($"Bittrex returned an error {response.Error.ErrorCode} : {response.Error.ErrorMessage}");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _log.LogError("Error in getting trades from bittrex: " + e.Message);
+                throw;
+            }
+
+            return list;
+        }
+
+        public async Task<decimal> GetPrice(string baseCcy, string termsCurrency)
+        {
+            BittrexPrice tick = null;
+            try
+            {
+                tick = await GetTicker(baseCcy, termsCurrency);
             }
             catch (Exception e)
             {
                 _log.LogError("Error in getting ticker from bittrex: " + e.Message);
             }
 
-            if (tcik != null && tcik.Last.HasValue)
+            if (tick != null && tick.Last != Decimal.Zero)
             {
-                return tcik.Last.Value;
+                return tick.Last;
             }
 
-            var btcPrice = await _exchange.GetTicker("BTC", termsCurrency);
+            var btcPrice = await GetTicker(Constants.BTC, termsCurrency);
 
             if (btcPrice?.Last != null)
             {
-                var btcBasePrice = await _exchange.GetTicker("BTC", baseCcy);
+                var btcBasePrice = await GetTicker(Constants.BTC, baseCcy);
                 if (btcBasePrice?.Last != null)
                 {
-                    return btcPrice.Last.Value * btcBasePrice.Last.Value;
+                    return btcPrice.Last * btcBasePrice.Last;
                 }
-                else
-                {
-                    var baseBtcPrice = await _exchange.GetTicker(baseCcy, "BTC");
 
-                    if (baseBtcPrice?.Last != null)
-                    {
-                        return baseBtcPrice.Last.Value * btcPrice.Last.Value;
-                    }
+                var baseBtcPrice = await GetTicker(baseCcy, Constants.BTC);
+
+                if (baseBtcPrice?.Last != null)
+                {
+                    return baseBtcPrice.Last * btcPrice.Last;
                 }
             }
             return 0;
+        }
+
+        private async Task<BittrexPrice> GetTicker(string baseCcy, string termsCurrency)
+        {
+            using (var client = new BittrexClient(_config.Key, _config.Secret))
+            {
+                var response = await client.GetTickerAsync($"{baseCcy}-{termsCurrency}");
+
+                if (response.Success)
+                {
+                    return response.Result;
+                }
+
+                _log.LogWarning($"Bittrex returned an error {response.Error.ErrorCode} : {response.Error.ErrorMessage}");
+                return null;
+            }
         }
     }
 }

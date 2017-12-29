@@ -1,15 +1,14 @@
-﻿using CryptoGramBot.Data;
-using CryptoGramBot.Helpers;
-using CryptoGramBot.Models;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CryptoGramBot.Data;
+using CryptoGramBot.Helpers;
+using CryptoGramBot.Models;
 using Microsoft.EntityFrameworkCore;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.DateTime;
+using Microsoft.Extensions.Logging;
 
-namespace CryptoGramBot.Services
+namespace CryptoGramBot.Services.Data
 {
     public class DatabaseService
     {

@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
-using CryptoGramBot.Services;
 using CryptoGramBot.Services.Exchanges;
-using CryptoGramBot.Services.Pricing;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.EventBus.Handlers.Bittrex
@@ -17,22 +14,16 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
         private readonly BittrexService _bittrexService;
         private readonly IMicroBus _bus;
         private readonly BittrexConfig _config;
-        private readonly DatabaseService _databaseService;
         private readonly GeneralConfig _generalConfig;
-        private readonly PriceService _priceService;
 
         public BittrexDepositWithdrawalHandler(
             BittrexService bittrexService,
             BittrexConfig config,
-            DatabaseService databaseService,
-            PriceService priceService,
             GeneralConfig generalConfig,
             IMicroBus bus)
         {
             _bittrexService = bittrexService;
             _config = config;
-            _databaseService = databaseService;
-            _priceService = priceService;
             _generalConfig = generalConfig;
             _bus = bus;
         }
@@ -46,9 +37,10 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
                 var i = 0;
                 foreach (var deposit in deposits)
                 {
-                    if (i > 3)
+                    if (i > 30)
                     {
-                        var message = new StringBuilder($"{deposits.Count - i} deposits can be sent but not going as to avoid spamming");
+                        var message = new StringBuffer();
+                        message.Append(StringContants.BittrexMoreThan30Deposits);
                         await _bus.SendAsync(new SendMessageCommand(message));
                         break;
                     }
@@ -67,9 +59,10 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
                 var i = 0;
                 foreach (var withdrawal in withdrawals)
                 {
-                    if (i > 3)
+                    if (i > 30)
                     {
-                        var message = new StringBuilder($"{withdrawals.Count - i} withdrawals can be sent but not going as to avoid spamming");
+                        var message = new StringBuffer();
+                        message.Append(StringContants.BittrexMoreThan30Deposits);
                         await _bus.SendAsync(new SendMessageCommand(message));
                         break;
                     }
@@ -84,21 +77,21 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
 
         private async Task SendDepositNotification(Deposit deposit, decimal btcAmount)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine($"{deposit.Time:g}");
-            sb.AppendLine($"<strong>{Constants.Bittrex} Deposit of {deposit.Currency}</strong>");
-            sb.AppendLine($"<strong>Currency: {deposit.Currency}</strong>");
-            sb.AppendLine($"Amount: {deposit.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})");
+            var sb = new StringBuffer();
+            sb.Append(string.Format("{0}", deposit.Time.ToString("g")));
+            sb.Append(string.Format("<strong>{0} Deposit of {1}</strong>", Constants.Bittrex, deposit.Currency));
+            sb.Append(string.Format("<strong>Currency: {0}</strong>", deposit.Currency));
+            sb.Append(string.Format("Amount: {0} ({1} {2})", deposit.Amount, btcAmount.ToString("##0.####"), _generalConfig.TradingCurrency));
 
             await _bus.SendAsync(new SendMessageCommand(sb));
         }
 
         private async Task SendWithdrawalNotification(Withdrawal withdrawal, decimal btcAmount)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine($"{withdrawal.Time:g}");
-            sb.AppendLine($"<strong>{Constants.Bittrex} Withdrawal of {withdrawal.Currency}</strong>");
-            sb.AppendLine($"Amount: {withdrawal.Amount} ({btcAmount:##0.####} {_generalConfig.TradingCurrency})");
+            var sb = new StringBuffer();
+            sb.Append(string.Format("{0}", withdrawal.Time.ToString("g")));
+            sb.Append(string.Format("<strong>{0} Withdrawal of {1}</strong>", Constants.Bittrex, withdrawal.Currency));
+            sb.Append(string.Format("Amount: {0} ({1} {2})", withdrawal.Amount, btcAmount.ToString("##0.####"), _generalConfig.TradingCurrency));
             await _bus.SendAsync(new SendMessageCommand(sb));
         }
     }

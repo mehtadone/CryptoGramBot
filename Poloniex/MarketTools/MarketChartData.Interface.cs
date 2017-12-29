@@ -1,14 +1,17 @@
 ﻿using System;
 
-namespace Poloniex.MarketTools
+namespace Jojatekok.PoloniexAPI.MarketTools
 {
     public interface IMarketChartData
     {
+        DateTime Time { get; }
+
+        double Open { get; }
         double Close { get; }
+
         double High { get; }
         double Low { get; }
-        double Open { get; }
-        DateTime Time { get; }
+
         double VolumeBase { get; }
         double VolumeQuote { get; }
 

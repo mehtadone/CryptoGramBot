@@ -1,15 +1,18 @@
 ﻿using System;
 
-namespace Poloniex.WalletTools
+namespace Jojatekok.PoloniexAPI.WalletTools
 {
     public interface IWithdrawal
     {
+        ulong Id { get; }
+
+        string Currency { get; }
         string Address { get; }
         double Amount { get; }
-        string Currency { get; }
-        ulong Id { get; }
-        string IpAddress { get; }
-        string Status { get; }
+
         DateTime Time { get; }
+        string IpAddress { get; }
+
+        string Status { get; }
     }
 }

@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Text;
 using System.Threading.Tasks;
+using CryptoGramBot.Helpers;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;
-using Microsoft.Extensions.Logging;
 
 namespace CryptoGramBot.EventBus.Handlers
 {
@@ -20,17 +19,13 @@ namespace CryptoGramBot.EventBus.Handlers
     public class PairProfitHandler : ICommandHandler<PairProfitCommand>
     {
         private readonly IMicroBus _bus;
-        private readonly ILogger<PairProfitHandler> _log;
         private readonly ProfitAndLossService _profitAndLossService;
 
-        public PairProfitHandler(ProfitAndLossService profitAndLossService, ILogger<PairProfitHandler> log, IMicroBus bus)
+        public PairProfitHandler(ProfitAndLossService profitAndLossService, IMicroBus bus)
         {
             _profitAndLossService = profitAndLossService;
-            _log = log;
             _bus = bus;
         }
-
-        public ILogger<PairProfitHandler> Log { get; }
 
         public async Task Handle(PairProfitCommand command)
         {
@@ -39,18 +34,20 @@ namespace CryptoGramBot.EventBus.Handlers
                 var pairsArray = command.Pair.Split("-");
                 var profitAndLoss = await _profitAndLossService.GetPnLInfo(pairsArray[0], pairsArray[1]);
 
-                var sb = new StringBuilder();
+                var sb = new StringBuffer();
 
-                sb.AppendLine($"{DateTime.Now:g}");
-                sb.AppendLine($"Profit information for <strong>{command.Pair}</strong>");
-                sb.AppendLine($"<strong>Average buy price</strong>: {profitAndLoss.AverageBuyPrice:#0.######}");
-                sb.AppendLine($"<strong>Total PnL</strong>: {profitAndLoss.Profit:#0.######} {pairsArray[0]}");
+                sb.Append(DateTime.Now.ToString("g")+ "\n");
+                sb.Append(string.Format("Profit information for <strong>{0}</strong>\n", command.Pair));
+                sb.Append(string.Format("<strong>Average buy price</strong>: {0}\n", profitAndLoss.AverageBuyPrice.ToString("#0.######")));
+                sb.Append(string.Format("<strong>Total PnL</strong>: {0} {1}", profitAndLoss.Profit.ToString("#0.######"), pairsArray[0]));
 
                 await _bus.SendAsync(new SendMessageCommand(sb));
             }
             catch (Exception)
             {
-                await _bus.SendAsync(new SendMessageCommand(new StringBuilder("Could not work out what the pair you typed was")));
+                var er = new StringBuffer();
+                er.Append(StringContants.CouldNotWorkOutPair);
+                await _bus.SendAsync(new SendMessageCommand(er));
             }
         }
     }

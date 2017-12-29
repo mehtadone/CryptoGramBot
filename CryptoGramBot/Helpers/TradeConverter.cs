@@ -3,18 +3,18 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using AutoMapper;
 using BinanceExchange.API.Models.Response;
-using BittrexSharp.Domain;
+using Bittrex.Net.Objects;
 using CsvHelper;
 using CryptoGramBot.Models;
+using Jojatekok.PoloniexAPI.TradingTools;
+using Jojatekok.PoloniexAPI.WalletTools;
 using Microsoft.Extensions.Logging;
 using Poloniex.TradingTools;
-using Poloniex.WalletTools;
+using Deposit = CryptoGramBot.Models.Deposit;
 using OpenOrder = CryptoGramBot.Models.OpenOrder;
-using Order = Poloniex.TradingTools.Order;
-using OrderType = Poloniex.General.OrderType;
 using Trade = CryptoGramBot.Models.Trade;
+using Withdrawal = CryptoGramBot.Models.Withdrawal;
 
 namespace CryptoGramBot.Helpers
 {
@@ -54,31 +54,64 @@ namespace CryptoGramBot.Helpers
             csv.Configuration.HasHeaderRecord = true;
             csv.Configuration.IsHeaderCaseSensitive = false;
 
-            var tradeList = new List<HistoricOrder>();
+            var tradeList = new List<Trade>();
             while (csv.Read())
             {
                 var completedOrder = ConvertBittrexCsvToCompletedOrder(csv.CurrentRecord);
                 tradeList.Add(completedOrder);
             }
 
-            return BittrexToTrades(tradeList, log);
+            return tradeList;
         }
 
-        public static List<OpenOrder> BittrexToOpenOrders(IEnumerable<BittrexSharp.Domain.OpenOrder> bittrexOrders)
+        public static List<Deposit> BittrexToDeposits(BittrexDeposit[] responseResult)
+        {
+            var list = new List<Deposit>();
+
+            foreach (var exchangeDeposit in responseResult)
+            {
+                var deposit = new Deposit
+                {
+                    Address = exchangeDeposit.CryptoAddress,
+                    Amount = Convert.ToDouble(exchangeDeposit.Amount),
+                    Confirmations = (uint)exchangeDeposit.Confirmations,
+                    Currency = exchangeDeposit.Currency,
+                    Time = exchangeDeposit.LastUpdated,
+                    TransactionId = exchangeDeposit.TransactionId
+                };
+
+                list.Add(deposit);
+            }
+
+            return list;
+        }
+
+        public static List<OpenOrder> BittrexToOpenOrders(BittrexOrder[] bittrexOrders)
         {
             var list = new List<OpenOrder>();
 
             foreach (var openOrder in bittrexOrders)
             {
-                var order = Mapper.Map<OpenOrder>(openOrder);
-                order.Exchange = Constants.Bittrex;
-                order.Price = openOrder.Limit;
-
-                order.Side = openOrder.OrderType == "LIMIT_BUY" ? TradeSide.Buy : TradeSide.Sell;
-
-                var ccy = openOrder.Exchange.Split('-');
-                order.Base = ccy[0];
-                order.Terms = ccy[1];
+                var pair = openOrder.Exchange.Split("-");
+                var order = new OpenOrder
+                {
+                    Base = pair[0],
+                    Terms = pair[1],
+                    Exchange = Constants.Bittrex,
+                    CommissionPaid = openOrder.CommissionPaid,
+                    OrderUuid = openOrder.OrderUuid.ToString(),
+                    Condition = openOrder.Condition,
+                    ConditionTarget = openOrder.ConditionTarget,
+                    CancelInitiated = openOrder.CancelInitiated,
+                    ImmediateOrCancel = openOrder.ImmediateOrCancel,
+                    IsConditional = openOrder.IsConditional,
+                    Limit = openOrder.Limit,
+                    Opened = openOrder.Opened,
+                    Price = openOrder.Price,
+                    Quantity = openOrder.Quantity,
+                    QuantityRemaining = openOrder.QuantityRemaining,
+                    Side = openOrder.OrderType == OrderTypeExtended.LimitBuy ? TradeSide.Buy : TradeSide.Sell
+                };
 
                 list.Add(order);
             }
@@ -86,33 +119,41 @@ namespace CryptoGramBot.Helpers
             return list;
         }
 
-        public static List<Trade> BittrexToTrades(IEnumerable<HistoricOrder> bittrexTrades, ILogger logger)
+        public static List<Trade> BittrexToTrades(BittrexOrder[] bittrexTrades, ILogger logger)
         {
             var tradeList = new List<Trade>();
 
             foreach (var completedOrder in bittrexTrades)
             {
-                var trade = Mapper.Map<Trade>(completedOrder);
-                trade.Exchange = Constants.Bittrex;
-
-                trade.Side = completedOrder.OrderType.Trim() == "LIMIT_BUY" ? TradeSide.Buy : TradeSide.Sell;
-
-                if (trade.Side == TradeSide.Buy)
-                {
-                    trade.Cost = completedOrder.Price + completedOrder.Commission;
-                }
-                else if (trade.Side == TradeSide.Sell)
-                {
-                    trade.Cost = completedOrder.Price - completedOrder.Commission;
-                }
-                else
-                {
-                    logger.LogError($"SOMETHING NEEDS FIXING: TRADE SIDE IS {completedOrder.OrderType}");
-                }
-
                 var ccy = completedOrder.Exchange.Split('-');
-                trade.Base = ccy[0];
-                trade.Terms = ccy[1];
+                var trade = new Trade
+                {
+                    Exchange = Constants.Bittrex,
+                    Base = ccy[0],
+                    Terms = ccy[1],
+                    Commission = completedOrder.CommissionPaid,
+                    ExchangeId = completedOrder.OrderUuid.ToString(),
+                    Limit = completedOrder.Limit,
+                    Quantity = completedOrder.Quantity,
+                    QuantityRemaining = completedOrder.QuantityRemaining,
+                    TimeStamp = completedOrder.Closed.GetValueOrDefault(),
+                    Side = completedOrder.OrderType == OrderTypeExtended.LimitBuy ? TradeSide.Buy : TradeSide.Sell
+                };
+
+                if (completedOrder.Closed.HasValue)
+
+                    if (trade.Side == TradeSide.Buy)
+                    {
+                        trade.Cost = completedOrder.Price + completedOrder.CommissionPaid;
+                    }
+                    else if (trade.Side == TradeSide.Sell)
+                    {
+                        trade.Cost = completedOrder.Price - completedOrder.CommissionPaid;
+                    }
+                    else
+                    {
+                        logger.LogError($"SOMETHING NEEDS FIXING: TRADE SIDE IS {completedOrder.OrderType}");
+                    }
 
                 tradeList.Add(trade);
             }
@@ -120,7 +161,7 @@ namespace CryptoGramBot.Helpers
             return tradeList;
         }
 
-        public static List<WalletBalance> BittrexToWalletBalances(IEnumerable<CurrencyBalance> response)
+        public static List<WalletBalance> BittrexToWalletBalances(BittrexBalance[] response)
         {
             var walletBalances = new List<WalletBalance>();
 
@@ -128,9 +169,24 @@ namespace CryptoGramBot.Helpers
             {
                 if (wallet.Balance > 0)
                 {
-                    var walletBalance = Mapper.Map<WalletBalance>(wallet);
-                    walletBalance.Exchange = Constants.Bittrex;
-                    walletBalance.Timestamp = DateTime.Now;
+                    var walletBalance = new WalletBalance
+                    {
+                        Exchange = Constants.Bittrex,
+                        Timestamp = DateTime.Now,
+                        Address = wallet.CryptoAddress,
+                        Available = wallet.Available,
+                        Balance = wallet.Balance,
+                        Pending = wallet.Pending,
+                        Currency = wallet.Currency,
+                        Requested = wallet.Requested,
+                        Uuid = wallet.Uuid
+                    };
+
+                    if (string.IsNullOrEmpty(wallet.CryptoAddress))
+                    {
+                        walletBalance.Address = string.Empty;
+                    }
+
                     walletBalances.Add(walletBalance);
                 }
             }
@@ -138,46 +194,95 @@ namespace CryptoGramBot.Helpers
             return walletBalances;
         }
 
+        public static List<Withdrawal> BittrexToWithdrawals(BittrexWithdrawal[] responseResult)
+        {
+            var list = new List<Withdrawal>();
+
+            foreach (var exchangeDeposit in responseResult)
+            {
+                var deposit = new Withdrawal
+                {
+                    Address = exchangeDeposit.Address,
+                    Amount = Convert.ToDouble(exchangeDeposit.Amount),
+                    Cost = Convert.ToDouble(exchangeDeposit.TransactionCost),
+                    Currency = exchangeDeposit.Currency,
+                    Time = exchangeDeposit.Opened,
+                    TransactionId = exchangeDeposit.TransactionId,
+                };
+
+                list.Add(deposit);
+            }
+
+            return list;
+        }
+
+        public static List<Deposit> PoloniexToDeposits(IList<Jojatekok.PoloniexAPI.WalletTools.Deposit> poloDeposits)
+        {
+            var list = new List<Deposit>();
+
+            foreach (var exchangeDeposit in poloDeposits)
+            {
+                var deposit = new Deposit
+                {
+                    Address = exchangeDeposit.Address,
+                    Amount = Convert.ToDouble(exchangeDeposit.Amount),
+                    Confirmations = exchangeDeposit.Confirmations,
+                    Currency = exchangeDeposit.Currency,
+                    Time = exchangeDeposit.Time,
+                    TransactionId = exchangeDeposit.TransactionId,
+                };
+
+                list.Add(deposit);
+            }
+
+            return list;
+        }
+
         public static List<OpenOrder> PoloniexToOpenOrders(Dictionary<string, List<Order>> orders)
         {
-            var openOrders = new List<OpenOrder>();
+            var list = new List<OpenOrder>();
 
             foreach (var openOrderPair in orders)
             {
-                foreach (var poloOrder in openOrderPair.Value)
+                foreach (var openOrder in openOrderPair.Value)
                 {
-                    var openOrder = Mapper.Map<OpenOrder>(poloOrder);
-                    openOrder.Exchange = Constants.Poloniex;
-                    openOrder.Side = poloOrder.Type == OrderType.Buy ? TradeSide.Buy : TradeSide.Sell;
-
                     var ccy = openOrderPair.Key.Split('_');
-                    openOrder.Base = ccy[0];
-                    openOrder.Terms = ccy[1];
+                    var order = new OpenOrder
+                    {
+                        Exchange = Constants.Poloniex,
+                        Side = openOrder.Type == Jojatekok.PoloniexAPI.OrderType.Buy ? TradeSide.Buy : TradeSide.Sell,
+                        Base = ccy[0],
+                        Terms = ccy[1],
+                        Opened = DateTime.Now,
+                        Quantity = Convert.ToDecimal(openOrder.AmountQuote),
+                        Price = Convert.ToDecimal(openOrder.PricePerCoin),
+                        OrderUuid = openOrder.IdOrder.ToString()
+                    };
 
-                    openOrder.Opened = DateTime.Now;
-
-                    openOrder.Quantity = Convert.ToDecimal(poloOrder.AmountQuote);
-
-                    openOrders.Add(openOrder);
+                    list.Add(order);
                 }
             }
 
-            return openOrders;
+            return list;
         }
 
-        public static List<Trade> PoloniexToTrades(IList<ITrade> trades, FeeInfo feeInfo)
+        public static List<Trade> PoloniexToTrades(IList<ITrade> trades)
         {
             var tradeList = new List<Trade>();
 
             foreach (var completedOrder in trades)
             {
-                var trade = Mapper.Map<Trade>(completedOrder);
-                trade.Exchange = Constants.Poloniex;
-                trade.Side = completedOrder.Type == OrderType.Buy ? TradeSide.Buy : TradeSide.Sell;
-
                 var ccy = completedOrder.Pair.Split('_');
-                trade.Base = ccy[0];
-                trade.Terms = ccy[1];
+                var trade = new Trade
+                {
+                    Exchange = Constants.Poloniex,
+                    Side = completedOrder.Type == Jojatekok.PoloniexAPI.OrderType.Buy ? TradeSide.Buy : TradeSide.Sell,
+                    Base = ccy[0],
+                    Terms = ccy[1],
+                    ExchangeId = completedOrder.IdOrder.ToString(),
+                    Limit = Convert.ToDecimal(completedOrder.PricePerCoin),
+                    TimeStamp = completedOrder.Time,
+                };
 
                 var baseAmount = Convert.ToDecimal(completedOrder.AmountBase);
 
@@ -201,52 +306,74 @@ namespace CryptoGramBot.Helpers
             return tradeList;
         }
 
-        public static List<WalletBalance> PoloniexToWalletBalances(IDictionary<string, IBalance> balances)
+        public static List<WalletBalance> PoloniexToWalletBalances(IDictionary<string, Balance> balances)
         {
             var walletBalances = new List<WalletBalance>();
 
             foreach (var balance in balances)
             {
-                if (balance.Value.BitcoinValue > 0)
-                {
-                    var walletBalance = new WalletBalance
-                    {
-                        Currency = balance.Key,
-                        BtcAmount = Convert.ToDecimal(balance.Value.BitcoinValue),
-                        Available = Convert.ToDecimal(balance.Value.QuoteAvailable),
-                        Balance = Convert.ToDecimal(balance.Value.QuoteAvailable),
-                        Pending = Convert.ToDecimal(balance.Value.QuoteOnOrders),
-                        Exchange = Constants.Poloniex,
-                        Timestamp = DateTime.Now
-                    };
+                if (!(balance.Value.BitcoinValue > 0)) continue;
 
-                    walletBalances.Add(walletBalance);
-                }
+                var walletBalance = new WalletBalance
+                {
+                    Currency = balance.Key,
+                    BtcAmount = Convert.ToDecimal(balance.Value.BitcoinValue),
+                    Available = Convert.ToDecimal(balance.Value.QuoteAvailable),
+                    Balance = Convert.ToDecimal(balance.Value.QuoteAvailable),
+                    Pending = Convert.ToDecimal(balance.Value.QuoteOnOrders),
+                    Exchange = Constants.Poloniex,
+                    Timestamp = DateTime.Now,
+                    Address = string.Empty
+                };
+
+                walletBalances.Add(walletBalance);
             }
 
             return walletBalances;
         }
 
-        private static HistoricOrder ConvertBittrexCsvToCompletedOrder(IReadOnlyList<string> csvCurrentRecord)
+        public static List<Withdrawal> PoloniexToWithdrawals(IList<Jojatekok.PoloniexAPI.WalletTools.Withdrawal> poloWithdrawals)
         {
-            var newOrder = new HistoricOrder()
+            var list = new List<Withdrawal>();
+
+            foreach (var exchangeDeposit in poloWithdrawals)
             {
-                OrderUuid = csvCurrentRecord[0],
+                var deposit = new Withdrawal
+                {
+                    Address = exchangeDeposit.Address,
+                    Amount = Convert.ToDouble(exchangeDeposit.Amount),
+                    Currency = exchangeDeposit.Currency,
+                    Time = exchangeDeposit.Time,
+                    TransactionId = exchangeDeposit.Id.ToString(),
+                    IpAddress = exchangeDeposit.IpAddress
+                };
+
+                list.Add(deposit);
+            }
+
+            return list;
+        }
+
+        private static Trade ConvertBittrexCsvToCompletedOrder(IReadOnlyList<string> csvCurrentRecord)
+        {
+            var newOrder = new Trade()
+            {
+                ExchangeId = csvCurrentRecord[0],
                 Exchange = csvCurrentRecord[1],
                 Quantity = decimal.Parse(csvCurrentRecord[3]),
                 Limit = decimal.Parse(csvCurrentRecord[4]),
                 Commission = decimal.Parse(csvCurrentRecord[5]),
-                Price = decimal.Parse(csvCurrentRecord[6]),
-                Timestamp = DateTime.Parse(csvCurrentRecord[8], CultureInfo.CreateSpecificCulture("en-US"))
+                Cost = decimal.Parse(csvCurrentRecord[6]) * decimal.Parse(csvCurrentRecord[3]),
+                TimeStamp = DateTime.Parse(csvCurrentRecord[8], CultureInfo.CreateSpecificCulture("en-US"))
             };
 
             if (csvCurrentRecord[2] == "LIMIT_BUY")
             {
-                newOrder.OrderType = BittrexSharp.Domain.OrderType.Buy;
+                newOrder.Side = TradeSide.Buy;
             }
             else if (csvCurrentRecord[2] == "LIMIT_SELL")
             {
-                newOrder.OrderType = BittrexSharp.Domain.OrderType.Sell;
+                newOrder.Side = TradeSide.Sell;
             }
 
             return newOrder;

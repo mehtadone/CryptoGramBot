@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
-using CryptoGramBot.EventBus.Commands;
 using CryptoGramBot.EventBus.Handlers;
 using CryptoGramBot.EventBus.Handlers.Poloniex;
 using CryptoGramBot.Helpers;
-using CryptoGramBot.Models;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
@@ -24,6 +18,7 @@ namespace CryptoGramBot.Services.Telegram
     {
         private static ILogger<TelegramMessageRecieveService> _log;
         private readonly IMicroBus _bus;
+        private readonly TelegramConfig _config;
         private readonly TelegramBittrexFileUploadService _fileImportService;
         private readonly TelegramPairProfitService _pairProfitService;
         private readonly TelegramMessageSendingService _sendingService;
@@ -34,37 +29,20 @@ namespace CryptoGramBot.Services.Telegram
             TelegramMessageSendingService sendingService,
             TelegramBittrexFileUploadService fileImportService,
             TelegramPairProfitService pairProfitService,
+            TelegramConfig config,
             ILogger<TelegramMessageRecieveService> log)
         {
             _bus = bus;
             _sendingService = sendingService;
             _fileImportService = fileImportService;
             _pairProfitService = pairProfitService;
+            _config = config;
             _log = log;
         }
 
         public void StartReceivingMessages(TelegramBotClient bot)
         {
-            _bot = bot;
-            _bot.OnCallbackQuery += BotOnCallbackQueryReceived;
-            _bot.OnMessage += BotOnMessageReceivedAsync;
-            _bot.OnMessageEdited += BotOnMessageReceivedAsync;
-            _bot.OnInlineResultChosen += BotOnChosenInlineResultReceived;
-            _bot.OnReceiveError += BotOnReceiveError;
-
-            try
-            {
-                var me = _bot.GetMeAsync().Result;
-                Console.Title = me.Username;
-            }
-            catch (Exception ex)
-            {
-                // Running from a job-launcher (such as PM2) can cause exceptions when setting the Title,
-                // as there is no console window - just treat as a warning.
-                _log.LogWarning($"Failed to set Console title - could be running in background: {ex}");
-            }
-
-            _bot.StartReceiving();
+            SetupBot(bot);
         }
 
         private async void BotOnCallbackQueryReceived(object sender, CallbackQueryEventArgs e)
@@ -96,13 +74,24 @@ namespace CryptoGramBot.Services.Telegram
             catch (Exception ex)
             {
                 _log.LogError($"Woops. {ex}");
-                await _bus.SendAsync(new SendMessageCommand(new StringBuilder("Could not process your command. Check your logs")));
+                var sb = new StringBuffer();
+                sb.Append(StringContants.CouldNotProcessCommand);
+                await _bus.SendAsync(new SendMessageCommand(sb));
             }
         }
 
         private void BotOnReceiveError(object sender, ReceiveErrorEventArgs e)
         {
             _log.LogError($"Error received {e.ApiRequestException.Message}");
+
+            _bot.OnCallbackQuery -= BotOnCallbackQueryReceived;
+            _bot.OnMessage -= BotOnMessageReceivedAsync;
+            _bot.OnMessageEdited -= BotOnMessageReceivedAsync;
+            _bot.OnInlineResultChosen -= BotOnChosenInlineResultReceived;
+            _bot.OnReceiveError -= BotOnReceiveError;
+
+            var bot = new TelegramBotClient(_config.BotToken);
+            SetupBot(bot);
         }
 
         private async Task CheckMessage(string message)
@@ -157,6 +146,18 @@ namespace CryptoGramBot.Services.Telegram
             if (await _pairProfitService.SendPairProfit(message.Text)) return true;
 
             return false;
+        }
+
+        private void SetupBot(TelegramBotClient bot)
+        {
+            _bot = bot;
+            _bot.OnCallbackQuery += BotOnCallbackQueryReceived;
+            _bot.OnMessage += BotOnMessageReceivedAsync;
+            _bot.OnMessageEdited += BotOnMessageReceivedAsync;
+            _bot.OnInlineResultChosen += BotOnChosenInlineResultReceived;
+            _bot.OnReceiveError += BotOnReceiveError;
+
+            _bot.StartReceiving();
         }
     }
 }

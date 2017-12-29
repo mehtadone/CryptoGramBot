@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using CryptoGramBot.Services;
+using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Exchanges;
 using CryptoGramBot.Services.Pricing;
 using Enexure.MicroBus;
@@ -49,7 +49,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
 
             foreach (var walletBalance in balanceInformation.WalletBalances)
             {
-                if (walletBalance.Currency == "BTC")
+                if (walletBalance.Currency == Constants.BTC)
                 {
                     if (_lowBtcConfig.Enabled)
                     {
@@ -60,7 +60,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                     }
                 }
 
-                if (walletBalance.Currency != "BTC" && walletBalance.Currency != "USDT" &&
+                if (walletBalance.Currency != Constants.BTC && walletBalance.Currency != "USDT" &&
                     walletBalance.Currency != "USD")
                 {
                     var averagePrice = await _databaseService.GetBuyAveragePrice(_generalConfig.TradingCurrency, walletBalance.Currency, Constants.Poloniex, walletBalance.Available);
@@ -103,33 +103,33 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
             var lastBought =
                 await _databaseService.GetLastBoughtAsync(_generalConfig.TradingCurrency, walletBalance.Currency, Constants.Poloniex);
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"<strong>{Constants.Poloniex}</strong>: {DateTime.Now:g}");
-            sb.AppendLine($"<strong>Bag detected for {walletBalance.Currency}</strong>");
-            sb.AppendLine($"Average bought price: {averagePrice:#0.#############}");
-            sb.AppendLine($"Current price: {currentPrice:#0.#############}");
-            sb.AppendLine($"Percentage: {percentageDrop}%");
-            sb.AppendLine($"Bought on: {lastBought:g}");
-            sb.AppendLine($"Value: {walletBalance.Balance * currentPrice:#0.#####} {_generalConfig.TradingCurrency}");
+            var sb = new StringBuffer();
+            sb.Append($"<strong>{Constants.Poloniex}</strong>: {DateTime.Now:g}\n");
+            sb.Append($"<strong>Bag detected for {walletBalance.Currency}</strong>\n");
+            sb.Append($"Average bought price: {averagePrice:#0.#############}\n");
+            sb.Append($"Current price: {currentPrice:#0.#############}\n");
+            sb.Append($"Percentage: {percentageDrop}%\n");
+            sb.Append($"Bought on: {lastBought:g}\n");
+            sb.Append($"Value: {walletBalance.Balance * currentPrice:#0.#####} {_generalConfig.TradingCurrency}");
 
             await _bus.SendAsync(new SendMessageCommand(sb));
         }
 
         private async Task SendBtcLowNotification(decimal walletBalanceBtcAmount)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine($"<strong>{Constants.Poloniex}</strong>: {DateTime.Now:g}");
-            sb.AppendLine($"<strong>Low {_generalConfig.TradingCurrency} detected</strong>");
-            sb.AppendLine($"{_generalConfig.TradingCurrency} Amount: {walletBalanceBtcAmount:#0.#############}");
+            var sb = new StringBuffer();
+            sb.Append($"<strong>{Constants.Poloniex}</strong>: {DateTime.Now:g}\n");
+            sb.Append($"<strong>Low {_generalConfig.TradingCurrency} detected</strong>\n");
+            sb.Append($"{_generalConfig.TradingCurrency} Amount: {walletBalanceBtcAmount:#0.#############}");
             await _bus.SendAsync(new SendMessageCommand(sb));
         }
 
         private async Task SendDustNotification(WalletBalance walletBalance)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine($"<strong>{Constants.Poloniex}</strong>: {DateTime.Now:g}");
-            sb.AppendLine($"<strong>Dust detected for {walletBalance.Currency}</strong>");
-            sb.AppendLine($"{_generalConfig.TradingCurrency} Amount: {walletBalance.BtcAmount:#0.#############}");
+            var sb = new StringBuffer();
+            sb.Append($"<strong>{Constants.Poloniex}</strong>: {DateTime.Now:g}\n");
+            sb.Append($"<strong>Dust detected for {walletBalance.Currency}</strong>\n");
+            sb.Append($"{_generalConfig.TradingCurrency} Amount: {walletBalance.BtcAmount:#0.#############}\n");
             await _bus.SendAsync(new SendMessageCommand(sb));
         }
     }

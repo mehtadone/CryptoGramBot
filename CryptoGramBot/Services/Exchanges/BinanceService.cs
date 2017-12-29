@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BinanceExchange.API.Client;
-using BinanceExchange.API.Models.Request;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
+using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Pricing;
 using Microsoft.Extensions.Logging;
 

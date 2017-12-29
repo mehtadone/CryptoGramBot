@@ -1,4 +1,6 @@
-﻿namespace Poloniex.General
+﻿using Poloniex.General;
+
+namespace Jojatekok.PoloniexAPI
 {
     public class CurrencyPair
     {

@@ -5,6 +5,7 @@ using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
 using CryptoGramBot.EventBus.Handlers.BalanceInfo;
 using CryptoGramBot.EventBus.Handlers.Bittrex;
+using CryptoGramBot.EventBus.Handlers.Coinigy;
 using CryptoGramBot.EventBus.Handlers.Poloniex;
 using CryptoGramBot.Services;
 using Enexure.MicroBus;

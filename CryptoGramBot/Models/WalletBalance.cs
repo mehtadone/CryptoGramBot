@@ -4,7 +4,7 @@ namespace CryptoGramBot.Models
 {
     public class WalletBalance
     {
-        public decimal Address { get; set; }
+        public string Address { get; set; } = string.Empty;
         public decimal Available { get; set; }
         public decimal Balance { get; set; }
         public decimal BtcAmount { get; set; }
@@ -14,7 +14,7 @@ namespace CryptoGramBot.Models
         public decimal Pending { get; set; }
         public decimal PercentageChange { get; set; }
         public decimal Price { get; set; }
-        public decimal Requested { get; set; }
+        public bool Requested { get; set; }
         public DateTime Timestamp { get; set; }
         public string Uuid { get; set; }
     }

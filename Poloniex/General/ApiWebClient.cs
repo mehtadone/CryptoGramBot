@@ -1,20 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
-using Newtonsoft.Json;
+using Jojatekok.PoloniexAPI.TradingTools;
 using Newtonsoft.Json.Linq;
-using Poloniex.TradingTools;
-using Poloniex.WalletTools;
 
-namespace Poloniex.General
+namespace Jojatekok.PoloniexAPI
 {
     internal sealed class ApiWebClient
     {
         public static readonly Encoding Encoding = Encoding.ASCII;
-        private static readonly JsonSerializer JsonSerializer = new JsonSerializer { NullValueHandling = NullValueHandling.Ignore };
         private Authenticator _authenticator;
+        private HMACSHA512 _encryptor = new HMACSHA512();
 
         public ApiWebClient(string baseUrl)
         {
@@ -34,14 +33,20 @@ namespace Poloniex.General
 
         public string BaseUrl { get; private set; }
 
-        public HMACSHA512 Encryptor { get; set; } = new HMACSHA512();
+        public HMACSHA512 Encryptor
+        {
+            private get { return _encryptor; }
+            set { _encryptor = value; }
+        }
 
         public T GetData<T>(string command, params object[] parameters)
         {
             var relativeUrl = CreateRelativeUrl(command, parameters);
 
             var jsonString = QueryString(relativeUrl);
-            var output = JsonSerializer.DeserializeObject<T>(jsonString);
+            var jsonSerializer = new JsonSerializer { NullValueHandling = NullValueHandling.Ignore };
+
+            var output = jsonSerializer.DeserializeObject<T>(jsonString);
 
             return output;
         }
@@ -52,7 +57,8 @@ namespace Poloniex.General
             postData.Add("nonce", Helper.GetCurrentHttpPostNonce());
 
             var jsonString = PostString(Helper.ApiUrlHttpsRelativeTrading, postData.ToHttpPostString());
-            var output = JsonSerializer.DeserializeObject<T>(jsonString);
+            var jsonSerializer = new JsonSerializer { NullValueHandling = NullValueHandling.Ignore };
+            var output = jsonSerializer.DeserializeObject<T>(jsonString);
 
             return output;
         }
@@ -68,11 +74,12 @@ namespace Poloniex.General
             try
             {
                 var output = JObject.Parse(jsonString);
+                var jsonSerializer = new JsonSerializer { NullValueHandling = NullValueHandling.Ignore };
                 foreach (var token in output)
                 {
                     if (!token.Value.HasValues) continue;
 
-                    var pairTrades = JsonSerializer.DeserializeObject<List<Order>>(token.Value.ToString());
+                    var pairTrades = jsonSerializer.DeserializeObject<List<Order>>(token.Value.ToString());
 
                     list.Add(token.Key, pairTrades);
                 }
@@ -96,9 +103,10 @@ namespace Poloniex.General
             try
             {
                 var output = JObject.Parse(jsonString);
+                var jsonSerializer = new JsonSerializer { NullValueHandling = NullValueHandling.Ignore };
                 foreach (var token in output)
                 {
-                    var pairTrades = JsonSerializer.DeserializeObject<List<Trade>>(token.Value.ToString());
+                    var pairTrades = jsonSerializer.DeserializeObject<List<Trade>>(token.Value.ToString());
 
                     foreach (var pairTrade in pairTrades)
                     {

@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Text;
 using System.Threading.Tasks;
-using CryptoGramBot.EventBus;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
+using CryptoGramBot.EventBus.Handlers.Coinigy;
 using CryptoGramBot.Helpers;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
@@ -33,7 +32,9 @@ namespace CryptoGramBot.Services.Telegram
         public async Task BittrexTradeImport()
         {
             BittrexFileUploadState.Waiting = true;
-            await _bus.SendAsync(new SendMessageCommand(new StringBuilder("Please upload bittrex trade export")));
+            var mess = new StringBuffer();
+            mess.Append(StringContants.PleaseUploadBittrexFile);
+            await _bus.SendAsync(new SendMessageCommand(mess));
         }
 
         public async Task CoinigyAccountBalance(string message)

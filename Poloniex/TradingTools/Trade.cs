@@ -1,7 +1,7 @@
-﻿using System;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using System;
 
-namespace Poloniex.TradingTools
+namespace Jojatekok.PoloniexAPI.TradingTools
 {
     public class Trade : Order, ITrade
     {
@@ -16,7 +16,7 @@ namespace Poloniex.TradingTools
         [JsonProperty("date")]
         private string TimeInternal
         {
-            set => Time = Helper.ParseDateTime(value);
+            set { Time = Helper.ParseDateTime(value); }
         }
     }
 }

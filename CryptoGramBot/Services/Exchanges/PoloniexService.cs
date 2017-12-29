@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
+using CryptoGramBot.Services.Data;
+using Jojatekok.PoloniexAPI;
+using Jojatekok.PoloniexAPI.MarketTools;
+using Jojatekok.PoloniexAPI.WalletTools;
 using Microsoft.Extensions.Logging;
-using Poloniex;
-using Poloniex.General;
-using Poloniex.MarketTools;
-using Poloniex.WalletTools;
 using Deposit = CryptoGramBot.Models.Deposit;
+using IOrder = Jojatekok.PoloniexAPI.TradingTools.IOrder;
+using Order = Jojatekok.PoloniexAPI.TradingTools.Order;
 using Trade = CryptoGramBot.Models.Trade;
 using Withdrawal = CryptoGramBot.Models.Withdrawal;
 
@@ -22,18 +22,21 @@ namespace CryptoGramBot.Services.Exchanges
         private readonly DatabaseService _databaseService;
         private readonly GeneralConfig _generalConfig;
         private readonly ILogger<PoloniexService> _log;
-        private readonly PoloniexClient _poloniexClient;
+        private readonly IPoloniexClientFactory _poloniexClientFactory;
+        private readonly PoloniexConfig _poloniexConfig;
 
         public PoloniexService(
             PoloniexConfig poloniexConfig,
             ILogger<PoloniexService> log,
             DatabaseService databaseService,
-            GeneralConfig generalConfig)
+            GeneralConfig generalConfig,
+            IPoloniexClientFactory poloniexClientFactory)
         {
+            _poloniexConfig = poloniexConfig;
             _log = log;
             _databaseService = databaseService;
             _generalConfig = generalConfig;
-            _poloniexClient = new PoloniexClient(poloniexConfig.Key, poloniexConfig.Secret);
+            _poloniexClientFactory = poloniexClientFactory;
         }
 
         public async Task<BalanceInformation> GetBalance()
@@ -41,7 +44,12 @@ namespace CryptoGramBot.Services.Exchanges
             List<WalletBalance> poloniexToWalletBalances;
             try
             {
-                var balances = await _poloniexClient.Wallet.GetBalancesAsync();
+                IDictionary<string, Balance> balances = new Dictionary<string, Balance>();
+                using (var poloClient = _poloniexClientFactory.CreateClient(_poloniexConfig.Key, _poloniexConfig.Secret))
+                {
+                    balances = await poloClient.Wallet.GetBalancesAsync();
+                }
+
                 poloniexToWalletBalances = TradeConverter.PoloniexToWalletBalances(balances);
             }
             catch (Exception e)
@@ -100,13 +108,24 @@ namespace CryptoGramBot.Services.Exchanges
             return new BalanceInformation(currentBalance, lastBalance, Constants.Poloniex, poloniexToWalletBalances);
         }
 
+        public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
+        {
+            if (baseCcy == "USDT")
+            {
+                return Math.Round(btcAmount, 2);
+            }
+
+            var price = await GetPrice("USDT", baseCcy);
+            return Math.Round(price * btcAmount, 2);
+        }
+
         public async Task<List<Deposit>> GetNewDeposits()
         {
             var checkedBefore = _databaseService.GetSetting("Poloniex.DepositCheck");
             var list = await GetDepositsAndWithdrawals(checkedBefore);
             var poloDeposits = list.Deposits;
 
-            var localDesposits = poloDeposits.Select(Mapper.Map<Deposit>).ToList();
+            var localDesposits = TradeConverter.PoloniexToDeposits(poloDeposits);
 
             var newDeposits = await _databaseService.AddDeposits(localDesposits, Constants.Poloniex);
             await _databaseService.AddLastChecked("Poloniex.DepositCheck", DateTime.Now);
@@ -116,7 +135,21 @@ namespace CryptoGramBot.Services.Exchanges
 
         public async Task<List<OpenOrder>> GetNewOpenOrders(DateTime lastChecked)
         {
-            var poloOrders = await _poloniexClient.Trading.GetOpenOrdersAsync();
+            Dictionary<string, List<Order>> poloOrders;
+
+            try
+            {
+                using (var poloClient = _poloniexClientFactory.CreateClient(_poloniexConfig.Key, _poloniexConfig.Secret))
+                {
+                    poloOrders = await poloClient.Trading.GetOpenOrdersAsync();
+                }
+            }
+            catch (Exception e)
+            {
+                _log.LogError("Error in getting balances from poloniex: " + e.Message);
+                throw;
+            }
+
             var orders = TradeConverter.PoloniexToOpenOrders(poloOrders);
 
             var newOrders = await _databaseService.AddOpenOrders(orders);
@@ -130,7 +163,7 @@ namespace CryptoGramBot.Services.Exchanges
             var list = await GetDepositsAndWithdrawals(checkedBefore);
             var poloWithdrawals = list.Withdrawals;
 
-            var withdrawals = poloWithdrawals.Select(Mapper.Map<Withdrawal>).ToList();
+            var withdrawals = TradeConverter.PoloniexToWithdrawals(poloWithdrawals);
 
             var newWithdrawals = await _databaseService.AddWithdrawals(withdrawals, Constants.Poloniex);
             await _databaseService.AddLastChecked("Poloniex.WithdrawalCheck", DateTime.Now);
@@ -140,34 +173,32 @@ namespace CryptoGramBot.Services.Exchanges
 
         public async Task<List<Trade>> GetOrderHistory(DateTime lastChecked)
         {
-            var tradesAsync = await _poloniexClient.Trading.GetTradesAsync(CurrencyPair.All, lastChecked);
-            var tradesAsyncResult = tradesAsync;
-
-            var feeInfo = await _poloniexClient.Trading.GetFeeInfoAsync();
-
-            var poloniexToTrades = TradeConverter.PoloniexToTrades(tradesAsyncResult, feeInfo);
-
-            return poloniexToTrades;
-        }
-
-        public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
-        {
-            if (baseCcy == "USDT")
+            try
             {
-                return Math.Round(btcAmount, 2);
+                using (var poloClient = _poloniexClientFactory.CreateClient(_poloniexConfig.Key, _poloniexConfig.Secret))
+                {
+                    var tradesAsync = await poloClient.Trading.GetTradesAsync(CurrencyPair.All, lastChecked, DateTime.Now);
+                    var poloniexToTrades = TradeConverter.PoloniexToTrades(tradesAsync);
+                    return poloniexToTrades;
+                }
             }
-
-            var price = await GetPrice("USDT", baseCcy);
-            return Math.Round(price * btcAmount, 2);
+            catch (Exception e)
+            {
+                _log.LogError("Error in getting balances from poloniex: " + e.Message);
+                throw;
+            }
         }
 
         public async Task<decimal> GetPrice(string baseCcy, string termsCurrency)
         {
-            IDictionary<CurrencyPair, IMarketData> ccyPairsData = null;
+            IDictionary<CurrencyPair, IMarketData> ccyPairsData;
 
             try
             {
-                ccyPairsData = await _poloniexClient.Markets.GetSummaryAsync();
+                using (var poloClient = _poloniexClientFactory.CreateClient(_poloniexConfig.Key, _poloniexConfig.Secret))
+                {
+                    ccyPairsData = await poloClient.Markets.GetSummaryAsync();
+                }
             }
             catch (Exception e)
             {
@@ -176,27 +207,23 @@ namespace CryptoGramBot.Services.Exchanges
             }
 
             var ccyPair = new CurrencyPair(baseCcy, termsCurrency);
-            IMarketData mktData = null;
-            if (ccyPairsData.TryGetValue(ccyPair, out mktData))
+            if (ccyPairsData.TryGetValue(ccyPair, out var mktData))
             {
                 return (decimal)mktData.PriceLast;
             }
 
-            var btcPricePair = new CurrencyPair("BTC", termsCurrency);
-            IMarketData btcPriceData = null;
-            if (ccyPairsData.TryGetValue(btcPricePair, out btcPriceData))
+            var btcPricePair = new CurrencyPair(Constants.BTC, termsCurrency);
+            if (ccyPairsData.TryGetValue(btcPricePair, out var btcPriceData))
             {
-                var btcBasePricePair = new CurrencyPair("BTC", baseCcy);
-                IMarketData btcBasePriceData = null;
-                if (ccyPairsData.TryGetValue(btcBasePricePair, out btcBasePriceData))
+                var btcBasePricePair = new CurrencyPair(Constants.BTC, baseCcy);
+                if (ccyPairsData.TryGetValue(btcBasePricePair, out var btcBasePriceData))
                 {
                     return (decimal)(btcPriceData.PriceLast * btcBasePriceData.PriceLast);
                 }
                 else
                 {
-                    var baseBtcPricePair = new CurrencyPair(baseCcy, "BTC");
-                    IMarketData baseBtcPriceData = null;
-                    if (ccyPairsData.TryGetValue(baseBtcPricePair, out baseBtcPriceData))
+                    var baseBtcPricePair = new CurrencyPair(baseCcy, Constants.BTC);
+                    if (ccyPairsData.TryGetValue(baseBtcPricePair, out var baseBtcPriceData))
                     {
                         return (decimal)(baseBtcPriceData.PriceLast * btcPriceData.PriceLast);
                     }
@@ -209,15 +236,19 @@ namespace CryptoGramBot.Services.Exchanges
         private async Task<IDepositWithdrawalList> GetDepositsAndWithdrawals(Setting checkedBefore)
         {
             IDepositWithdrawalList depositWithdrawalList;
-            if (checkedBefore == null || checkedBefore.Value == "false")
+
+            using (var poloClient = _poloniexClientFactory.CreateClient(_poloniexConfig.Key, _poloniexConfig.Secret))
             {
-                depositWithdrawalList = await _poloniexClient.Wallet.GetDepositsAndWithdrawalsAsync();
-            }
-            else
-            {
-                var lastChecked = _databaseService.GetLastChecked("Poloniex.DepositsAndWithdrawals");
-                depositWithdrawalList =
-                    await _poloniexClient.Wallet.GetDepositsAndWithdrawalsAsync(lastChecked, DateTime.MaxValue);
+                if (checkedBefore == null || checkedBefore.Value == "false")
+                {
+                    depositWithdrawalList = await poloClient.Wallet.GetDepositsAndWithdrawalsAsync();
+                }
+                else
+                {
+                    var lastChecked = _databaseService.GetLastChecked("Poloniex.DepositsAndWithdrawals");
+                    depositWithdrawalList =
+                        await poloClient.Wallet.GetDepositsAndWithdrawalsAsync(lastChecked, DateTime.MaxValue);
+                }
             }
 
             return depositWithdrawalList;

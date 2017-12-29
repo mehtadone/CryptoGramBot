@@ -1,18 +1,18 @@
-﻿using System;
-using Poloniex.General;
-using Poloniex.MarketTools;
+﻿using Jojatekok.PoloniexAPI.MarketTools;
+using System;
 
 namespace Jojatekok.PoloniexAPI
 {
+    [Serializable]
     public class TickerChangedEventArgs : EventArgs
     {
-        internal TickerChangedEventArgs(CurrencyPair currencyPair, MarketData marketData)
+        public CurrencyPair CurrencyPair { get; private set; }
+        public MarketData MarketData { get; private set; }
+
+        public TickerChangedEventArgs(CurrencyPair currencyPair, MarketData marketData)
         {
             CurrencyPair = currencyPair;
             MarketData = marketData;
         }
-
-        public CurrencyPair CurrencyPair { get; private set; }
-        public MarketData MarketData { get; private set; }
     }
 }

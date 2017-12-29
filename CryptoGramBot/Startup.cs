@@ -2,16 +2,19 @@
 using System.IO;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using AutoMapper;
+using Bittrex.Net;
+using Bittrex.Net.RateLimiter;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Data;
 using CryptoGramBot.Extensions;
 using CryptoGramBot.Services;
+using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Exchanges;
 using CryptoGramBot.Services.Pricing;
 using CryptoGramBot.Services.Telegram;
 using Enexure.MicroBus;
 using Enexure.MicroBus.Autofac;
+using Jojatekok.PoloniexAPI;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -28,15 +31,18 @@ namespace CryptoGramBot
         public Startup(IConfiguration configuration)
         {
             TelemetryConfiguration.Active.DisableTelemetry = true;
-
             Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
 
+        public IContainer Container { get; set; }
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime applicationLifetime)
         {
+            applicationLifetime.ApplicationStarted.Register(OnStarting);
+
             app.UseDeveloperExceptionPage();
 
             app.UseDefaultFiles();
@@ -96,8 +102,7 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<TradeExportService>();
             containerBuilder.RegisterType<TelegramBittrexFileUploadService>();
             containerBuilder.RegisterType<TelegramPairProfitService>();
-
-            Mapper.Initialize(config => config.MapEntities());
+            containerBuilder.RegisterType<PoloniexClientFactory>().As<IPoloniexClientFactory>();
 
             CheckWhatIsEnabled(out bool coinigyEnabled,
                 out bool bittrexEnabled,
@@ -112,20 +117,13 @@ namespace CryptoGramBot
             busBuilder.ConfigureCore(coinigyEnabled, bittrexEnabled, poloniexEnabled, binanceEnabled, bagEnabled, dustEnabled);
 
             containerBuilder.RegisterMicroBus(busBuilder);
-            var container = containerBuilder.Build();
+            Container = containerBuilder.Build();
 
-            var loggerFactory = container.Resolve<ILoggerFactory>();
+            var loggerFactory = Container.Resolve<ILoggerFactory>();
             var log = loggerFactory.CreateLogger<Program>();
 
             log.LogInformation($"Services\nCoinigy: {coinigyEnabled}\nBittrex: {bittrexEnabled}\nBinance: {poloniexEnabled}\nPoloniex: {poloniexEnabled}\nBag Management: {bagEnabled}\nDust Notifications: {dustEnabled}\nLow BTC Notifications: {lowBtcEnabled}");
-            ConfigureConfig(container, Configuration, log);
-
-            var startupService = container.Resolve<StartupCheckingService>();
-            var context = container.Resolve<CryptoGramBotDbContext>();
-
-            DbInitializer.Initialize(context).Wait();
-
-            startupService.Start().Wait();
+            ConfigureConfig(Container, Configuration, log);
         }
 
         private static void ConfigureConfig(IContainer container, IConfiguration configuration, ILogger<Program> log)
@@ -178,17 +176,17 @@ namespace CryptoGramBot
                 throw;
             }
 
-            try
-            {
-                var config = container.Resolve<BinanceConfig>();
-                configuration.GetSection("Binance").Bind(config);
-                log.LogInformation("Created binance config");
-            }
-            catch (Exception)
-            {
-                log.LogError("Error in reading bittrex config");
-                throw;
-            }
+            //            try
+            //            {
+            //                var config = container.Resolve<BinanceConfig>();
+            //                configuration.GetSection("Binance").Bind(config);
+            //                log.LogInformation("Created binance config");
+            //            }
+            //            catch (Exception)
+            //            {
+            //                log.LogError("Error in reading binance config");
+            //                throw;
+            //            }
 
             try
             {
@@ -273,6 +271,22 @@ namespace CryptoGramBot
                 dustNotification = false;
                 lowBtcNotification = false;
             }
+        }
+
+        private void OnStarting()
+        {
+            var startupService = Container.Resolve<StartupCheckingService>();
+            var context = Container.Resolve<CryptoGramBotDbContext>();
+
+            DbInitializer.Initialize(context).Wait();
+
+            var limiterTotal = new RateLimiterPerEndpoint(1, TimeSpan.FromSeconds(1));
+            var limiterPerEndpoint = new RateLimiterPerEndpoint(1, TimeSpan.FromSeconds(1));
+
+            BittrexDefaults.AddDefaultRateLimiter(limiterTotal);
+            BittrexDefaults.AddDefaultRateLimiter(limiterPerEndpoint);
+
+            startupService.Start();
         }
     }
 }

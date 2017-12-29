@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
-using CryptoGramBot.Services;
 using CryptoGramBot.Services.Exchanges;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
@@ -51,9 +49,11 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         {
             if (newTradesResponse.NewTrades.Count() > 29)
             {
+                var stringBuffer = new StringBuffer();
+                stringBuffer.Append(StringContants.PoloniexMoreThan30Trades);
                 await _bus.SendAsync(
                     new SendMessageCommand(
-                        new StringBuilder("There are more than 30 Poloniex trades to send. Not going to send them to avoid spamming you")));
+                        stringBuffer));
                 return;
             }
 
@@ -77,20 +77,23 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
             {
                 var newOrders = await _poloService.GetNewOpenOrders(lastChecked - TimeSpan.FromDays(2));
 
-                if (newOrders.Count > 5)
+                if (newOrders.Count > 30)
                 {
-                    await _bus.SendAsync(new SendMessageCommand(new StringBuilder($"{newOrders.Count} open poloniex orders available to send. Will not send them to avoid spam.")));
+                    var stringBuilder = new StringBuffer();
+                    stringBuilder.Append(StringContants.PoloniexMoreThan30OpenOrders);
+
+                    await _bus.SendAsync(new SendMessageCommand(stringBuilder));
                     return;
                 }
 
                 foreach (var openOrder in newOrders)
                 {
-                    var sb = new StringBuilder();
-                    sb.AppendLine($"{openOrder.Opened:g}");
-                    sb.AppendLine($"New {openOrder.Exchange} OPEN order");
-                    sb.AppendLine($"<strong>{openOrder.Side} {openOrder.Base}-{openOrder.Terms}</strong>");
-                    sb.AppendLine($"Price: {openOrder.Price}");
-                    sb.AppendLine($"Quanitity: {openOrder.Quantity}");
+                    var sb = new StringBuffer();
+                    sb.Append($"{openOrder.Opened:g}\n");
+                    sb.Append($"New {openOrder.Exchange} OPEN order\n");
+                    sb.Append($"<strong>{openOrder.Side} {openOrder.Base}-{openOrder.Terms}</strong>\n");
+                    sb.Append($"Price: {openOrder.Price}\n");
+                    sb.Append($"Quanitity: {openOrder.Quantity}");
                     await _bus.SendAsync(new SendMessageCommand(sb));
                 }
             }

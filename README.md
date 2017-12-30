@@ -12,7 +12,7 @@ A telegram bot that sends your balance updates from coinigy, send trade notifica
 
 ## Installation
 * Pre-requisites:
-[.Net Core Runtime](https://www.microsoft.com/net/download/core#/runtime). Instructions for [windows](https://www.microsoft.com/net/download/core#/runtime), [linux](https://www.microsoft.com/net/download/linux) and [macos](https://www.microsoft.com/net/download/core#/runtime) or [.Net Core SDK](https://www.microsoft.com/net/core#windowscmd) for your OS if you want to build yourself. 
+[.Net Core SDK](https://www.microsoft.com/net/core#windowscmd) version 2.0.3 or higher. 
 
 1. Get your Bot ID, you need to chat to the BotFather. See [here](https://core.telegram.org/bots#3-how-do-i-create-a-bot) and [here](https://core.telegram.org/bots#6-botfather) 
 2. Open a new chat to your bot and talk to him. Say hi. He won't respond just yet. 
@@ -46,6 +46,7 @@ trex_balance - bittrex account summary
 
 polo_balance - poloniex account summary
 polo_reset_trades - reset trades database from poloniex
+
 ```
 7. Clear history on your telegram bot to pick up the commands
 

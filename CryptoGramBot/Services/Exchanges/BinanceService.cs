@@ -108,11 +108,11 @@ namespace CryptoGramBot.Services.Exchanges
         {
             if (baseCcy == "USDT")
             {
-                return Math.Round(btcAmount, 2);
+                return Math.Round(btcAmount, 3);
             }
 
             var price = await GetPrice("USDT", baseCcy);
-            return Math.Round(price * btcAmount, 2);
+            return Math.Round(price * btcAmount, 3);
         }
 
         public async Task<List<Deposit>> GetNewDeposits()

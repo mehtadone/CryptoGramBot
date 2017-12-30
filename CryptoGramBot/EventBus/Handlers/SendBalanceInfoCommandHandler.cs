@@ -30,9 +30,9 @@ namespace CryptoGramBot.EventBus.Handlers
             var walletBalances = requestedCommand.BalanceInformation.WalletBalances;
 
             var timeFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Time:", $"     {DateTime.Now:g}", StringContants.StrongOpen, StringContants.StrongClose);
-            var currentFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Current:", $"  {current.Balance:##0.####} {_generalConfig.TradingCurrency} (${current.DollarAmount})", StringContants.StrongOpen, StringContants.StrongClose);
-            var previousFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Previous:", $" {lastBalance.Balance:##0.####} {_generalConfig.TradingCurrency} (${lastBalance.DollarAmount})", StringContants.StrongOpen, StringContants.StrongClose);
-            var differenceFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Difference:", $"{(current.Balance - lastBalance.Balance):##0.####} {_generalConfig.TradingCurrency} (${Math.Round(current.DollarAmount - lastBalance.DollarAmount, 2)})", StringContants.StrongOpen, StringContants.StrongClose);
+            var currentFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Current:", $"  {current.Balance:##0.#####} {_generalConfig.TradingCurrency} (${current.DollarAmount})", StringContants.StrongOpen, StringContants.StrongClose);
+            var previousFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Previous:", $" {lastBalance.Balance:##0.#####} {_generalConfig.TradingCurrency} (${lastBalance.DollarAmount})", StringContants.StrongOpen, StringContants.StrongClose);
+            var differenceFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Difference:", $"{(current.Balance - lastBalance.Balance):##0.#####} {_generalConfig.TradingCurrency} (${Math.Round(current.DollarAmount - lastBalance.DollarAmount, 2)})", StringContants.StrongOpen, StringContants.StrongClose);
 
             sb.Append(string.Format("{1}24 Hour Summary{2} for {1}{0}{2}\n\n", accountName, StringContants.StrongOpen, StringContants.StrongClose));
             sb.Append(timeFormat);

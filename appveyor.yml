@@ -1,4 +1,4 @@
-﻿version: '0.1.{build}'
+﻿version: '0.3.{build}'
 image: Visual Studio 2017
 branches:
   only:
@@ -27,7 +27,7 @@ on_finish :
   # any cleanup in here
 deploy:
   release: CryptoGramBot-v$(appveyor_build_version)
-  description: 'Fix partial buy calculations. Change to web app to improve performance. Try fix non BTC trading. NOTE: two new properties will have to be added in appsettings.json, ServerUrls and TradingCurrency'
+  description: ''
   provider: GitHub
   auth_token:
     secure: rMxVtVrce2Oh6Jf2V6c2FDAyJR4/L0ZFpxGl0ntx0g3cHwcqQvWvD4AW0VfIwFBs # your encrypted token from GitHub

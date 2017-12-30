@@ -29,7 +29,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
             {
                 var balanceInformation = await _poloniexService.GetBalance();
 
-                if (_config.SendHourlyUpdates || @event.UserRequested)
+                if (@event.UserRequested)
                 {
                     await _bus.SendAsync(new SendBalanceInfoCommand(balanceInformation));
                 }

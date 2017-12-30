@@ -24,8 +24,8 @@ namespace CryptoGramBot.EventBus.Handlers.Coinigy
         {
             var accountList = await _coinigyBalanceService.GetAccounts();
             var sb = new StringBuffer();
-            sb.Append(string.Format("{0}", DateTime.Now.ToString("g")));
-            sb.Append(StringContants.CoinigyConnectedAccounts);
+            sb.Append(string.Format("{0}\n", DateTime.Now.ToString("g")));
+            sb.Append(StringContants.CoinigyConnectedAccounts + "\n");
             foreach (var pair in accountList)
             {
                 sb.Append("/acc_");

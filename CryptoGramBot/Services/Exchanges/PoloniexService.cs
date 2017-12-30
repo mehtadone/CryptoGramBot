@@ -50,7 +50,7 @@ namespace CryptoGramBot.Services.Exchanges
                     balances = await poloClient.Wallet.GetBalancesAsync();
                 }
 
-                poloniexToWalletBalances = TradeConverter.PoloniexToWalletBalances(balances);
+                poloniexToWalletBalances = PoloniexConvertor.PoloniexToWalletBalances(balances);
             }
             catch (Exception e)
             {
@@ -125,7 +125,7 @@ namespace CryptoGramBot.Services.Exchanges
             var list = await GetDepositsAndWithdrawals(checkedBefore);
             var poloDeposits = list.Deposits;
 
-            var localDesposits = TradeConverter.PoloniexToDeposits(poloDeposits);
+            var localDesposits = PoloniexConvertor.PoloniexToDeposits(poloDeposits);
 
             var newDeposits = await _databaseService.AddDeposits(localDesposits, Constants.Poloniex);
             await _databaseService.AddLastChecked("Poloniex.DepositCheck", DateTime.Now);
@@ -150,7 +150,7 @@ namespace CryptoGramBot.Services.Exchanges
                 throw;
             }
 
-            var orders = TradeConverter.PoloniexToOpenOrders(poloOrders);
+            var orders = PoloniexConvertor.PoloniexToOpenOrders(poloOrders);
 
             var newOrders = await _databaseService.AddOpenOrders(orders);
 
@@ -163,7 +163,7 @@ namespace CryptoGramBot.Services.Exchanges
             var list = await GetDepositsAndWithdrawals(checkedBefore);
             var poloWithdrawals = list.Withdrawals;
 
-            var withdrawals = TradeConverter.PoloniexToWithdrawals(poloWithdrawals);
+            var withdrawals = PoloniexConvertor.PoloniexToWithdrawals(poloWithdrawals);
 
             var newWithdrawals = await _databaseService.AddWithdrawals(withdrawals, Constants.Poloniex);
             await _databaseService.AddLastChecked("Poloniex.WithdrawalCheck", DateTime.Now);
@@ -178,7 +178,7 @@ namespace CryptoGramBot.Services.Exchanges
                 using (var poloClient = _poloniexClientFactory.CreateClient(_poloniexConfig.Key, _poloniexConfig.Secret))
                 {
                     var tradesAsync = await poloClient.Trading.GetTradesAsync(CurrencyPair.All, lastChecked, DateTime.Now);
-                    var poloniexToTrades = TradeConverter.PoloniexToTrades(tradesAsync);
+                    var poloniexToTrades = PoloniexConvertor.PoloniexToTrades(tradesAsync);
                     return poloniexToTrades;
                 }
             }

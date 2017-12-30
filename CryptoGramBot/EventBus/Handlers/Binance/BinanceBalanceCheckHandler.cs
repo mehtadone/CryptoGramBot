@@ -6,27 +6,26 @@ using CryptoGramBot.Helpers;
 using CryptoGramBot.Services.Exchanges;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus.Handlers.Bittrex
+namespace CryptoGramBot.EventBus.Handlers.Binance
 {
-    public class BittrexBalanceCheckHandler : IEventHandler<BalanceCheckEvent>
+    public class BinanceBalanceCheckHandler : IEventHandler<BalanceCheckEvent>
     {
-        private readonly BittrexService _bittrexService;
         private readonly IMicroBus _bus;
-        private readonly BittrexConfig _config;
+        private readonly BinanceConfig _config;
+        private readonly BinanceService _exchangeService;
 
-        public BittrexBalanceCheckHandler(BittrexService bittrexService,
-            BittrexConfig config, IMicroBus bus)
+        public BinanceBalanceCheckHandler(BinanceService exchangeService, BinanceConfig config, IMicroBus bus)
         {
-            _bittrexService = bittrexService;
+            _exchangeService = exchangeService;
             _config = config;
             _bus = bus;
         }
 
         public async Task Handle(BalanceCheckEvent @event)
         {
-            if (@event.Exchange == null || @event.Exchange == Constants.Bittrex)
+            if (@event.Exchange == null || @event.Exchange == Constants.Binance)
             {
-                var balanceInformation = await _bittrexService.GetBalance();
+                var balanceInformation = await _exchangeService.GetBalance();
 
                 if (@event.UserRequested)
                 {

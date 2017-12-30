@@ -19,13 +19,12 @@ namespace CryptoGramBot.Services
             _databaseService = databaseService;
         }
 
-        public async Task<ProfitAndLoss> GetPnLInfo(string ccy1, string ccy2)
+        public async Task<ProfitAndLoss> GetPnLInfo(string ccy1, string ccy2, string exchange)
         {
             var tradesForPair = await _databaseService.GetTradesForPair(ccy1, ccy2);
             var profitAndLoss = ProfitCalculator.GetProfitAndLossForPair(tradesForPair, new Currency { Base = ccy1, Terms = ccy2 });
 
-            // TODO: Ideally use each trade's exchange to get dollar amounts
-            var dollarAmount = await _priceService.GetDollarAmount(ccy1, profitAndLoss.Profit, Constants.Bittrex);
+            var dollarAmount = await _priceService.GetDollarAmount(ccy1, profitAndLoss.Profit, exchange);
 
             profitAndLoss.DollarProfit = dollarAmount;
 

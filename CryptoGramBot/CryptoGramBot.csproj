@@ -9,12 +9,11 @@
 		<PackageProjectUrl>https://github.com/mehtadone/CryptoGramBot</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/mehtadone/CryptoGramBot</RepositoryUrl>
 		<RepositoryType>Github</RepositoryType>
-		<PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.2.0" />
-		<PackageReference Include="BinanceDotNet" Version="3.0.0" />
+		<PackageReference Include="Binance" Version="0.2.0-alpha.8" />
 		<PackageReference Include="Bittrex.Net" Version="1.3.2" />
 		<PackageReference Include="CsvHelper" Version="2.16.3" />
 		<PackageReference Include="Enexure.MicroBus" Version="3.6.0" />

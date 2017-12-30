@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
+using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using Enexure.MicroBus;
 
@@ -50,8 +51,8 @@ namespace CryptoGramBot.EventBus.Handlers
 
             sb.Append(string.Format("{0}\n", (newTrade.TimeStamp + TimeSpan.FromHours(_config.TimeOffset)).ToString("g")));
             sb.Append(string.Format("New {0} order\n", newTrade.Exchange));
-            sb.Append(string.Format("<strong>{0} {1}-{2}</strong>\n", newTrade.Side.ToString(), newTrade.Base, newTrade.Terms));
-            sb.Append(string.Format("Quantity: {0}\n", newTrade.QuantityOfTrade));
+            sb.Append(string.Format("{3}{0} {1}-{2}{4}\n", newTrade.Side.ToString(), newTrade.Base, newTrade.Terms, StringContants.StrongOpen, StringContants.StrongClose));
+            sb.Append(string.Format("Quantity: {0}\n", newTrade.QuantityOfTrade.ToString("##0.###########")));
             sb.Append(string.Format("Rate: {0} {1}\n", newTrade.Limit.ToString("##0.##############"), newTrade.Base));
             sb.Append(string.Format("Total: {0} {1}\n", newTrade.Cost.ToString("##0.###########"), newTrade.Base));
 
@@ -59,7 +60,7 @@ namespace CryptoGramBot.EventBus.Handlers
             {
                 sb.Append(string.Format("Profit: {0} {1} (${2})\n", btcProfit.Value.ToString("##0.########"), newTrade.Base, dollarProfit.Value.ToString("###0.##")));
                 sb.Append(string.Format("Bought on: {0}\n", (lastBought.Value + TimeSpan.FromHours(_config.TimeOffset)).ToString("g")));
-                sb.Append(string.Format("<strong>Percentage: {0}%</strong>\n", profitPercentage.Value));
+                sb.Append(string.Format("{1}Percentage: {0}%{2}\n", profitPercentage.Value, StringContants.StrongOpen, StringContants.StrongClose));
             }
 
             await _bus.SendAsync(new SendMessageCommand(sb));

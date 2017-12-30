@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
@@ -39,12 +40,8 @@ namespace CryptoGramBot.Data
     {
         public CryptoGramBotDbContext CreateDbContext(string[] args)
         {
-            var databaseLocation = Directory.GetCurrentDirectory() + "/database/cryptogrambot.sqlite";
-
             var builder = new DbContextOptionsBuilder<CryptoGramBotDbContext>();
-
-            builder.UseSqlite(databaseLocation);
-
+            builder.UseSqlite(StringContants.DatabaseLocation);
             return new CryptoGramBotDbContext(builder.Options);
         }
     }

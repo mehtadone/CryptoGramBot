@@ -2,6 +2,7 @@
 {
     public static class TelegramCommands
     {
+        public static string BinanceBalanceInfo = "/binance_balance";
         public static string BittrexBalanceInfo = "/trex_balance";
         public static string BittrexTradeExportUpload = "/upload_bittrex_trades";
         public static string CoinigyAccountBalance = "/acc_n";

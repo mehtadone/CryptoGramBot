@@ -7,13 +7,15 @@ namespace CryptoGramBot.Services.Pricing
 {
     public class PriceService
     {
+        private readonly BinanceService _binanceService;
         private readonly BittrexService _bittrexService;
         private readonly PoloniexService _poloniexService;
 
-        public PriceService(BittrexService bittrexService, PoloniexService poloniexService)
+        public PriceService(BittrexService bittrexService, PoloniexService poloniexService, BinanceService binanceService)
         {
             _bittrexService = bittrexService;
             _poloniexService = poloniexService;
+            _binanceService = binanceService;
         }
 
         public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount, string exchange)
@@ -28,6 +30,10 @@ namespace CryptoGramBot.Services.Pricing
 
                 case Constants.Poloniex:
                     price = await _poloniexService.GetDollarAmount(baseCcy, btcAmount);
+                    break;
+
+                case Constants.Binance:
+                    price = await _binanceService.GetDollarAmount(baseCcy, btcAmount);
                     break;
             }
 
@@ -46,6 +52,10 @@ namespace CryptoGramBot.Services.Pricing
 
                 case Constants.Poloniex:
                     price = await _poloniexService.GetPrice(baseCcy, termsCurrency);
+                    break;
+
+                case Constants.Binance:
+                    price = await _binanceService.GetPrice(baseCcy, termsCurrency);
                     break;
             }
 

@@ -13,30 +13,24 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
 {
     public class BittrexBagAndDustHandler : IEventHandler<BagAndDustEvent>
     {
-        private readonly BagConfig _bagConfig;
         private readonly BittrexService _bittrexService;
         private readonly IMicroBus _bus;
+        private readonly BittrexConfig _config;
         private readonly DatabaseService _databaseService;
-        private readonly DustConfig _dustConfig;
         private readonly GeneralConfig _generalConfig;
-        private readonly LowBtcConfig _lowBtcConfig;
 
         public BittrexBagAndDustHandler(
             IMicroBus bus,
             GeneralConfig generalConfig,
+            BittrexConfig config,
             BittrexService bittrexService,
-            DatabaseService databaseService,
-            BagConfig bagConfig,
-            DustConfig dustConfig,
-            LowBtcConfig lowBtcConfig)
+            DatabaseService databaseService)
         {
             _bus = bus;
             _generalConfig = generalConfig;
+            _config = config;
             _bittrexService = bittrexService;
             _databaseService = databaseService;
-            _bagConfig = bagConfig;
-            _dustConfig = dustConfig;
-            _lowBtcConfig = lowBtcConfig;
         }
 
         public async Task Handle(BagAndDustEvent @event)
@@ -47,9 +41,9 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
             {
                 if (walletBalance.Currency == Constants.BTC)
                 {
-                    if (_lowBtcConfig.Enabled)
+                    if (_config.LowBtcNotification.HasValue)
                     {
-                        if (walletBalance.BtcAmount <= _lowBtcConfig.LowBtcAmount)
+                        if (walletBalance.BtcAmount <= _config.LowBtcNotification.Value)
                         {
                             await SendBtcLowNotification(walletBalance.BtcAmount);
                         }
@@ -62,12 +56,12 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
                     var averagePrice = await _databaseService.GetBuyAveragePrice(_generalConfig.TradingCurrency, walletBalance.Currency, Constants.Poloniex, walletBalance.Available);
                     var currentPrice = await _bittrexService.GetPrice(_generalConfig.TradingCurrency, walletBalance.Currency);
 
-                    if (_bagConfig.Enabled)
+                    if (_config.BagNotification.HasValue)
                     {
                         await BagManagement(currentPrice, averagePrice, walletBalance);
                     }
 
-                    if (_dustConfig.Enabled)
+                    if (_config.DustNotification.HasValue)
                     {
                         await DustManagement(walletBalance);
                     }
@@ -78,7 +72,7 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
         private async Task BagManagement(decimal currentPrice, decimal averagePrice, WalletBalance walletBalance)
         {
             var percentageDrop = ProfitCalculator.PriceDifference(currentPrice, averagePrice);
-            if (percentageDrop < -_bagConfig.PercentageDrop)
+            if (_config.BagNotification != null && percentageDrop < -_config.BagNotification.Value)
             {
                 await SendBagNotification(walletBalance, averagePrice, currentPrice, percentageDrop);
             }
@@ -86,7 +80,7 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
 
         private async Task DustManagement(WalletBalance walletBalance)
         {
-            var bagDetected = walletBalance.BtcAmount <= _dustConfig.BtcAmount;
+            var bagDetected = _config.DustNotification != null && walletBalance.BtcAmount <= _config.DustNotification.Value;
             if (bagDetected)
             {
                 await SendDustNotification(walletBalance);
@@ -99,8 +93,8 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
                 await _databaseService.GetLastBoughtAsync(_generalConfig.TradingCurrency, walletBalance.Currency, Constants.Bittrex);
 
             var sb = new StringBuffer();
-            sb.Append($"<strong>{Constants.Bittrex}</strong>: {DateTime.Now:g}\n");
-            sb.Append($"<strong>Bag detected for {walletBalance.Currency}</strong>\n");
+            sb.Append($"{StringContants.StrongOpen}{Constants.Bittrex}{StringContants.StrongClose}: {DateTime.Now:g}\n");
+            sb.Append($"{StringContants.StrongOpen}Bag detected for {walletBalance.Currency}{StringContants.StrongClose}\n");
             sb.Append($"Average bought price: {averagePrice:#0.#############}\n");
             sb.Append($"Current price: {currentPrice:#0.#############}\n");
             sb.Append($"Percentage: {percentageDrop}%\n");
@@ -113,8 +107,8 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
         private async Task SendBtcLowNotification(decimal walletBalanceBtcAmount)
         {
             var sb = new StringBuffer();
-            sb.Append($"<strong>{Constants.Bittrex}</strong>: {DateTime.Now:g}\n");
-            sb.Append($"<strong>Low {_generalConfig.TradingCurrency} detected</strong>\n");
+            sb.Append($"{StringContants.StrongOpen}{Constants.Bittrex}{StringContants.StrongClose}: {DateTime.Now:g}\n");
+            sb.Append($"{StringContants.StrongOpen}Low {_generalConfig.TradingCurrency} detected{StringContants.StrongClose}\n");
             sb.Append($"{_generalConfig.TradingCurrency} Amount: {walletBalanceBtcAmount:#0.#############}");
             await _bus.SendAsync(new SendMessageCommand(sb));
         }
@@ -122,8 +116,8 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
         private async Task SendDustNotification(WalletBalance walletBalance)
         {
             var sb = new StringBuffer();
-            sb.Append($"<strong>{Constants.Bittrex}</strong>: {DateTime.Now:g}\n");
-            sb.Append($"<strong>Dust detected for {walletBalance.Currency}</strong>\n");
+            sb.Append($"{StringContants.StrongOpen}{Constants.Bittrex}{StringContants.StrongClose}: {DateTime.Now:g}\n");
+            sb.Append($"{StringContants.StrongOpen}Dust detected for {walletBalance.Currency}{StringContants.StrongClose}\n");
             sb.Append($"{_generalConfig.TradingCurrency} Amount: {walletBalance.BtcAmount:#0.#############}\n");
             await _bus.SendAsync(new SendMessageCommand(sb));
         }

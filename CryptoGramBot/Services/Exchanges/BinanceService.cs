@@ -1,34 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using BinanceExchange.API.Client;
-using CryptoGramBot.Configuration;
+﻿using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using CryptoGramBot.Services.Data;
-using CryptoGramBot.Services.Pricing;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Binance.Api;
+using CryptoGramBot.Helpers.Convertors;
 
 namespace CryptoGramBot.Services.Exchanges
 {
     public class BinanceService : IExchangeService
     {
+        private readonly IBinanceApi _client;
         private readonly BinanceConfig _config;
         private readonly DatabaseService _databaseService;
         private readonly GeneralConfig _generalConfig;
         private readonly ILogger<BinanceService> _log;
-        private readonly PriceService _priceService;
+        private readonly List<string> _symbols = new List<string>();
 
-        public BinanceService(BinanceConfig config, DatabaseService databaseService,
-            PriceService priceService,
+        public BinanceService(BinanceConfig config,
+            DatabaseService databaseService,
             GeneralConfig generalConfig,
+            IBinanceApi binanceApi,
             ILogger<BinanceService> log)
         {
             _config = config;
             _databaseService = databaseService;
-            _priceService = priceService;
             _generalConfig = generalConfig;
             _log = log;
+
+            _client = binanceApi;
+            _client.HttpClient.RateLimiter.Configure(TimeSpan.FromMinutes(1), 200);
         }
 
         public async Task<BalanceInformation> GetBalance()
@@ -37,20 +42,21 @@ namespace CryptoGramBot.Services.Exchanges
             try
             {
                 var binanceClient = GetApi();
-                var accountInfo = await binanceClient.GetAccountInformation();
-                balances = TradeConverter.BinanceToWalletBalances(accountInfo.Balances);
+                using (var user = new BinanceApiUser(_config.Key, _config.Secret))
+                {
+                    var accountInfo = await binanceClient.GetAccountInfoAsync(user);
+                    balances = BinanceConverter.BinanceToWalletBalances(accountInfo.Balances);
+                }
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting balances from bittrex: " + e.Message);
+                _log.LogError("Error in getting balances from binance: " + e.Message);
                 throw;
             }
 
             var totalBtcBalance = 0m;
             foreach (var balance in balances)
             {
-                if (balance.Balance == 0) continue;
-
                 decimal price;
                 decimal btcAmount;
                 decimal averagePrice = 0m;
@@ -62,13 +68,13 @@ namespace CryptoGramBot.Services.Exchanges
                 }
                 else if (balance.Currency == "USDT")
                 {
-                    var marketPrice = await _priceService.GetPrice("USDT", _generalConfig.TradingCurrency, Constants.Binance);
+                    var marketPrice = await GetPrice("USDT", _generalConfig.TradingCurrency);
                     btcAmount = balance.Balance / marketPrice;
                     price = 0m;
                 }
                 else
                 {
-                    var marketPrice = await _priceService.GetPrice(_generalConfig.TradingCurrency, balance.Currency, Constants.Binance);
+                    var marketPrice = await GetPrice(_generalConfig.TradingCurrency, balance.Currency);
                     price = marketPrice;
                     btcAmount = (price * balance.Balance);
                     averagePrice =
@@ -88,59 +94,168 @@ namespace CryptoGramBot.Services.Exchanges
                 totalBtcBalance = totalBtcBalance + balance.BtcAmount;
             }
 
-            var lastBalance = await _databaseService.GetBalance24HoursAgo(Constants.Bittrex);
+            var lastBalance = await _databaseService.GetBalance24HoursAgo(Constants.Binance);
 
-            var dollarAmount = await _priceService.GetDollarAmount(_generalConfig.TradingCurrency, totalBtcBalance, Constants.Binance);
+            var dollarAmount = await GetDollarAmount(_generalConfig.TradingCurrency, totalBtcBalance);
 
-            var currentBalance = await _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Bittrex);
+            var currentBalance = await _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Binance);
             await _databaseService.AddWalletBalances(balances);
 
-            return new BalanceInformation(currentBalance, lastBalance, Constants.Bittrex, balances);
+            return new BalanceInformation(currentBalance, lastBalance, Constants.Binance, balances);
         }
 
-        public Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
+        public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<List<Deposit>> GetNewDeposits()
-        {
-            // no api call
-            return Task.FromResult(new List<Deposit>());
-        }
-
-        public Task<List<OpenOrder>> GetNewOpenOrders(DateTime lastChecked)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<List<Withdrawal>> GetNewWithdrawals()
-        {
-            // no api call
-            return Task.FromResult(new List<Withdrawal>());
-        }
-
-        public Task<List<Trade>> GetOrderHistory(DateTime lastChecked)
-        {
-            //            var api = GetApi();
-            //            api.GetAccountTrades(new AllTradesRequest())
-            return Task.FromResult(new List<Trade>());
-        }
-
-        public Task<decimal> GetPrice(string baseCcy, string termsCurrency)
-        {
-            throw new NotImplementedException();
-        }
-
-        private BinanceClient GetApi()
-        {
-            var client = new BinanceClient(new ClientConfiguration()
+            if (baseCcy == "USDT")
             {
-                ApiKey = _config.Key,
-                SecretKey = _config.Secret,
-            });
+                return Math.Round(btcAmount, 2);
+            }
 
-            return client;
+            var price = await GetPrice("USDT", baseCcy);
+            return Math.Round(price * btcAmount, 2);
+        }
+
+        public async Task<List<Deposit>> GetNewDeposits()
+        {
+            var list = new List<Deposit>();
+
+            try
+            {
+                var binanceClient = GetApi();
+                using (var user = new BinanceApiUser(_config.Key, _config.Secret))
+                {
+                    var binanceDesposits = await binanceClient.GetDepositsAsync(user, "BTC");
+                    list = BinanceConverter.BinanceToDeposits(binanceDesposits);
+                }
+            }
+            catch (Exception e)
+            {
+                _log.LogError("Error in getting deposits from Binance: " + e.Message);
+            }
+
+            var newDeposits = await _databaseService.AddDeposits(list, Constants.Binance);
+
+            await _databaseService.AddLastChecked("Binance.DepositCheck", DateTime.Now);
+
+            return newDeposits;
+        }
+
+        public async Task<List<OpenOrder>> GetNewOpenOrders(DateTime lastChecked)
+        {
+            var openOrders = new List<OpenOrder>();
+
+            try
+            {
+                var binanceClient = GetApi();
+                using (var user = new BinanceApiUser(_config.Key, _config.Secret))
+                {
+                    foreach (var symbol in _symbols)
+                    {
+                        var response = await binanceClient.GetOpenOrdersAsync(user, symbol);
+                        var ccy2 = symbol.Remove(symbol.Length - _generalConfig.TradingCurrency.Length);
+                        var list = BinanceConverter.BinanceToOpenOrders(response, _generalConfig.TradingCurrency, ccy2);
+
+                        openOrders.AddRange(list);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _log.LogError("Error in getting openOrders from binance: " + e.Message);
+            }
+
+            var newOrders = await _databaseService.AddOpenOrders(openOrders);
+
+            return newOrders;
+        }
+
+        public async Task<List<Withdrawal>> GetNewWithdrawals()
+        {
+            // no api call
+            var list = new List<Withdrawal>();
+
+            try
+            {
+                var binanceClient = GetApi();
+
+                using (var user = new BinanceApiUser(_config.Key, _config.Secret))
+                {
+                    var binanceDesposits = await binanceClient.GetWithdrawalsAsync(user, "BTC");
+                    list = BinanceConverter.BinanceToWithdrawals(binanceDesposits);
+                }
+            }
+            catch (Exception e)
+            {
+                _log.LogError("Error in getting withdrawals from binance: " + e.Message);
+            }
+
+            var newWithdrawals = await _databaseService.AddWithdrawals(list, Constants.Binance);
+            await _databaseService.AddLastChecked("Binance.WithdrawalCheck", DateTime.Now);
+            return newWithdrawals;
+        }
+
+        public async Task<List<Trade>> GetOrderHistory(DateTime lastChecked)
+        {
+            var list = new List<Trade>();
+
+            try
+            {
+                var binanceClient = GetApi();
+
+                using (var user = new BinanceApiUser(_config.Key, _config.Secret))
+                {
+                    foreach (var symbol in _symbols)
+                    {
+                        var response = await binanceClient.GetAccountTradesAsync(user, symbol);
+
+                        var ccy2 = symbol.Remove(symbol.Length - _generalConfig.TradingCurrency.Length);
+
+                        var symlist = BinanceConverter.BinanceToTrades(response, _generalConfig.TradingCurrency, ccy2, _log);
+                        list.AddRange(symlist);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _log.LogError("Error in getting trades from binance: " + e.Message);
+            }
+
+            return list;
+        }
+
+        public async Task<decimal> GetPrice(string baseCcy, string termsCurrency)
+        {
+            var client = GetApi();
+            var price = await client.GetPricesAsync();
+
+            var sym = price.FirstOrDefault(x => x.Symbol == $"{termsCurrency}{baseCcy}");
+
+            if (sym != null)
+            {
+                return sym.Value;
+            }
+
+            return decimal.Zero;
+        }
+
+        public async Task GetSymbols()
+        {
+            _symbols.Clear();
+            var binanceClient = GetApi();
+            var symbolPriceResponses = await binanceClient.GetSymbolsAsync();
+
+            foreach (var response in symbolPriceResponses)
+            {
+                if (response.QuoteAsset.Equals(_generalConfig.TradingCurrency))
+                {
+                    _symbols.Add($"{response.BaseAsset}{response.QuoteAsset}");
+                }
+            }
+        }
+
+        private IBinanceApi GetApi()
+        {
+            return _client;
         }
     }
 }

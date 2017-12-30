@@ -36,7 +36,7 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
 
         private async Task SendAndCheckNotifications(FindNewTradesResponse newTradesResponse)
         {
-            if (!_config.BuyNotifications && !_config.SellNotifications) return;
+            if (!_config.BuyNotifications.HasValue && !_config.SellNotifications.HasValue) return;
 
             if (newTradesResponse.NewTrades.Count() > 29)
             {
@@ -49,12 +49,12 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
 
             foreach (var newTrade in newTradesResponse.NewTrades)
             {
-                if (newTrade.Side == TradeSide.Sell && _config.SellNotifications)
+                if (newTrade.Side == TradeSide.Sell && _config.SellNotifications.HasValue)
                 {
                     await _bus.SendAsync(new TradeNotificationCommand(newTrade));
                 }
 
-                if (newTrade.Side == TradeSide.Buy && _config.BuyNotifications)
+                if (newTrade.Side == TradeSide.Buy && _config.BuyNotifications.HasValue && _config.BuyNotifications.Value)
                 {
                     await _bus.SendAsync(new TradeNotificationCommand(newTrade));
                 }
@@ -63,7 +63,7 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
 
         private async Task SendOpenOrdersNotifications(DateTime lastChecked)
         {
-            if (_config.OpenOrderNotification)
+            if (_config.OpenOrderNotification.HasValue && _config.OpenOrderNotification.Value)
             {
                 var newOrders = await _bittrexService.GetNewOpenOrders(lastChecked);
 
@@ -79,7 +79,7 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
                     var sb = new StringBuffer();
                     sb.Append(string.Format("{0}", openOrder.Opened.ToString("g")));
                     sb.Append(string.Format("New {0} OPEN order", openOrder.Exchange));
-                    sb.Append(string.Format("<strong>{0} {1}-{2}</strong>", openOrder.Side, openOrder.Base, openOrder.Terms));
+                    sb.Append(string.Format("{3}{0} {1}-{2}{4}", openOrder.Side, openOrder.Base, openOrder.Terms, StringContants.StrongOpen, StringContants.StrongClose));
                     sb.Append(string.Format("Price: {0}", openOrder.Price));
                     sb.Append(string.Format("Quanitity: {0}", openOrder.Quantity));
                     await _bus.SendAsync(new SendMessageCommand(sb));

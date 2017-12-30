@@ -1,8 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using FluentScheduler;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
+using CryptoGramBot.EventBus.Handlers.Binance;
 using CryptoGramBot.EventBus.Handlers.Coinigy;
 using CryptoGramBot.Helpers;
 using Enexure.MicroBus;
@@ -11,13 +13,11 @@ namespace CryptoGramBot.Services
 {
     public class StartupCheckingService
     {
-        private readonly BagConfig _bagConfig;
+        private readonly BinanceConfig _binanceConfig;
         private readonly BittrexConfig _bittrexConfig;
         private readonly TelegramBot _bot;
         private readonly IMicroBus _bus;
         private readonly CoinigyConfig _coinigyConfig;
-        private readonly DustConfig _dustConfig;
-        private readonly LowBtcConfig _lowBtcConfig;
         private readonly PoloniexConfig _poloniexConfig;
         private readonly TelegramConfig _telegramConfig;
 
@@ -28,9 +28,7 @@ namespace CryptoGramBot.Services
             CoinigyConfig coinigyConfig,
             PoloniexConfig poloniexConfig,
             BittrexConfig bittrexConfig,
-            DustConfig dustConfig,
-            BagConfig bagConfig,
-            LowBtcConfig lowBtcConfig
+            BinanceConfig binanceConfig
             )
         {
             _bus = bus;
@@ -39,9 +37,7 @@ namespace CryptoGramBot.Services
             _coinigyConfig = coinigyConfig;
             _poloniexConfig = poloniexConfig;
             _bittrexConfig = bittrexConfig;
-            _dustConfig = dustConfig;
-            _bagConfig = bagConfig;
-            _lowBtcConfig = lowBtcConfig;
+            _binanceConfig = binanceConfig;
         }
 
         public void Start()
@@ -50,7 +46,16 @@ namespace CryptoGramBot.Services
             _bot.StartBot(_telegramConfig);
 
             var registry = new Registry();
-            if (_bittrexConfig.Enabled || _poloniexConfig.Enabled)
+
+            if (_binanceConfig.Enabled)
+            {
+                registry.Schedule(() => FindBinanceSymbols().Wait())
+                    .ToRunNow()
+                    .AndEvery(30)
+                    .Minutes();
+            }
+
+            if (_bittrexConfig.Enabled || _poloniexConfig.Enabled || _binanceConfig.Enabled)
             {
                 registry.Schedule(() => GetNewOrders().Wait())
                     .ToRunEvery(1)
@@ -69,6 +74,18 @@ namespace CryptoGramBot.Services
                 }
             }
 
+            if (_binanceConfig.Enabled)
+            {
+                if (!string.IsNullOrEmpty(_bittrexConfig.DailyNotifications))
+                {
+                    var dailyBalance = _bittrexConfig.DailyNotifications.Split(':');
+                    int.TryParse(dailyBalance[0], out int hour);
+                    int.TryParse(dailyBalance[1], out int min);
+
+                    registry.Schedule(() => DailyBalanceCheck(Constants.Binance).Wait()).ToRunEvery(1).Days().At(hour, min);
+                }
+            }
+
             if (_poloniexConfig.Enabled)
             {
                 if (!string.IsNullOrEmpty(_poloniexConfig.DailyNotifications))
@@ -81,23 +98,22 @@ namespace CryptoGramBot.Services
                 }
             }
 
-            if (_bittrexConfig.Enabled || _poloniexConfig.Enabled || _coinigyConfig.Enabled)
+            if (_bittrexConfig.Enabled || _poloniexConfig.Enabled || _binanceConfig.Enabled || _coinigyConfig.Enabled)
             {
                 registry.Schedule(() => CheckBalances().Wait()).ToRunEvery(1).Hours().At(0);
                 registry.Schedule(() => CheckBalances().Wait()).ToRunOnceIn(30).Seconds();
                 registry.Schedule(() => CheckDepositAndWithdrawals().Wait()).ToRunEvery(2).Minutes();
             }
 
-            if (_bagConfig.Enabled || _lowBtcConfig.Enabled || _dustConfig.Enabled)
-            {
-                registry.Schedule(() => CheckForBags().Wait()).ToRunEvery(8).Hours();
-                registry.Schedule(() => CheckForBags().Wait()).ToRunOnceIn(5).Minutes();
-            }
+            //                registry.Schedule(() => CheckForBags().Wait()).ToRunEvery(8).Hours();
+            registry.Schedule(() => CheckForBags().Wait()).ToRunNow();
 
             if (_coinigyConfig.Enabled)
             {
                 registry.Schedule(() => GetCoinigyAccounts().Wait()).ToRunOnceIn(3).Minutes();
             }
+
+            registry.Schedule(() => ForceGC()).ToRunEvery(15).Minutes();
 
             JobManager.Initialize(registry);
 
@@ -123,6 +139,16 @@ namespace CryptoGramBot.Services
         {
             var balanceCheckEvent = new BalanceCheckEvent(true, exchange);
             await _bus.PublishAsync(balanceCheckEvent);
+        }
+
+        private async Task FindBinanceSymbols()
+        {
+            await _bus.SendAsync(new BinanceQuerySymbolsCommand());
+        }
+
+        private void ForceGC()
+        {
+            GC.Collect();
         }
 
         private async Task GetCoinigyAccounts()

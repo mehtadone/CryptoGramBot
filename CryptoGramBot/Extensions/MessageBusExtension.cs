@@ -4,6 +4,7 @@ using CryptoGramBot.EventBus.Commands;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
 using CryptoGramBot.EventBus.Handlers.BalanceInfo;
+using CryptoGramBot.EventBus.Handlers.Binance;
 using CryptoGramBot.EventBus.Handlers.Bittrex;
 using CryptoGramBot.EventBus.Handlers.Coinigy;
 using CryptoGramBot.EventBus.Handlers.Poloniex;
@@ -49,6 +50,13 @@ namespace CryptoGramBot.Extensions
                 busBuilder.RegisterEventHandler<BalanceCheckEvent, BittrexBalanceCheckHandler>();
             }
 
+            if (binanceEnabled)
+            {
+                busBuilder.RegisterEventHandler<NewTradesCheckEvent, BinanceNewOrderCheckHandler>();
+                busBuilder.RegisterEventHandler<BalanceCheckEvent, BinanceBalanceCheckHandler>();
+                busBuilder.RegisterCommandHandler<BinanceQuerySymbolsCommand, BinanceSymbolGenerateHandler>();
+            }
+
             if ((bagEnabled || dustEnabled) && bittrexEnabled)
             {
                 busBuilder.RegisterEventHandler<BagAndDustEvent, BittrexBagAndDustHandler>();
@@ -59,6 +67,12 @@ namespace CryptoGramBot.Extensions
             {
                 busBuilder.RegisterEventHandler<BagAndDustEvent, PoloniexBagAndDustHandler>();
                 busBuilder.RegisterEventHandler<DepositAndWithdrawalEvent, PoloniexDepositWithdrawalHandler>();
+            }
+
+            if ((bagEnabled || dustEnabled) && binanceEnabled)
+            {
+                busBuilder.RegisterEventHandler<BagAndDustEvent, BinanceBagAndDustHandler>();
+                busBuilder.RegisterEventHandler<DepositAndWithdrawalEvent, BinanceDepositWithdrawalHandler>();
             }
 
             return busBuilder;

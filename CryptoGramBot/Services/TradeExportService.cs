@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ using OfficeOpenXml;
 
 namespace CryptoGramBot.Services
 {
-    public class TradeExportService
+    public class TradeExportService : IDisposable
     {
         private readonly DatabaseService _databaseService;
         private readonly ILogger<TradeExportService> _log;
@@ -19,6 +20,10 @@ namespace CryptoGramBot.Services
         {
             _log = log;
             _databaseService = databaseService;
+        }
+
+        public void Dispose()
+        {
         }
 
         public async Task<FileInfo> GetTradeExport()

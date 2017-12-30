@@ -43,7 +43,7 @@ namespace CryptoGramBot.Services.Exchanges
 
                     if (response.Success)
                     {
-                        bittrexBalances = TradeConverter.BittrexToWalletBalances(response.Result);
+                        bittrexBalances = BittrexConvertor.BittrexToWalletBalances(response.Result);
                     }
                     else
                     {
@@ -54,7 +54,6 @@ namespace CryptoGramBot.Services.Exchanges
             catch (Exception e)
             {
                 _log.LogError("Error in getting balances from bittrex: " + e.Message);
-                throw;
             }
 
             var totalBtcBalance = 0m;
@@ -132,7 +131,7 @@ namespace CryptoGramBot.Services.Exchanges
 
                     if (response.Success)
                     {
-                        list = TradeConverter.BittrexToDeposits(response.Result);
+                        list = BittrexConvertor.BittrexToDeposits(response.Result);
                     }
                     else
                     {
@@ -143,7 +142,6 @@ namespace CryptoGramBot.Services.Exchanges
             catch (Exception e)
             {
                 _log.LogError("Error in getting deposits from bittrex: " + e.Message);
-                throw;
             }
 
             var newDeposits = await _databaseService.AddDeposits(list, Constants.Bittrex);
@@ -164,7 +162,7 @@ namespace CryptoGramBot.Services.Exchanges
 
                     if (response.Success)
                     {
-                        openOrders = TradeConverter.BittrexToOpenOrders(response.Result);
+                        openOrders = BittrexConvertor.BittrexToOpenOrders(response.Result);
                     }
                     else
                     {
@@ -175,7 +173,6 @@ namespace CryptoGramBot.Services.Exchanges
             catch (Exception e)
             {
                 _log.LogError("Error in getting openOrders from bittrex: " + e.Message);
-                throw;
             }
 
             var newOrders = await _databaseService.AddOpenOrders(openOrders);
@@ -195,7 +192,7 @@ namespace CryptoGramBot.Services.Exchanges
 
                     if (response.Success)
                     {
-                        list = TradeConverter.BittrexToWithdrawals(response.Result);
+                        list = BittrexConvertor.BittrexToWithdrawals(response.Result);
                     }
                     else
                     {
@@ -206,7 +203,6 @@ namespace CryptoGramBot.Services.Exchanges
             catch (Exception e)
             {
                 _log.LogError("Error in getting withdrawals from bittrex: " + e.Message);
-                throw;
             }
 
             var newWithdrawals = await _databaseService.AddWithdrawals(list, Constants.Bittrex);
@@ -226,7 +222,7 @@ namespace CryptoGramBot.Services.Exchanges
 
                     if (response.Success)
                     {
-                        list = TradeConverter.BittrexToTrades(response.Result, _log);
+                        list = BittrexConvertor.BittrexToTrades(response.Result, _log);
                     }
                     else
                     {
@@ -237,7 +233,6 @@ namespace CryptoGramBot.Services.Exchanges
             catch (Exception e)
             {
                 _log.LogError("Error in getting trades from bittrex: " + e.Message);
-                throw;
             }
 
             return list;

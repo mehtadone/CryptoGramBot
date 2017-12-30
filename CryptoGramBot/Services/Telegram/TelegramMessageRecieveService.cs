@@ -120,6 +120,10 @@ namespace CryptoGramBot.Services.Telegram
             {
                 await _sendingService.BittrexBalance();
             }
+            else if (message.StartsWith(TelegramCommands.BinanceBalanceInfo))
+            {
+                await _sendingService.BinanceBalance();
+            }
             else if (message.StartsWith(TelegramCommands.PoloniexBalanceInfo))
             {
                 await _sendingService.PoloniexBalance();

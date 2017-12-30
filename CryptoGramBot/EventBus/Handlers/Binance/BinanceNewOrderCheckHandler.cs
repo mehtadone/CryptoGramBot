@@ -9,18 +9,18 @@ using CryptoGramBot.Services.Exchanges;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
 
-namespace CryptoGramBot.EventBus.Handlers.Poloniex
+namespace CryptoGramBot.EventBus.Handlers.Binance
 {
-    public class PoloniexNewOrderCheckHandler : IEventHandler<NewTradesCheckEvent>
+    public class BinanceNewOrderCheckHandler : IEventHandler<NewTradesCheckEvent>
     {
         private readonly IMicroBus _bus;
         private readonly IConfig _config;
-        private readonly ILogger<PoloniexService> _log;
-        private readonly PoloniexService _poloService;
+        private readonly BinanceService _exchangeService;
+        private readonly ILogger<BinanceService> _log;
 
-        public PoloniexNewOrderCheckHandler(PoloniexService poloService, ILogger<PoloniexService> log, IMicroBus bus, PoloniexConfig config)
+        public BinanceNewOrderCheckHandler(BinanceService exchangeService, ILogger<BinanceService> log, IMicroBus bus, BinanceConfig config)
         {
-            _poloService = poloService;
+            _exchangeService = exchangeService;
             _log = log;
             _bus = bus;
             _config = config;
@@ -30,17 +30,17 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         {
             try
             {
-                var lastChecked = await _bus.QueryAsync(new LastCheckedQuery(Constants.Poloniex));
-                var orderHistory = await _poloService.GetOrderHistory(lastChecked.LastChecked - TimeSpan.FromDays(2));
+                var lastChecked = await _bus.QueryAsync(new LastCheckedQuery(Constants.Binance));
+                var orderHistory = await _exchangeService.GetOrderHistory(lastChecked.LastChecked - TimeSpan.FromDays(2));
                 var newTradesResponse = await _bus.QueryAsync(new FindNewTradeQuery(orderHistory));
-                await _bus.SendAsync(new AddLastCheckedCommand(Constants.Poloniex));
+                await _bus.SendAsync(new AddLastCheckedCommand(Constants.Binance));
 
                 await SendAndCheckNotifications(newTradesResponse);
                 await SendOpenOrdersNotifications(lastChecked.LastChecked);
             }
             catch (Exception ex)
             {
-                _log.LogError("Error in getting new orders from poloniex\n" + ex.Message);
+                _log.LogError("Error in getting new orders from Binance\n" + ex.Message);
                 throw;
             }
         }
@@ -49,10 +49,11 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         {
             if (!_config.BuyNotifications.HasValue && !_config.SellNotifications.HasValue) return;
 
-            if (newTradesResponse.NewTrades.Count() > 29)
+            var count = newTradesResponse.NewTrades.Count();
+            if (count > 29)
             {
                 var stringBuffer = new StringBuffer();
-                stringBuffer.Append(StringContants.PoloniexMoreThan30Trades);
+                stringBuffer.Append(StringContants.BinanceMoreThan30Trades);
                 await _bus.SendAsync(
                     new SendMessageCommand(
                         stringBuffer));
@@ -77,12 +78,12 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         {
             if (_config.OpenOrderNotification.HasValue && _config.OpenOrderNotification.Value)
             {
-                var newOrders = await _poloService.GetNewOpenOrders(lastChecked - TimeSpan.FromDays(2));
+                var newOrders = await _exchangeService.GetNewOpenOrders(lastChecked - TimeSpan.FromDays(2));
 
                 if (newOrders.Count > 30)
                 {
                     var stringBuilder = new StringBuffer();
-                    stringBuilder.Append(StringContants.PoloniexMoreThan30OpenOrders);
+                    stringBuilder.Append(StringContants.BinanceMoreThan30OpenOrders);
 
                     await _bus.SendAsync(new SendMessageCommand(stringBuilder));
                     return;

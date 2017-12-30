@@ -8,6 +8,7 @@ namespace CryptoGramBot.EventBus.Handlers
 {
     public class HelpMessageHandler : ICommandHandler<SendHelpMessageCommand>
     {
+        private readonly BinanceConfig _binanceConfig;
         private readonly BittrexConfig _bittrexConfig;
         private readonly IMicroBus _bus;
         private readonly CoinigyConfig _coinigyConfig;
@@ -19,12 +20,14 @@ namespace CryptoGramBot.EventBus.Handlers
             BittrexConfig bittrexConfig,
             PoloniexConfig poloniexConfig,
             CoinigyConfig coinigyConfig,
+            BinanceConfig binanceConfig,
             IMicroBus bus)
         {
             _log = log;
             _bittrexConfig = bittrexConfig;
             _poloniexConfig = poloniexConfig;
             _coinigyConfig = coinigyConfig;
+            _binanceConfig = binanceConfig;
             _bus = bus;
         }
 
@@ -54,6 +57,11 @@ namespace CryptoGramBot.EventBus.Handlers
                 sb.Append(StringContants.PoloCommands);
                 sb.Append(string.Format("{0} - poloniex account summary\n", TelegramCommands.PoloniexBalanceInfo));
                 sb.Append(string.Format("{0} - reset trades database from poloniex\n", TelegramCommands.PoloniexTradeReset));
+            }
+            if (_binanceConfig.Enabled)
+            {
+                sb.Append(StringContants.BinanceCommands);
+                sb.Append(string.Format("{0} - binance account summary\n", TelegramCommands.BinanceBalanceInfo));
             }
 
             _log.LogInformation("Sending help message");

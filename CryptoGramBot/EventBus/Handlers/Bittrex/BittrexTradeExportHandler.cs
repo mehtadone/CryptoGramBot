@@ -40,7 +40,7 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
             {
                 var bot = new TelegramBotClient(_config.BotToken);
                 var file = await bot.GetFileAsync(command.FileId);
-                var trades = TradeConverter.BittrexFileToTrades(file.FileStream, _log);
+                var trades = BittrexConvertor.BittrexFileToTrades(file.FileStream, _log);
                 await _databaseService.DeleteAllTrades(Constants.Bittrex);
                 var newTrades = await _databaseService.AddTrades(trades);
 

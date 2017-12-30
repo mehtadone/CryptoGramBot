@@ -30,7 +30,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
 
         public async Task Handle(DepositAndWithdrawalEvent @event)
         {
-            if (_config.DepositNotification)
+            if (_config.DepositNotification.HasValue && _config.DepositNotification.Value)
             {
                 var deposits = await _poloniexService.GetNewDeposits();
 
@@ -52,7 +52,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                 }
             }
 
-            if (_config.WithdrawalNotification)
+            if (_config.WithdrawalNotification.HasValue && _config.WithdrawalNotification.Value)
             {
                 var withdrawals = await _poloniexService.GetNewWithdrawals();
 
@@ -77,9 +77,8 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         private async Task SendDepositNotification(Deposit deposit, decimal btcAmount)
         {
             var sb = new StringBuffer();
-            sb.Append(string.Format("{0}", deposit.Time.ToString("g")));
-            sb.Append(string.Format("<strong>{0} Deposit of {1}</strong>", Constants.Poloniex, deposit.Currency));
-            sb.Append(string.Format("<strong>Currency: {0}</strong>", deposit.Currency));
+            sb.Append(string.Format("{0}\n", deposit.Time.ToString("g")));
+            sb.Append($"{StringContants.StrongOpen}{Constants.Poloniex} Deposit of {deposit.Currency}{StringContants.StrongClose}\n");
             sb.Append(string.Format("Amount: {0} ({1} {2})", deposit.Amount, btcAmount.ToString("##0.####"), _generalConfig.TradingCurrency));
 
             await _bus.SendAsync(new SendMessageCommand(sb));
@@ -88,8 +87,8 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         private async Task SendWithdrawalNotification(Withdrawal withdrawal, decimal btcAmount)
         {
             var sb = new StringBuffer();
-            sb.Append(string.Format("{0}", withdrawal.Time.ToString("g")));
-            sb.Append(string.Format("<strong>{0} Withdrawal of {1}</strong>", Constants.Poloniex, withdrawal.Currency));
+            sb.Append(string.Format("{0}\n", withdrawal.Time.ToString("g")));
+            sb.Append($"{StringContants.StrongOpen}{Constants.Poloniex} Withdrawal of {withdrawal.Currency}{StringContants.StrongClose}\n");
             sb.Append(string.Format("Amount: {0} ({1} {2})", withdrawal.Amount, btcAmount.ToString("##0.####"), _generalConfig.TradingCurrency));
             await _bus.SendAsync(new SendMessageCommand(sb));
         }

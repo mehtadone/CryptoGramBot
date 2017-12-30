@@ -102,6 +102,11 @@ namespace Jojatekok.PoloniexAPI
 
             try
             {
+                if (jsonString == "[]")
+                {
+                    return new List<ITrade>();
+                }
+
                 var output = JObject.Parse(jsonString);
                 var jsonSerializer = new JsonSerializer { NullValueHandling = NullValueHandling.Ignore };
                 foreach (var token in output)

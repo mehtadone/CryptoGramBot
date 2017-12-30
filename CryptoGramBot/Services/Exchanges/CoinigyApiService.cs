@@ -11,7 +11,7 @@ using CryptoGramBot.Models;
 
 namespace CryptoGramBot.Services
 {
-    public class CoinigyApiService
+    public class CoinigyApiService : IDisposable
     {
         private readonly Dictionary<int, CoinigyAccount> _coinigyAccounts = new Dictionary<int, CoinigyAccount>();
         private readonly CoinigyConfig _config;
@@ -21,6 +21,10 @@ namespace CryptoGramBot.Services
         {
             _config = config;
             _log = log;
+        }
+
+        public void Dispose()
+        {
         }
 
         public async Task<Dictionary<int, CoinigyAccount>> GetAccounts()

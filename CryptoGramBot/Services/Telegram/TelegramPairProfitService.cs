@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CryptoGramBot.Services.Telegram
 {
-    public class TelegramPairProfitService
+    public class TelegramPairProfitService : IDisposable
     {
         private readonly IMicroBus _bus;
         private readonly ILogger<TelegramPairProfitService> _log;
@@ -16,6 +16,10 @@ namespace CryptoGramBot.Services.Telegram
         {
             _log = log;
             _bus = bus;
+        }
+
+        public void Dispose()
+        {
         }
 
         public async Task RequestedPairProfit()

@@ -36,7 +36,7 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
                 await _coinigyBalanceService.GetBalance();
             }
 
-            if (@event.UserRequested || _config.SendHourlyUpdates && @event.Exchange == Constants.CoinigyAccountBalance)
+            if (@event.UserRequested || @event.Exchange == Constants.CoinigyAccountBalance)
             {
                 if (@event.CoinigyAccountId.HasValue)
                 {
@@ -45,7 +45,7 @@ namespace CryptoGramBot.EventBus.Handlers.BalanceInfo
                 }
             }
 
-            if (@event.Exchange == Constants.TotalCoinigyBalance && (@event.UserRequested || _config.SendHourlyUpdates))
+            if (@event.Exchange == Constants.TotalCoinigyBalance && (@event.UserRequested))
             {
                 await _coinigyBalanceService.GetAllBalances();
                 var balanceInformation = await _coinigyBalanceService.GetBalance();

@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CryptoGramBot.Services.Telegram
 {
-    public class TelegramMessageSendingService
+    public class TelegramMessageSendingService : IDisposable
     {
         private readonly IMicroBus _bus;
         private readonly ILogger<TelegramMessageSendingService> _log;
@@ -23,9 +23,13 @@ namespace CryptoGramBot.Services.Telegram
             _bus = bus;
         }
 
+        public async Task BinanceBalance()
+        {
+            await _bus.PublishAsync(new BalanceCheckEvent(true, Constants.Binance));
+        }
+
         public async Task BittrexBalance()
         {
-            _log.LogInformation("24 Hour pnl difference for bittrex");
             await _bus.PublishAsync(new BalanceCheckEvent(true, Constants.Bittrex));
         }
 
@@ -33,7 +37,7 @@ namespace CryptoGramBot.Services.Telegram
         {
             BittrexFileUploadState.Waiting = true;
             var mess = new StringBuffer();
-            mess.Append(StringContants.PleaseUploadBittrexFile);
+            mess.Append(StringContants.BittrexFileUpload);
             await _bus.SendAsync(new SendMessageCommand(mess));
         }
 
@@ -71,6 +75,10 @@ namespace CryptoGramBot.Services.Telegram
             }
         }
 
+        public void Dispose()
+        {
+        }
+
         public async Task ExcelSheet()
         {
             _log.LogInformation("Excel sheet");
@@ -79,7 +87,6 @@ namespace CryptoGramBot.Services.Telegram
 
         public async Task PoloniexBalance()
         {
-            _log.LogInformation("24 Hour pnl difference for poloniex");
             await _bus.PublishAsync(new BalanceCheckEvent(true, Constants.Poloniex));
         }
 
@@ -90,7 +97,6 @@ namespace CryptoGramBot.Services.Telegram
 
         public async Task TotalCoinigyBalance()
         {
-            _log.LogInformation("24 Hour pnl difference for coinigy");
             await _bus.PublishAsync(new BalanceCheckEvent(true, Constants.TotalCoinigyBalance));
         }
     }

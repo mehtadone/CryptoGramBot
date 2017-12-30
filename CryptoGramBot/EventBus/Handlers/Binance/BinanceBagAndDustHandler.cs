@@ -8,33 +8,33 @@ using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Exchanges;
 using Enexure.MicroBus;
 
-namespace CryptoGramBot.EventBus.Handlers.Poloniex
+namespace CryptoGramBot.EventBus.Handlers.Binance
 {
-    public class PoloniexBagAndDustHandler : IEventHandler<BagAndDustEvent>
+    public class BinanceBagAndDustHandler : IEventHandler<BagAndDustEvent>
     {
+        private readonly BinanceService _binanceService;
         private readonly IMicroBus _bus;
-        private readonly PoloniexConfig _config;
+        private readonly BinanceConfig _config;
         private readonly DatabaseService _databaseService;
         private readonly GeneralConfig _generalConfig;
-        private readonly PoloniexService _poloService;
 
-        public PoloniexBagAndDustHandler(
+        public BinanceBagAndDustHandler(
             IMicroBus bus,
-            PoloniexService poloService,
-            PoloniexConfig config,
+            BinanceConfig config,
+            BinanceService binanceService,
             DatabaseService databaseService,
             GeneralConfig generalConfig)
         {
             _bus = bus;
-            _poloService = poloService;
             _config = config;
+            _binanceService = binanceService;
             _databaseService = databaseService;
             _generalConfig = generalConfig;
         }
 
         public async Task Handle(BagAndDustEvent @event)
         {
-            var balanceInformation = await _poloService.GetBalance();
+            var balanceInformation = await _binanceService.GetBalance();
 
             foreach (var walletBalance in balanceInformation.WalletBalances)
             {
@@ -52,9 +52,9 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                 if (walletBalance.Currency != Constants.BTC && walletBalance.Currency != "USDT" &&
                     walletBalance.Currency != "USD")
                 {
-                    var averagePrice = await _databaseService.GetBuyAveragePrice(_generalConfig.TradingCurrency, walletBalance.Currency, Constants.Poloniex, walletBalance.Available);
+                    var averagePrice = await _databaseService.GetBuyAveragePrice(_generalConfig.TradingCurrency, walletBalance.Currency, Constants.Binance, walletBalance.Available);
 
-                    var currentPrice = await _poloService.GetPrice(_generalConfig.TradingCurrency, walletBalance.Currency);
+                    var currentPrice = await _binanceService.GetPrice(_generalConfig.TradingCurrency, walletBalance.Currency);
 
                     if (_config.BagNotification.HasValue)
                     {
@@ -90,10 +90,10 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         private async Task SendBagNotification(WalletBalance walletBalance, decimal averagePrice, decimal currentPrice, decimal percentageDrop)
         {
             var lastBought =
-                await _databaseService.GetLastBoughtAsync(_generalConfig.TradingCurrency, walletBalance.Currency, Constants.Poloniex);
+                await _databaseService.GetLastBoughtAsync(_generalConfig.TradingCurrency, walletBalance.Currency, Constants.Binance);
 
             var sb = new StringBuffer();
-            sb.Append($"{StringContants.StrongOpen}{Constants.Poloniex}{StringContants.StrongClose}: {DateTime.Now:g}\n");
+            sb.Append($"{StringContants.StrongOpen}{Constants.Binance}{StringContants.StrongClose}: {DateTime.Now:g}\n");
             sb.Append($"{StringContants.StrongOpen}Bag detected for {walletBalance.Currency}{StringContants.StrongClose}\n");
             sb.Append($"Average bought price: {averagePrice:#0.#############}\n");
             sb.Append($"Current price: {currentPrice:#0.#############}\n");
@@ -107,7 +107,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         private async Task SendBtcLowNotification(decimal walletBalanceBtcAmount)
         {
             var sb = new StringBuffer();
-            sb.Append($"{StringContants.StrongOpen}{Constants.Poloniex}{StringContants.StrongClose}: {DateTime.Now:g}\n");
+            sb.Append($"{StringContants.StrongOpen}{Constants.Binance}{StringContants.StrongClose}: {DateTime.Now:g}\n");
             sb.Append($"{StringContants.StrongOpen}Low {_generalConfig.TradingCurrency} detected{StringContants.StrongClose}\n");
             sb.Append($"{_generalConfig.TradingCurrency} Amount: {walletBalanceBtcAmount:#0.#############}");
             await _bus.SendAsync(new SendMessageCommand(sb));
@@ -116,7 +116,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
         private async Task SendDustNotification(WalletBalance walletBalance)
         {
             var sb = new StringBuffer();
-            sb.Append($"{StringContants.StrongOpen}{Constants.Poloniex}{StringContants.StrongClose}: {DateTime.Now:g}\n");
+            sb.Append($"{StringContants.StrongOpen}{Constants.Binance}{StringContants.StrongClose}: {DateTime.Now:g}\n");
             sb.Append($"{StringContants.StrongOpen}Dust detected for {walletBalance.Currency}{StringContants.StrongClose}\n");
             sb.Append($"{_generalConfig.TradingCurrency} Amount: {walletBalance.BtcAmount:#0.#############}\n");
             await _bus.SendAsync(new SendMessageCommand(sb));

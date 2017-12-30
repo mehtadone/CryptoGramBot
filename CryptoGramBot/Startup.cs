@@ -2,11 +2,13 @@
 using System.IO;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Binance;
 using Bittrex.Net;
 using Bittrex.Net.RateLimiter;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Data;
 using CryptoGramBot.Extensions;
+using CryptoGramBot.Helpers;
 using CryptoGramBot.Services;
 using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Exchanges;
@@ -71,11 +73,13 @@ namespace CryptoGramBot
             var serviceCollection = new ServiceCollection().AddLogging(loggingBuilder =>
                 loggingBuilder.AddSerilog(dispose: true));
 
-            var databaseLocation = Directory.GetCurrentDirectory() + "/database/cryptogrambot.sqlite";
-
             serviceCollection.AddDbContext<CryptoGramBotDbContext>(options =>
-                options.UseSqlite("Data Source=" + databaseLocation + ";cache=shared")
+                options.UseSqlite(StringContants.DatabaseLocation)
             );
+
+            serviceCollection.AddBinance();
+
+            serviceCollection.BuildServiceProvider();
 
             containerBuilder.Populate(serviceCollection);
 
@@ -84,13 +88,11 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<BittrexConfig>().SingleInstance();
             containerBuilder.RegisterType<BinanceConfig>().SingleInstance();
             containerBuilder.RegisterType<PoloniexConfig>().SingleInstance();
-            containerBuilder.RegisterType<BagConfig>().SingleInstance();
-            containerBuilder.RegisterType<DustConfig>().SingleInstance();
             containerBuilder.RegisterType<GeneralConfig>().SingleInstance();
-            containerBuilder.RegisterType<LowBtcConfig>().SingleInstance();
             containerBuilder.RegisterType<CoinigyApiService>();
             containerBuilder.RegisterType<BittrexService>();
             containerBuilder.RegisterType<PoloniexService>();
+            containerBuilder.RegisterType<BinanceService>().SingleInstance(); // because symbols is saved in it. //todo move this out into a cache
             containerBuilder.RegisterType<DatabaseService>();
             containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
             containerBuilder.RegisterType<TelegramMessageSendingService>();
@@ -122,7 +124,7 @@ namespace CryptoGramBot
             var loggerFactory = Container.Resolve<ILoggerFactory>();
             var log = loggerFactory.CreateLogger<Program>();
 
-            log.LogInformation($"Services\nCoinigy: {coinigyEnabled}\nBittrex: {bittrexEnabled}\nBinance: {poloniexEnabled}\nPoloniex: {poloniexEnabled}\nBag Management: {bagEnabled}\nDust Notifications: {dustEnabled}\nLow BTC Notifications: {lowBtcEnabled}");
+            log.LogInformation($"Services\nCoinigy: {coinigyEnabled}\nBittrex: {bittrexEnabled}\nBinance: {binanceEnabled}\nPoloniex: {poloniexEnabled}\nBag Management: {bagEnabled}\nDust Notifications: {dustEnabled}\nLow BTC Notifications: {lowBtcEnabled}");
             ConfigureConfig(Container, Configuration, log);
         }
 
@@ -132,11 +134,11 @@ namespace CryptoGramBot
             {
                 var config = container.Resolve<CoinigyConfig>();
                 configuration.GetSection("Coinigy").Bind(config);
-                log.LogInformation("Created Coinigy Config");
+                log.LogInformation("Created coinigy config");
             }
             catch (Exception)
             {
-                log.LogError("Error in reading Coinigy Config");
+                log.LogError("Error in reading coinigy config");
                 throw;
             }
 
@@ -144,11 +146,11 @@ namespace CryptoGramBot
             {
                 var config = container.Resolve<GeneralConfig>();
                 configuration.GetSection("General").Bind(config);
-                log.LogInformation("Created General Config");
+                log.LogInformation("Created general config");
             }
             catch (Exception)
             {
-                log.LogError("Error in reading General Config");
+                log.LogError("Error in reading general config");
                 throw;
             }
 
@@ -156,7 +158,7 @@ namespace CryptoGramBot
             {
                 var config = container.Resolve<TelegramConfig>();
                 configuration.GetSection("Telegram").Bind(config);
-                log.LogInformation("Created Telegram Config");
+                log.LogInformation("Created telegram config");
             }
             catch (Exception)
             {
@@ -176,63 +178,27 @@ namespace CryptoGramBot
                 throw;
             }
 
-            //            try
-            //            {
-            //                var config = container.Resolve<BinanceConfig>();
-            //                configuration.GetSection("Binance").Bind(config);
-            //                log.LogInformation("Created binance config");
-            //            }
-            //            catch (Exception)
-            //            {
-            //                log.LogError("Error in reading binance config");
-            //                throw;
-            //            }
+            try
+            {
+                var config = container.Resolve<BinanceConfig>();
+                configuration.GetSection("Binance").Bind(config);
+                log.LogInformation("Created binance config");
+            }
+            catch (Exception)
+            {
+                log.LogError("Error in reading binance config");
+                throw;
+            }
 
             try
             {
                 var config = container.Resolve<PoloniexConfig>();
                 configuration.GetSection("Poloniex").Bind(config);
-                log.LogInformation("Created Poloniex config");
+                log.LogInformation("Created poloniex config");
             }
             catch (Exception)
             {
-                log.LogError("Error in reading telegram config");
-                throw;
-            }
-
-            try
-            {
-                var config = container.Resolve<BagConfig>();
-                configuration.GetSection("BagManagement").Bind(config);
-                log.LogInformation("Created Bag Management Config");
-            }
-            catch (Exception)
-            {
-                log.LogError("Error in reading bag management config");
-                throw;
-            }
-
-            try
-            {
-                var config = container.Resolve<DustConfig>();
-                configuration.GetSection("DustNotification").Bind(config);
-                log.LogInformation("Created dust notification Config");
-            }
-            catch (Exception)
-            {
-                log.LogError("Error in reading dust notification config");
-                throw;
-            }
-
-            try
-            {
-                var config = container.Resolve<LowBtcConfig>();
-                configuration.GetSection("LowBtcNotification").Bind(config);
-                log.LogInformation("Created low btc Config");
-            }
-            catch (Exception)
-            {
-                log.LogError("Error in reading low btc config");
+                log.LogError("Error in reading poloniex config");
                 throw;
             }
         }

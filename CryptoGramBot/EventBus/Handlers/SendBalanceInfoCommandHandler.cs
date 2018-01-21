@@ -40,7 +40,11 @@ namespace CryptoGramBot.EventBus.Handlers
             sb.Append(previousFormat);
             sb.Append(differenceFormat);
 
-            try
+            if (lastBalance.Balance == 0 || lastBalance.DollarAmount == 0)
+            {
+                await No24HourOfDataNotify();
+            }
+            else
             {
                 var percentage = Math.Round((current.Balance - lastBalance.Balance) / lastBalance.Balance * 100, 2);
                 var dollarPercentage = Math.Round(
@@ -49,12 +53,6 @@ namespace CryptoGramBot.EventBus.Handlers
                 var percentageFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Change:", $"  {percentage}% {_generalConfig.TradingCurrency} ({dollarPercentage}% USD)", StringContants.StrongOpen, StringContants.StrongClose);
 
                 sb.Append(percentageFormat);
-            }
-            catch (Exception)
-            {
-                var message = new StringBuffer();
-                message.Append(StringContants.No24HourOfData);
-                await _bus.SendAsync(new SendMessageCommand(message));
             }
 
             if (walletBalances != null)
@@ -69,6 +67,13 @@ namespace CryptoGramBot.EventBus.Handlers
             }
 
             await _bus.SendAsync(new SendMessageCommand(sb));
+        }
+
+        private async Task No24HourOfDataNotify()
+        {
+            var message = new StringBuffer();
+            message.Append(StringContants.No24HourOfData);
+            await _bus.SendAsync(new SendMessageCommand(message));
         }
     }
 }

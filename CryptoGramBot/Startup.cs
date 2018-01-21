@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using Autofac;
+﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Binance;
 using Bittrex.Net;
@@ -10,7 +8,6 @@ using CryptoGramBot.Data;
 using CryptoGramBot.Extensions;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Services;
-using CryptoGramBot.Services.Cache;
 using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Exchanges;
 using CryptoGramBot.Services.Exchanges.WebSockets.Binance;
@@ -27,6 +24,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using System;
 
 namespace CryptoGramBot
 {
@@ -80,8 +78,9 @@ namespace CryptoGramBot
             );
 
             serviceCollection.AddBinance();
+            serviceCollection.AddTransient<ICustomUserDataWebSocketClient, CustomUserDataWebSocketClient>();
 
-            serviceCollection.BuildServiceProvider();
+            serviceCollection.BuildServiceProvider();           
 
             containerBuilder.Populate(serviceCollection);
 
@@ -95,8 +94,9 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<BittrexService>();
             containerBuilder.RegisterType<PoloniexService>();
             containerBuilder.RegisterType<BinanceService>().SingleInstance(); // because symbols is saved in it. //todo move this out into a cache
-            containerBuilder.RegisterType<MemoryCacheService>().SingleInstance();
-            containerBuilder.RegisterType<BinanceWebsocketService>().SingleInstance();
+            containerBuilder.RegisterType<BinanceCacheService>().As<IBinanceCacheService>();
+            containerBuilder.RegisterType<BinanceSubscribersService>().As<IBinanceSubscribersService>();
+            containerBuilder.RegisterType<BinanceWebsocketService>();
             containerBuilder.RegisterType<DatabaseService>();
             containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
             containerBuilder.RegisterType<TelegramMessageSendingService>();

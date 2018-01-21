@@ -108,16 +108,14 @@ namespace CryptoGramBot.Helpers
 
         public static decimal PriceDifference(decimal currentPrice, decimal limit)
         {
-            try
+            if (limit == 0)
             {
-                var percentage = (currentPrice - limit) / limit * 100;
-                return Math.Round(percentage, 2);
-            }
-            catch (Exception)
-            {
-                // tried to dvide by 0
                 return 0;
             }
+
+            var percentage = (currentPrice - limit) / limit * 100;
+
+            return Math.Round(percentage, 2);
         }
     }
 }

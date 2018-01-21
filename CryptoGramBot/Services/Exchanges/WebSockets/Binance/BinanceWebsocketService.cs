@@ -6,8 +6,7 @@ using Binance.Api.WebSocket.Events;
 using Binance.Cache;
 using Binance.Market;
 using CryptoGramBot.Configuration;
-using CryptoGramBot.Services.Cache;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -23,37 +22,14 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private bool isDisposed;
 
-        private readonly string ACCOUNT_INFO_KEY = "account_info";
-        private readonly string ORDERS_BY_SYMBOL_KEY = "_orders";
-        private readonly string ACCOUNT_TRADES_BY_SYMBOL_KEY = "_accountTrades";
-        private readonly string SYMBOL_PRICES_KEY = "symbols";
-        private readonly int CACHE_TIME_IN_MINUTES = 60;
-
-        private readonly CancellationTokenSource _userDataCancellationTokenSource;
-        private readonly CancellationTokenSource _symbolStatisticCancellationTokenSource;
-
-        private readonly BinanceApiUser _user;
-
-        private Task userDataSubscribeTask;
-        private Task _symbolsSubscribeTask;
-
-        #endregion
-
-        #region WebSocket Clients
-
-        private AllSymbolStatisticsWebSocketClient _allSymbolStatisticsWebSocketClient;
-        private UserDataWebSocketClient _userDataWebSocketClient;
-
         #endregion
 
         #region Dependecies
 
         private readonly BinanceConfig _config;
         private readonly IBinanceApi _binanceApi;
-        private readonly MemoryCacheService _memoryCacheService;
-        private readonly IWebSocketClient _webSocketClient;
-        private readonly ILogger<SymbolStatisticsWebSocketClient> _symbolStattisticsLogger;
-        private readonly ILogger<UserDataWebSocketClient> _userDataWebSocketClientLogger;
+        private readonly IBinanceCacheService _cache;
+        private readonly IBinanceSubscribersService _subscribers;
 
         #endregion
 
@@ -61,22 +37,13 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public BinanceWebsocketService(BinanceConfig config,
            IBinanceApi binanceApi,
-           MemoryCacheService memoryCacheService,
-           IWebSocketClient webSocketClient, 
-           ILogger<SymbolStatisticsWebSocketClient> symbolStattisticsLogger,
-           ILogger<UserDataWebSocketClient> userDataWebSocketClientLogger)
+           IBinanceCacheService cache,
+           IBinanceSubscribersService subscribers)
         {
             _config = config;
             _binanceApi = binanceApi;
-            _memoryCacheService = memoryCacheService;
-            _webSocketClient = webSocketClient;
-            _symbolStattisticsLogger = symbolStattisticsLogger;
-            _userDataWebSocketClientLogger = userDataWebSocketClientLogger;
-
-            _userDataCancellationTokenSource = new CancellationTokenSource();
-            _symbolStatisticCancellationTokenSource = new CancellationTokenSource();
-
-            _user = new BinanceApiUser(_config.Key, _config.Secret);
+            _cache = cache;
+            _subscribers = subscribers;
         } 
 
         #endregion
@@ -92,7 +59,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             var orders = await GetOrders(symbol);
 
-            return orders.Where(p => p.Status == OrderStatus.New).ToList();
+            return orders.Where(order => order.IsOpen());
         }
 
         public async Task<IEnumerable<AccountTrade>> GetAccountTradesAsync(string symbol)
@@ -100,13 +67,11 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             return await GetAccountTrades(symbol);
         }
 
-        public async Task<IEnumerable<SymbolPrice>> GetPricesAsync()
+        public async Task<SymbolPrice> GetPrice(string symbol)
         {
-            var symbolPrices = await GetSymbolPrices();
+            var symbolPrice = await GetSymbolPrice(symbol);
 
-            var prices = symbolPrices.Select(p => new SymbolPrice(p.Key, p.Value)).ToList();
-
-            return prices;
+            return new SymbolPrice(symbol, symbolPrice);
         }
 
         #endregion
@@ -117,9 +82,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             if (!isDisposed)
             {
-                _user?.Dispose();
-                _symbolStatisticCancellationTokenSource?.Dispose();
-                _userDataCancellationTokenSource?.Dispose();
+                _subscribers.Dispose();
 
                 isDisposed = true;
             }
@@ -127,37 +90,47 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         #endregion
 
-        #region Methods
+        #region Private methods
+
+        #region Wrappers
 
         private Task<AccountInfo> GetAccountInfo()
         {
-            return GetOrCreateObject(
-                GetAccountInfoCache, InitializeAccountInfo, SetAccountInfoCache);
+            return GetOrCreateUserObject(
+                () => _cache.GetAccountInfo(),
+                () => InitializeAccountInfo(),
+                (accountInfo) => _cache.SetAccountInfo(accountInfo));
         }
 
         private Task<List<Order>> GetOrders(string symbol)
         {
-            return GetOrCreateObject(
-                () => GetOrdersCache(symbol),
+            return GetOrCreateUserObject(
+                () => _cache.GetOrders(symbol),
                 () => InitializeOpenOrders(symbol),
-                (orders) => SetOrdersCache(symbol, orders));
+                (orders) => _cache.SetOrders(symbol, orders));
         }
 
         private Task<List<AccountTrade>> GetAccountTrades(string symbol)
         {
-            return GetOrCreateObject(
-                () => GetAccountTradesCache(symbol),
+            return GetOrCreateUserObject(
+                () => _cache.GetAccountTrades(symbol),
                 () => InitializeAccountTrades(symbol),
-                (trades) => SetAccountTradesCache(symbol, trades));
+                (trades) => _cache.SetAccountTrades(symbol, trades));
         }
 
-        private Task<ConcurrentDictionary<string, decimal>> GetSymbolPrices()
+        private async Task<decimal> GetSymbolPrice(string symbol)
         {
-            return GetOrCreateObject(
-                GetSymbolPricesCache, InitializeSymbolPrices, SetSymbolPricesCache);
+            if (_cache.GetSymbolPrices() == null)
+            {
+                await InitializeSymbolPrices();
+            }
+
+            _subscribers.AddSymbols(OnStatisticsUpdate);
+
+            return _cache.GetSymbolPrice(symbol);
         }
 
-        private async Task<T> GetOrCreateObject<T>(Func<T> getFromCache, Func<Task<T>> initialize, Action<T> saveToCache)
+        private async Task<T> GetOrCreateUserObject<T>(Func<T> getFromCache, Func<Task<T>> initialize, Action<T> saveToCache)
             where T : class
         {
             if (getFromCache() == null)
@@ -167,48 +140,14 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 saveToCache(@object);
             }
 
+            _subscribers.AddUserData(OnOrderUpdate, OnAccountUpdate, OnAccountTradeUpdate);
+
             return getFromCache();
         }
 
-        private AccountInfo GetAccountInfoCache()
-        {
-            return _memoryCacheService.Get<AccountInfo>(ACCOUNT_INFO_KEY);
-        }
+        #endregion
 
-        private void SetAccountInfoCache(AccountInfo accountInfo)
-        {
-            _memoryCacheService.Set(ACCOUNT_INFO_KEY, accountInfo, CACHE_TIME_IN_MINUTES);
-        }
-
-        private List<Order> GetOrdersCache(string symbol)
-        {
-            return _memoryCacheService.Get<List<Order>>($"{symbol}{ORDERS_BY_SYMBOL_KEY}");
-        }
-
-        private void SetOrdersCache(string symbol, List<Order> orders)
-        {
-            _memoryCacheService.Set($"{symbol}{ORDERS_BY_SYMBOL_KEY}", orders, CACHE_TIME_IN_MINUTES);
-        }
-
-        private List<AccountTrade> GetAccountTradesCache(string symbol)
-        {
-            return _memoryCacheService.Get<List<AccountTrade>>($"{symbol}{ACCOUNT_TRADES_BY_SYMBOL_KEY}");
-        }
-
-        private void SetAccountTradesCache(string symbol, List<AccountTrade> trades)
-        {
-            _memoryCacheService.Set($"{symbol}{ACCOUNT_TRADES_BY_SYMBOL_KEY}", trades, CACHE_TIME_IN_MINUTES);
-        }
-
-        private ConcurrentDictionary<string, decimal> GetSymbolPricesCache()
-        {
-            return _memoryCacheService.Get<ConcurrentDictionary<string, decimal>>(SYMBOL_PRICES_KEY);
-        }
-
-        private void SetSymbolPricesCache(ConcurrentDictionary<string, decimal> symbolPrices)
-        {
-            _memoryCacheService.Set(SYMBOL_PRICES_KEY, symbolPrices, CACHE_TIME_IN_MINUTES);
-        }
+        #region Initial initialization
 
         private async Task<AccountInfo> InitializeAccountInfo()
         {
@@ -238,66 +177,26 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
-        private async Task<ConcurrentDictionary<string, decimal>> InitializeSymbolPrices()
+        private async Task InitializeSymbolPrices()
         {
             var symbolPrices = await _binanceApi.GetPricesAsync();
 
-            var symbolPriceDictionary = new ConcurrentDictionary<string, decimal>();
+            _cache.SetSymbolPrices(new ConcurrentDictionary<string, decimal>());
 
             foreach (var symbolPrice in symbolPrices)
             {
-                symbolPriceDictionary[symbolPrice.Symbol] = symbolPrice.Value;
-            }
-
-            return symbolPriceDictionary;
-        }
-
-        #region Subscribings
-
-        private void SubscribeSymbolWebSocket()
-        {
-            if (_allSymbolStatisticsWebSocketClient == null)
-            {
-                try
-                {
-                    _allSymbolStatisticsWebSocketClient = new AllSymbolStatisticsWebSocketClient(_webSocketClient, _symbolStattisticsLogger);
-
-                    _allSymbolStatisticsWebSocketClient.ManyStatisticsUpdate += OnManyStatisticsUpdate;
-
-                    _symbolsSubscribeTask = _allSymbolStatisticsWebSocketClient.SubscribeAsync(e => { }, _symbolStatisticCancellationTokenSource.Token);
-                }
-                catch (Exception)
-                { }
+                _cache.SetSymbolPrice(symbolPrice.Symbol, symbolPrice.Value);
             }
         }
-
-        private void SubscribeUserDataWebSocket()
-        {
-            if (_userDataWebSocketClient == null)
-            {
-                try
-                {
-                    _userDataWebSocketClient = new UserDataWebSocketClient(_binanceApi, _webSocketClient, null, _userDataWebSocketClientLogger);
-
-                    _userDataWebSocketClient.TradeUpdate += OnTradeUpdate;
-                    _userDataWebSocketClient.AccountUpdate += OnAccountUpdate;
-                    _userDataWebSocketClient.OrderUpdate += OnOrderUpdate;
-
-                    userDataSubscribeTask = _userDataWebSocketClient.SubscribeAsync(_user, _userDataCancellationTokenSource.Token);
-                }
-                catch (Exception)
-                { }
-            }
-        } 
 
         #endregion
 
-        #region EventHandlers Methods
+        #region Event Handlers Methods
 
-        private void OnTradeUpdate(object sender, AccountTradeUpdateEventArgs e)
+        private void OnAccountTradeUpdate(AccountTradeUpdateEventArgs e)
         {
             var symbol = e.Trade.Symbol;
-            var accountTrades = GetAccountTradesCache(symbol).ToList();
+            var accountTrades = _cache.GetAccountTrades(symbol).ToList();
 
             if (accountTrades != null)
             {
@@ -310,50 +209,52 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                 accountTrades.Add(e.Trade);
 
-                SetAccountTradesCache(symbol, accountTrades);
+                _cache.SetAccountTrades(symbol, accountTrades);
+
+                UpdateOrders(e.Order, symbol);
             }
         }
 
-        private void OnAccountUpdate(object sender, AccountUpdateEventArgs e)
+        private void OnAccountUpdate(AccountUpdateEventArgs e)
         {
-            SetAccountInfoCache(e.AccountInfo);
+            _cache.SetAccountInfo(e.AccountInfo);
         }
 
-        private void OnOrderUpdate(object sender, OrderUpdateEventArgs args)
+        private void OnOrderUpdate(OrderUpdateEventArgs args)
         {
             var symbol = args.Order.Symbol;
 
-            var orders = GetOrdersCache(symbol).ToList();
+            UpdateOrders(args.Order, symbol);
+        }
 
-            if (orders != null)
+        private void UpdateOrders(Order updatedOrder, string symbol)
+        {
+            var orders = _cache.GetOrders(symbol).ToList();
+
+            if(orders != null)
             {
-                var previosOrder = orders.FirstOrDefault(p => args.Order.Id == p.Id);
+                var previosOrder = orders.FirstOrDefault(p => updatedOrder.Id == p.Id);
 
                 if (previosOrder != null)
                 {
                     orders.Remove(previosOrder);
                 }
 
-                orders.Add(args.Order);
+                orders.Add(updatedOrder);
 
-                SetOrdersCache(symbol, orders);
+                _cache.SetOrders(symbol, orders);
             }
         }
 
-        private void OnManyStatisticsUpdate(object sender, Events.ManySymbolStatisticsEventArgs e)
+        private void OnStatisticsUpdate(SymbolStatisticsEventArgs e)
         {
-            var prices = GetSymbolPricesCache();
+            var statistics = e.Statistics;
 
-            if (prices != null)
+            foreach (var statistic in statistics)
             {
-                var statistics = e.Statistics;
-
-                foreach (var statistic in statistics)
-                {
-                    prices[statistic.Symbol] = statistic.LastPrice;
-                }
+                _cache.SetSymbolPrice(statistic.Symbol, statistic.LastPrice);
             }
-        } 
+        }
 
         #endregion
 

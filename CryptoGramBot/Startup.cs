@@ -10,8 +10,10 @@ using CryptoGramBot.Data;
 using CryptoGramBot.Extensions;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Services;
+using CryptoGramBot.Services.Cache;
 using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Exchanges;
+using CryptoGramBot.Services.Exchanges.WebSockets.Binance;
 using CryptoGramBot.Services.Pricing;
 using CryptoGramBot.Services.Telegram;
 using Enexure.MicroBus;
@@ -93,6 +95,8 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<BittrexService>();
             containerBuilder.RegisterType<PoloniexService>();
             containerBuilder.RegisterType<BinanceService>().SingleInstance(); // because symbols is saved in it. //todo move this out into a cache
+            containerBuilder.RegisterType<MemoryCacheService>().SingleInstance();
+            containerBuilder.RegisterType<BinanceWebsocketService>().SingleInstance();
             containerBuilder.RegisterType<DatabaseService>();
             containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
             containerBuilder.RegisterType<TelegramMessageSendingService>();

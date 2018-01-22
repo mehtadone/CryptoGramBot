@@ -206,11 +206,11 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
             if (accountTrades != null)
             {
-                var previosTrade = accountTrades.FirstOrDefault(p => p.Id == e.Trade.Id);
+                var previousTrade = accountTrades.FirstOrDefault(p => p.Id == e.Trade.Id);
 
-                if (previosTrade != null)
+                if (previousTrade != null)
                 {
-                    accountTrades.Remove(previosTrade);
+                    accountTrades.Remove(previousTrade);
                 }
 
                 accountTrades.Add(e.Trade);
@@ -239,11 +239,11 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
             if(orders != null)
             {
-                var previosOrder = orders.FirstOrDefault(p => updatedOrder.Id == p.Id);
+                var previousOrder = orders.FirstOrDefault(p => updatedOrder.Id == p.Id);
 
-                if (previosOrder != null)
+                if (previousOrder != null)
                 {
-                    orders.Remove(previosOrder);
+                    orders.Remove(previousOrder);
                 }
 
                 orders.Add(updatedOrder);

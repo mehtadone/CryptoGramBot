@@ -1,21 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Binance.Api;
+﻿using Binance.Api;
 using Binance.Api.WebSocket;
 using Binance.Api.WebSocket.Events;
 using CryptoGramBot.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 {
-    public class BinanceSubscribersService : IBinanceSubscribersService
+    public class BinanceSubscriberService : IBinanceSubscriberService
     {
         #region Consts
 
-        private readonly int WEBSOCKET_LIFE_TIME_IN_MINUTES = 1430; //for 10 minutes less than 24 hours, in order not to wait for the connection to break from Binance
+        /// <summary>
+        /// Binance websocket connection life time.
+        /// "A single connection to stream.binance.com is only valid for 24 hours; expect to be disconnected at the 24 hour mark"        
+        /// on 10 minutes less than 24 hours, to prevent Binance disconnect
+        /// <see cref="https://github.com/binance-exchange/binance-official-api-docs/blob/master/web-socket-streams.md"/>
+        /// </summary>
+        private readonly int WEBSOCKET_LIFE_TIME_IN_MINUTES = 1430;
 
         #endregion
 
@@ -27,7 +31,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private CancellationTokenSource _symbolStatisticCancellationTokenSource;
 
         private ISymbolStatisticsWebSocketClient _symbolStatisticsWebSocketClient;
-        private ICustomUserDataWebSocketClient _userDataWebSocketClient;
+        private IUserDataWebSocketClient _userDataWebSocketClient;
 
         private Timer _symbolsReConnectionTimer;
         private Timer _userDataReConnectionTimer;
@@ -53,7 +57,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         #region Constructor
 
-        public BinanceSubscribersService(BinanceConfig config,
+        public BinanceSubscriberService(BinanceConfig config,
             IServiceProvider serviceProvider)
         {
             _config = config;
@@ -64,25 +68,25 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         #region IBinanceSubscribersService
 
-        public void AddSymbols(Action<SymbolStatisticsEventArgs> onUpdate)
+        public async Task SymbolsStatistics(Action<SymbolStatisticsEventArgs> onUpdate)
         {
             if (_symbolsSubscribeTask == null)
             {
                 _onSymbolStatisticUpdate = onUpdate ?? throw new ArgumentException(nameof(onUpdate));
 
-                SubscribeSymbols();
+                await SubscribeToSymbols();
             }
         }
 
-        public void AddUserData(Action<OrderUpdateEventArgs> onOrderUpdate, Action<AccountUpdateEventArgs> onAccountUpdate, Action<AccountTradeUpdateEventArgs> onAccountTradeUpdate)
+        public async Task UserData(Action<OrderUpdateEventArgs> onOrderUpdate, Action<AccountUpdateEventArgs> onAccountUpdate, Action<AccountTradeUpdateEventArgs> onAccountTradeUpdate)
         {
             if (_userDataSubscribeTask == null)
             {
                 _onOrderUpdate = onOrderUpdate ?? throw new ArgumentException(nameof(onOrderUpdate));
-                _onAccountUpdate = onAccountUpdate ?? throw new ArgumentException(nameof(onAccountUpdate)); ;
-                _onAccountTradeUpdate = onAccountTradeUpdate ?? throw new ArgumentException(nameof(onAccountTradeUpdate)); ;
+                _onAccountUpdate = onAccountUpdate ?? throw new ArgumentException(nameof(onAccountUpdate));
+                _onAccountTradeUpdate = onAccountTradeUpdate ?? throw new ArgumentException(nameof(onAccountTradeUpdate));
 
-                SubscribeUserData();
+                await SubscribeToUserData();
             }
         }
 
@@ -94,8 +98,13 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             if (!_isDisposed)
             {
+
                 _symbolsReConnectionTimer?.Dispose();
                 _userDataReConnectionTimer?.Dispose();
+
+                _symbolStatisticCancellationTokenSource?.Cancel();
+                _userDataCancellationTokenSource?.Cancel();
+
                 _symbolStatisticCancellationTokenSource?.Dispose();
                 _userDataCancellationTokenSource?.Dispose();
 
@@ -107,7 +116,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         #region Private methods
 
-        private void SubscribeSymbols(bool reConnect = false)
+        private async Task SubscribeToSymbols(bool reConnect = false)
         {
             if (_symbolsSubscribeTask != null && !reConnect)
             {
@@ -116,6 +125,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
             try
             {
+                _symbolStatisticCancellationTokenSource?.Cancel();
                 _symbolStatisticCancellationTokenSource?.Dispose();
 
                 _symbolStatisticCancellationTokenSource = new CancellationTokenSource();
@@ -124,7 +134,12 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                 _symbolsSubscribeTask = _symbolStatisticsWebSocketClient.SubscribeAsync(_onSymbolStatisticUpdate, _symbolStatisticCancellationTokenSource.Token);
 
-                SymbolsReConnectionTimerInitialize();
+                if (!reConnect)
+                {
+                    SymbolsReConnectionTimerInitialize();
+                }
+
+                await _symbolsSubscribeTask;
             }
             catch (Exception)
             {
@@ -132,7 +147,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
-        private void SubscribeUserData(bool reConnect = false)
+        private async Task SubscribeToUserData(bool reConnect = false)
         {
             if (_userDataSubscribeTask != null && !reConnect)
             {
@@ -143,19 +158,34 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             {
                 _user?.Dispose();
 
+                _userDataCancellationTokenSource?.Cancel();
                 _userDataCancellationTokenSource?.Dispose();
 
                 _userDataCancellationTokenSource = new CancellationTokenSource();
 
-                _userDataWebSocketClient = _serviceProvider.GetService<ICustomUserDataWebSocketClient>();
+                if(_userDataWebSocketClient != null)
+                {
+                    _userDataWebSocketClient.TradeUpdate -= OnAccountTradeUpdate;
+                    _userDataWebSocketClient.AccountUpdate -= OnAccountUpdate;
+                    _userDataWebSocketClient.OrderUpdate -= OnOrderUpdate;
+                }
 
-                _userDataWebSocketClient.TradeUpdate += (o, a) => _onAccountTradeUpdate(a);
-                _userDataWebSocketClient.AccountUpdate += (o, a) => _onAccountUpdate(a);
-                _userDataWebSocketClient.OrderUpdate += (o, a) => _onOrderUpdate(a);
+                _userDataWebSocketClient = _serviceProvider.GetService<IUserDataWebSocketClient>();
+
+                _user = new BinanceApiUser(_config.Key, _config.Secret);
+
+                _userDataWebSocketClient.TradeUpdate += OnAccountTradeUpdate;
+                _userDataWebSocketClient.AccountUpdate += OnAccountUpdate;
+                _userDataWebSocketClient.OrderUpdate += OnOrderUpdate;
 
                 _userDataSubscribeTask = _userDataWebSocketClient.SubscribeAsync(_user, _userDataCancellationTokenSource.Token);
 
-                UserDataReConnectionTimerInitialize();
+                if (!reConnect)
+                {
+                    UserDataReConnectionTimerInitialize();
+                }
+
+                await _userDataSubscribeTask;
             }
             catch (Exception)
             {
@@ -163,11 +193,26 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
+        private void OnAccountTradeUpdate(object sender, AccountTradeUpdateEventArgs args)
+        {
+            _onAccountTradeUpdate?.Invoke(args);
+        }
+
+        private void OnAccountUpdate(object sender, AccountUpdateEventArgs args)
+        {
+            _onAccountUpdate?.Invoke(args);
+        }
+
+        private void OnOrderUpdate(object sender, OrderUpdateEventArgs args)
+        {
+            _onOrderUpdate?.Invoke(args);
+        }
+
         private void SymbolsReConnectionTimerInitialize()
         {
             _symbolsReConnectionTimer?.Dispose();
 
-            _symbolsReConnectionTimer = new Timer(s => SubscribeSymbols(reConnect: true), null,
+            _symbolsReConnectionTimer = new Timer(s => SubscribeToSymbols(reConnect: true), null,
                 TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES),
                 TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES));
         }
@@ -176,7 +221,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             _userDataReConnectionTimer?.Dispose();
 
-            _userDataReConnectionTimer = new Timer(s => SubscribeUserData(reConnect: true), null,
+            _userDataReConnectionTimer = new Timer(s => SubscribeToUserData(reConnect: true), null,
                 TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES),
                 TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES));
         } 

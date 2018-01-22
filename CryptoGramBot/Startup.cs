@@ -78,7 +78,6 @@ namespace CryptoGramBot
             );
 
             serviceCollection.AddBinance();
-            serviceCollection.AddTransient<ICustomUserDataWebSocketClient, CustomUserDataWebSocketClient>();
 
             serviceCollection.BuildServiceProvider();           
 
@@ -95,7 +94,7 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<PoloniexService>();
             containerBuilder.RegisterType<BinanceService>().SingleInstance(); // because symbols is saved in it. //todo move this out into a cache
             containerBuilder.RegisterType<BinanceCacheService>().As<IBinanceCacheService>();
-            containerBuilder.RegisterType<BinanceSubscribersService>().As<IBinanceSubscribersService>();
+            containerBuilder.RegisterType<BinanceSubscriberService>().As<IBinanceSubscriberService>();
             containerBuilder.RegisterType<BinanceWebsocketService>();
             containerBuilder.RegisterType<DatabaseService>();
             containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();

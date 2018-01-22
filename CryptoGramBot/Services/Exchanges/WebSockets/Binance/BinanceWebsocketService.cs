@@ -1,17 +1,13 @@
 ﻿using Binance.Account;
 using Binance.Account.Orders;
 using Binance.Api;
-using Binance.Api.WebSocket;
 using Binance.Api.WebSocket.Events;
-using Binance.Cache;
 using Binance.Market;
 using CryptoGramBot.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
@@ -29,7 +25,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private readonly BinanceConfig _config;
         private readonly IBinanceApi _binanceApi;
         private readonly IBinanceCacheService _cache;
-        private readonly IBinanceSubscribersService _subscribers;
+        private readonly IBinanceSubscriberService _subscriber;
 
         #endregion
 
@@ -38,12 +34,12 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         public BinanceWebsocketService(BinanceConfig config,
            IBinanceApi binanceApi,
            IBinanceCacheService cache,
-           IBinanceSubscribersService subscribers)
+           IBinanceSubscriberService subscriber)
         {
             _config = config;
             _binanceApi = binanceApi;
             _cache = cache;
-            _subscribers = subscribers;
+            _subscriber = subscriber;
         } 
 
         #endregion
@@ -82,7 +78,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             if (!isDisposed)
             {
-                _subscribers.Dispose();
+                _subscriber.Dispose();
 
                 isDisposed = true;
             }
@@ -125,7 +121,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 await InitializeSymbolPrices();
             }
 
-            _subscribers.AddSymbols(OnStatisticsUpdate);
+            SubscribeSymbols();
 
             return _cache.GetSymbolPrice(symbol);
         }
@@ -140,9 +136,19 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 saveToCache(@object);
             }
 
-            _subscribers.AddUserData(OnOrderUpdate, OnAccountUpdate, OnAccountTradeUpdate);
+            SubscribeUserData();
 
             return getFromCache();
+        }
+
+        private void SubscribeSymbols()
+        {
+            _subscriber.SymbolsStatistics(OnStatisticsUpdate);
+        }
+
+        private void SubscribeUserData()
+        {
+            _subscriber.UserData(OnOrderUpdate, OnAccountUpdate, OnAccountTradeUpdate);
         }
 
         #endregion

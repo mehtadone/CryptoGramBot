@@ -1,13 +1,14 @@
 ﻿using Binance.Api.WebSocket.Events;
 using System;
+using System.Threading.Tasks;
 
 namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 {
-    public interface IBinanceSubscribersService : IDisposable
+    public interface IBinanceSubscriberService : IDisposable
     {
-        void AddSymbols(Action<SymbolStatisticsEventArgs> onUpdate);
+        Task SymbolsStatistics(Action<SymbolStatisticsEventArgs> onUpdate);
 
-        void AddUserData(Action<OrderUpdateEventArgs> onOrderUpdate, 
+        Task UserData(Action<OrderUpdateEventArgs> onOrderUpdate, 
             Action<AccountUpdateEventArgs> onAccountUpdate, 
             Action<AccountTradeUpdateEventArgs> onAccountTradeUpdate);
     }

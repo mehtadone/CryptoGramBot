@@ -1,14 +1,15 @@
-﻿using CryptoGramBot.Configuration;
+﻿using Binance.Api;
+using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
+using CryptoGramBot.Helpers.Convertors;
 using CryptoGramBot.Models;
 using CryptoGramBot.Services.Data;
+using CryptoGramBot.Services.Exchanges.WebSockets.Binance;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Binance.Api;
-using CryptoGramBot.Helpers.Convertors;
 
 namespace CryptoGramBot.Services.Exchanges
 {
@@ -17,18 +18,21 @@ namespace CryptoGramBot.Services.Exchanges
         private readonly IBinanceApi _client;
         private readonly BinanceConfig _config;
         private readonly DatabaseService _databaseService;
+        private readonly BinanceWebsocketService _binanceWebsocketService;
         private readonly GeneralConfig _generalConfig;
         private readonly ILogger<BinanceService> _log;
         private readonly List<string> _symbols = new List<string>();
 
         public BinanceService(BinanceConfig config,
             DatabaseService databaseService,
+            BinanceWebsocketService binanceWebsocketService,
             GeneralConfig generalConfig,
             IBinanceApi binanceApi,
             ILogger<BinanceService> log)
         {
             _config = config;
             _databaseService = databaseService;
+            _binanceWebsocketService = binanceWebsocketService;
             _generalConfig = generalConfig;
             _log = log;
 
@@ -41,12 +45,9 @@ namespace CryptoGramBot.Services.Exchanges
             List<WalletBalance> balances;
             try
             {
-                var binanceClient = GetApi();
-                using (var user = new BinanceApiUser(_config.Key, _config.Secret))
-                {
-                    var accountInfo = await binanceClient.GetAccountInfoAsync(user);
-                    balances = BinanceConverter.BinanceToWalletBalances(accountInfo.Balances);
-                }
+                var accountInfo = await _binanceWebsocketService.GetAccountInfoAsync();
+
+                balances = BinanceConverter.BinanceToWalletBalances(accountInfo.Balances);
             }
             catch (Exception e)
             {
@@ -80,15 +81,8 @@ namespace CryptoGramBot.Services.Exchanges
                     averagePrice =
                         await _databaseService.GetBuyAveragePrice(_generalConfig.TradingCurrency, balance.Currency, Constants.Binance, balance.Balance);
                 }
-                try
-                {
-                    balance.PercentageChange = ProfitCalculator.PriceDifference(price, averagePrice);
-                }
-                catch
-                {
-                    // There maybe a divide by 0 issue if we couldn't find the last trade. Its fine. Just print zero
-                    balance.PercentageChange = 0;
-                }
+
+                balance.PercentageChange = ProfitCalculator.PriceDifference(price, averagePrice);
                 balance.BtcAmount = btcAmount;
                 balance.Price = price;
                 totalBtcBalance = totalBtcBalance + balance.BtcAmount;
@@ -124,7 +118,7 @@ namespace CryptoGramBot.Services.Exchanges
                 var binanceClient = GetApi();
                 using (var user = new BinanceApiUser(_config.Key, _config.Secret))
                 {
-                    var binanceDesposits = await binanceClient.GetDepositsAsync(user, "BTC");
+                    var binanceDesposits = await binanceClient.GetDepositsAsync(user, _generalConfig.TradingCurrency);
                     list = BinanceConverter.BinanceToDeposits(binanceDesposits);
                 }
             }
@@ -146,17 +140,13 @@ namespace CryptoGramBot.Services.Exchanges
 
             try
             {
-                var binanceClient = GetApi();
-                using (var user = new BinanceApiUser(_config.Key, _config.Secret))
+                foreach (var symbol in _symbols)
                 {
-                    foreach (var symbol in _symbols)
-                    {
-                        var response = await binanceClient.GetOpenOrdersAsync(user, symbol);
-                        var ccy2 = symbol.Remove(symbol.Length - _generalConfig.TradingCurrency.Length);
-                        var list = BinanceConverter.BinanceToOpenOrders(response, _generalConfig.TradingCurrency, ccy2);
+                    var response = await _binanceWebsocketService.GetOpenOrdersAsync(symbol);
+                    var ccy2 = symbol.Remove(symbol.Length - _generalConfig.TradingCurrency.Length);
+                    var list = BinanceConverter.BinanceToOpenOrders(response, _generalConfig.TradingCurrency, ccy2);
 
-                        openOrders.AddRange(list);
-                    }
+                    openOrders.AddRange(list);
                 }
             }
             catch (Exception e)
@@ -180,7 +170,7 @@ namespace CryptoGramBot.Services.Exchanges
 
                 using (var user = new BinanceApiUser(_config.Key, _config.Secret))
                 {
-                    var binanceDesposits = await binanceClient.GetWithdrawalsAsync(user, "BTC");
+                    var binanceDesposits = await binanceClient.GetWithdrawalsAsync(user, _generalConfig.TradingCurrency);
                     list = BinanceConverter.BinanceToWithdrawals(binanceDesposits);
                 }
             }
@@ -200,19 +190,13 @@ namespace CryptoGramBot.Services.Exchanges
 
             try
             {
-                var binanceClient = GetApi();
-
-                using (var user = new BinanceApiUser(_config.Key, _config.Secret))
+                foreach (var symbol in _symbols)
                 {
-                    foreach (var symbol in _symbols)
-                    {
-                        var response = await binanceClient.GetAccountTradesAsync(user, symbol);
+                    var response = await _binanceWebsocketService.GetAccountTradesAsync(symbol);
+                    var ccy2 = symbol.Remove(symbol.Length - _generalConfig.TradingCurrency.Length);
 
-                        var ccy2 = symbol.Remove(symbol.Length - _generalConfig.TradingCurrency.Length);
-
-                        var symlist = BinanceConverter.BinanceToTrades(response, _generalConfig.TradingCurrency, ccy2, _log);
-                        list.AddRange(symlist);
-                    }
+                    var symlist = BinanceConverter.BinanceToTrades(response, _generalConfig.TradingCurrency, ccy2, _log);
+                    list.AddRange(symlist);
                 }
             }
             catch (Exception e)
@@ -225,10 +209,7 @@ namespace CryptoGramBot.Services.Exchanges
 
         public async Task<decimal> GetPrice(string baseCcy, string termsCurrency)
         {
-            var client = GetApi();
-            var price = await client.GetPricesAsync();
-
-            var sym = price.FirstOrDefault(x => x.Symbol == $"{termsCurrency}{baseCcy}");
+            var sym = await _binanceWebsocketService.GetPrice($"{termsCurrency}{baseCcy}");
 
             if (sym != null)
             {
@@ -242,6 +223,7 @@ namespace CryptoGramBot.Services.Exchanges
         {
             _symbols.Clear();
             var binanceClient = GetApi();
+
             var symbolPriceResponses = await binanceClient.GetSymbolsAsync();
 
             foreach (var response in symbolPriceResponses)

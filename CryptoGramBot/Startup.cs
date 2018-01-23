@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using Autofac;
+﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Binance;
 using Bittrex.Net;
@@ -12,6 +10,7 @@ using CryptoGramBot.Helpers;
 using CryptoGramBot.Services;
 using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Exchanges;
+using CryptoGramBot.Services.Exchanges.WebSockets.Binance;
 using CryptoGramBot.Services.Pricing;
 using CryptoGramBot.Services.Telegram;
 using Enexure.MicroBus;
@@ -25,6 +24,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using System;
 
 namespace CryptoGramBot
 {
@@ -79,7 +79,7 @@ namespace CryptoGramBot
 
             serviceCollection.AddBinance();
 
-            serviceCollection.BuildServiceProvider();
+            serviceCollection.BuildServiceProvider();           
 
             containerBuilder.Populate(serviceCollection);
 
@@ -93,6 +93,9 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<BittrexService>();
             containerBuilder.RegisterType<PoloniexService>();
             containerBuilder.RegisterType<BinanceService>().SingleInstance(); // because symbols is saved in it. //todo move this out into a cache
+            containerBuilder.RegisterType<BinanceCacheService>().As<IBinanceCacheService>();
+            containerBuilder.RegisterType<BinanceSubscriberService>().As<IBinanceSubscriberService>();
+            containerBuilder.RegisterType<BinanceWebsocketService>();
             containerBuilder.RegisterType<DatabaseService>();
             containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
             containerBuilder.RegisterType<TelegramMessageSendingService>();

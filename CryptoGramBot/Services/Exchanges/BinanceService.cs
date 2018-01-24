@@ -21,7 +21,7 @@ namespace CryptoGramBot.Services.Exchanges
         private readonly BinanceWebsocketService _binanceWebsocketService;
         private readonly GeneralConfig _generalConfig;
         private readonly ILogger<BinanceService> _log;
-        private readonly List<string> _symbols = new List<string>();
+        private List<string> _symbols = new List<string>();
 
         public BinanceService(BinanceConfig config,
             DatabaseService databaseService,
@@ -226,7 +226,8 @@ namespace CryptoGramBot.Services.Exchanges
 
         public async Task GetSymbols()
         {
-            _symbols.Clear();
+
+            var newSymbols = new List<string>();
             var binanceClient = GetApi();
 
             var symbolPriceResponses = await binanceClient.GetSymbolsAsync();
@@ -235,9 +236,11 @@ namespace CryptoGramBot.Services.Exchanges
             {
                 if (response.QuoteAsset.Equals(_generalConfig.TradingCurrency))
                 {
-                    _symbols.Add($"{response.BaseAsset}{response.QuoteAsset}");
+                    newSymbols.Add($"{response.BaseAsset}{response.QuoteAsset}");
                 }
             }
+
+            _symbols = newSymbols;
         }
 
         private IBinanceApi GetApi()

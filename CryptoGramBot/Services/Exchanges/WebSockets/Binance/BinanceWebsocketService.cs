@@ -7,6 +7,7 @@ using CryptoGramBot.Configuration;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -53,9 +54,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public async Task<IEnumerable<Order>> GetOpenOrdersAsync(string symbol)
         {
-            var orders = await GetOrders(symbol);
-
-            return orders.Where(order => order.IsOpen());
+            return await GetOrders(symbol);
         }
 
         public async Task<IEnumerable<AccountTrade>> GetAccountTradesAsync(string symbol)
@@ -98,7 +97,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 (accountInfo) => _cache.SetAccountInfo(accountInfo));
         }
 
-        private Task<List<Order>> GetOrders(string symbol)
+        private Task<ImmutableList<Order>> GetOrders(string symbol)
         {
             return GetOrCreateUserObject(
                 () => _cache.GetOrders(symbol),
@@ -106,7 +105,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 (orders) => _cache.SetOrders(symbol, orders));
         }
 
-        private Task<List<AccountTrade>> GetAccountTrades(string symbol)
+        private Task<ImmutableList<AccountTrade>> GetAccountTrades(string symbol)
         {
             return GetOrCreateUserObject(
                 () => _cache.GetAccountTrades(symbol),
@@ -163,23 +162,23 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
-        private async Task<List<Order>> InitializeOpenOrders(string symbol)
+        private async Task<ImmutableList<Order>> InitializeOpenOrders(string symbol)
         {
             using (var user = new BinanceApiUser(_config.Key, _config.Secret))
             {
                 var openOrders = await _binanceApi.GetOpenOrdersAsync(user, symbol, 10000000);
 
-                return openOrders.ToList();
+                return openOrders.ToImmutableList();
             }
         }
 
-        private async Task<List<AccountTrade>> InitializeAccountTrades(string symbol)
+        private async Task<ImmutableList<AccountTrade>> InitializeAccountTrades(string symbol)
         {
             using (var user = new BinanceApiUser(_config.Key, _config.Secret))
             {
                 var accountTrades = await _binanceApi.GetAccountTradesAsync(user, symbol, -1L, 0, 10000000);
 
-                return accountTrades.ToList();
+                return accountTrades.ToImmutableList();
             }
         }
 
@@ -202,20 +201,22 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private void OnAccountTradeUpdate(AccountTradeUpdateEventArgs e)
         {
             var symbol = e.Trade.Symbol;
-            var accountTrades = _cache.GetAccountTrades(symbol).ToList();
+            var immutableAccountTrades = _cache.GetAccountTrades(symbol);
 
-            if (accountTrades != null)
+            if (immutableAccountTrades != null)
             {
-                var previousTrade = accountTrades.FirstOrDefault(p => p.Id == e.Trade.Id);
+                var mutableTrades = immutableAccountTrades.ToBuilder();
+
+                var previousTrade = mutableTrades.FirstOrDefault(p => p.Id == e.Trade.Id);
 
                 if (previousTrade != null)
                 {
-                    accountTrades.Remove(previousTrade);
+                    mutableTrades.Remove(previousTrade);
                 }
 
-                accountTrades.Add(e.Trade);
+                mutableTrades.Add(e.Trade);
 
-                _cache.SetAccountTrades(symbol, accountTrades);
+                _cache.SetAccountTrades(symbol, mutableTrades.ToImmutable());
 
                 UpdateOrders(e.Order, symbol);
             }
@@ -235,20 +236,22 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private void UpdateOrders(Order updatedOrder, string symbol)
         {
-            var orders = _cache.GetOrders(symbol).ToList();
+            var immutableOrders = _cache.GetOrders(symbol);
 
-            if(orders != null)
+            if (immutableOrders != null)
             {
-                var previousOrder = orders.FirstOrDefault(p => updatedOrder.Id == p.Id);
+                var mutableOrders = immutableOrders.ToBuilder();
+
+                var previousOrder = mutableOrders.FirstOrDefault(p => updatedOrder.Id == p.Id);
 
                 if (previousOrder != null)
                 {
-                    orders.Remove(previousOrder);
+                    mutableOrders.Remove(previousOrder);
                 }
 
-                orders.Add(updatedOrder);
+                mutableOrders.Add(updatedOrder);
 
-                _cache.SetOrders(symbol, orders);
+                _cache.SetOrders(symbol, mutableOrders.ToImmutable());
             }
         }
 

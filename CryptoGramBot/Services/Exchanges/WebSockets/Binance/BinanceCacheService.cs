@@ -1,8 +1,10 @@
 ﻿using Binance.Account;
 using Binance.Account.Orders;
+using Binance.Market;
 using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 
 namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
@@ -16,6 +18,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private readonly string ACCOUNT_TRADES_BY_SYMBOL_KEY = "_accountTrades";
         private readonly string SYMBOL_PRICES_KEY = "symbols";
         private readonly string SYMBOL_PRICE_KEY = "_price";
+        private readonly string SYMBOL_CANDLESTICK = "_candlesTick_";
 
         private readonly int CACHE_TIME_IN_MINUTES = 60;
 
@@ -68,14 +71,14 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             _memoryCache.Set($"{symbol}{ACCOUNT_TRADES_BY_SYMBOL_KEY}", trades, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
-        public ConcurrentDictionary<string, decimal> GetSymbolPrices()
+        public List<string> GetSymbols()
         {
-            return _memoryCache.Get<ConcurrentDictionary<string, decimal>>(SYMBOL_PRICES_KEY);
+            return _memoryCache.Get<List<string>>(SYMBOL_PRICES_KEY);
         }
 
-        public void SetSymbolPrices(ConcurrentDictionary<string, decimal> symbolPrices)
+        public void SetSymbols(List<string> symbols)
         {
-            _memoryCache.Set(SYMBOL_PRICES_KEY, symbolPrices, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
+            _memoryCache.Set(SYMBOL_PRICES_KEY, symbols, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
         public decimal GetSymbolPrice(string symbol)
@@ -86,6 +89,16 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         public void SetSymbolPrice(string symbol, decimal price)
         {
             _memoryCache.Set($"{symbol}{SYMBOL_PRICE_KEY}", price, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
+        }
+
+        public ImmutableList<Candlestick> GetCandlesticks(string symbol, CandlestickInterval interval)
+        {
+            return _memoryCache.Get<ImmutableList<Candlestick>>($"{symbol}{SYMBOL_CANDLESTICK}{interval.AsString()}");
+        }
+
+        public void SetCandlestick(string symbol, CandlestickInterval interval, ImmutableList<Candlestick> candlesticks)
+        {
+            _memoryCache.Set($"{symbol}{SYMBOL_CANDLESTICK}{interval.AsString()}", candlesticks, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
         #endregion

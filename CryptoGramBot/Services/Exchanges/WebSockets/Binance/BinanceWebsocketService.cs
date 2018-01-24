@@ -53,9 +53,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public async Task<IEnumerable<Order>> GetOpenOrdersAsync(string symbol)
         {
-            var orders = await GetOrders(symbol);
-
-            return orders.Where(order => order.IsOpen());
+            return await GetOrders(symbol);
         }
 
         public async Task<IEnumerable<AccountTrade>> GetAccountTradesAsync(string symbol)
@@ -202,10 +200,12 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private void OnAccountTradeUpdate(AccountTradeUpdateEventArgs e)
         {
             var symbol = e.Trade.Symbol;
-            var accountTrades = _cache.GetAccountTrades(symbol).ToList();
+            var accountTrades = _cache.GetAccountTrades(symbol);
 
             if (accountTrades != null)
             {
+                accountTrades = accountTrades.ToList();
+
                 var previousTrade = accountTrades.FirstOrDefault(p => p.Id == e.Trade.Id);
 
                 if (previousTrade != null)
@@ -235,10 +235,12 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private void UpdateOrders(Order updatedOrder, string symbol)
         {
-            var orders = _cache.GetOrders(symbol).ToList();
+            var orders = _cache.GetOrders(symbol);
 
             if(orders != null)
             {
+                orders = orders.ToList();
+
                 var previousOrder = orders.FirstOrDefault(p => updatedOrder.Id == p.Id);
 
                 if (previousOrder != null)

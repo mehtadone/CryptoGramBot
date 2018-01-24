@@ -40,7 +40,9 @@ namespace CryptoGramBot.Helpers.Convertors
         {
             var list = new List<OpenOrder>();
 
-            foreach (var openOrder in orderResponses.Where(x => x.Status == OrderStatus.New))
+            var openOrders = orderResponses.Where(x => x.Status == OrderStatus.New).ToList();
+
+            foreach (var openOrder in openOrders)
             {
                 var order = new OpenOrder
                 {
@@ -66,7 +68,9 @@ namespace CryptoGramBot.Helpers.Convertors
         {
             var tradeList = new List<Trade>();
 
-            foreach (var completedOrder in response)
+            var completedOrders = response.ToList();
+
+            foreach (var completedOrder in completedOrders)
             {
                 var trade = new Trade
                 {

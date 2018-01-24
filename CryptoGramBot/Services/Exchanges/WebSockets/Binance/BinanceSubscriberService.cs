@@ -212,7 +212,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             _symbolsReConnectionTimer?.Dispose();
 
-            _symbolsReConnectionTimer = new Timer(s => SubscribeToSymbols(reConnect: true), null,
+            _symbolsReConnectionTimer = new Timer(async s => await SubscribeToSymbols(reConnect: true), null,
                 TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES),
                 TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES));
         }
@@ -221,7 +221,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             _userDataReConnectionTimer?.Dispose();
 
-            _userDataReConnectionTimer = new Timer(s => SubscribeToUserData(reConnect: true), null,
+            _userDataReConnectionTimer = new Timer(async s => await SubscribeToUserData(reConnect: true), null,
                 TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES),
                 TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES));
         } 

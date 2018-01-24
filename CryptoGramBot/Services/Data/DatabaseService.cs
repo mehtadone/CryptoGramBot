@@ -57,7 +57,7 @@ namespace CryptoGramBot.Services.Data
 
                 if (foundDeposit == null)
                 {
-                    context.Add(deposit);
+                    await context.AddAsync(deposit);
                     list.Add(deposit);
                 }
             }
@@ -73,7 +73,7 @@ namespace CryptoGramBot.Services.Data
 
             if (lastChecked == null)
             {
-                lastCheckeds.Add(new LastChecked
+                await lastCheckeds.AddAsync(new LastChecked
                 {
                     Exchange = key,
                     Timestamp = timestamp
@@ -109,7 +109,7 @@ namespace CryptoGramBot.Services.Data
 
                 if (foundOpenOrder == null)
                 {
-                    context.Add(openOrder);
+                    await context.AddAsync(openOrder);
                     list.Add(openOrder);
                 }
             }
@@ -138,7 +138,7 @@ namespace CryptoGramBot.Services.Data
 
                 if (foundTrade == null)
                 {
-                    _context.Trades.Add(trade);
+                    await _context.Trades.AddAsync(trade);
                     newTrades.Add(trade);
                 }
             }
@@ -157,7 +157,7 @@ namespace CryptoGramBot.Services.Data
         public async Task AddWalletBalances(List<WalletBalance> walletBalances)
         {
             var walletBalancesDb = _context.WalletBalances;
-            walletBalancesDb.AddRange(walletBalances);
+            await walletBalancesDb.AddRangeAsync(walletBalances);
             await _context.SaveChangesAsync();
         }
 
@@ -179,7 +179,7 @@ namespace CryptoGramBot.Services.Data
 
                 if (foundWithdrawal == null)
                 {
-                    context.Add(withdrawal);
+                    await context.AddAsync(withdrawal);
                     list.Add(withdrawal);
                 }
             }
@@ -368,12 +368,12 @@ namespace CryptoGramBot.Services.Data
             _log.LogInformation($"Adding pnl for {pnl.Pair} to database");
 
             var contextProfitAndLosses = _context.ProfitAndLosses;
-            contextProfitAndLosses.Add(pnl);
+            await contextProfitAndLosses.AddAsync(pnl);
 
             await _context.SaveChangesAsync();
         }
 
-        public void SaveSetting(Setting setting)
+        public async Task SaveSetting(Setting setting)
         {
             var contextSettings = _context.Settings;
 
@@ -381,7 +381,7 @@ namespace CryptoGramBot.Services.Data
 
             if (foundSetting == null)
             {
-                _context.Settings.Add(setting);
+                await _context.Settings.AddAsync(setting);
             }
         }
 
@@ -389,7 +389,7 @@ namespace CryptoGramBot.Services.Data
         {
             var balanceHistories = _context.BalanceHistories;
             balanceHistory.Name = name;
-            balanceHistories.Add(balanceHistory);
+            await balanceHistories.AddAsync(balanceHistory);
             _context.BalanceHistories.Add(balanceHistory);
             _log.LogInformation($"Saved new balance in database for: {name}");
             _lastBalances[name] = balanceHistory;

@@ -41,7 +41,7 @@ namespace CryptoGramBot.Services.Data
 
         public async Task<List<Deposit>> AddDeposits(List<Deposit> deposits, string exchange)
         {
-            _log.LogInformation($"Adding new deposits to database");
+            _log.LogInformation($"Adding new deposits to database for {exchange}");
 
             var context = _context.Deposits;
             var list = new List<Deposit>();
@@ -89,7 +89,13 @@ namespace CryptoGramBot.Services.Data
 
         public async Task<List<OpenOrder>> AddOpenOrders(List<OpenOrder> orders)
         {
-            _log.LogInformation("Adding new open orders to database");
+            var firstOrder = orders.FirstOrDefault();
+
+            _log.LogInformation(firstOrder != null
+                ? $"Adding new open orders to database for {firstOrder.Exchange}"
+                : "Adding new open orders to database");
+
+
             var context = _context.OpenOrders;
 
             var list = new List<OpenOrder>();
@@ -139,7 +145,12 @@ namespace CryptoGramBot.Services.Data
 
             await _context.SaveChangesAsync();
 
-            _log.LogInformation($"Added {newTrades.Count} new trades to database");
+            var first = newTrades.FirstOrDefault();
+
+            _log.LogInformation(first != null
+                ? $"Added {newTrades.Count} new trades to database for {first.Exchange}"
+                : $"Added {newTrades.Count} new trades to database");
+
             return newTrades;
         }
 
@@ -152,7 +163,7 @@ namespace CryptoGramBot.Services.Data
 
         public async Task<List<Withdrawal>> AddWithdrawals(List<Withdrawal> withdrawals, string exchange)
         {
-            _log.LogInformation($"Adding new withdrawals to database");
+            _log.LogInformation($"Adding new withdrawals to database for {exchange}");
             var context = _context.Withdrawals;
 
             var list = new List<Withdrawal>();

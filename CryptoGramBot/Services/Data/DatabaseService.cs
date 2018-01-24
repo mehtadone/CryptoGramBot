@@ -93,7 +93,7 @@ namespace CryptoGramBot.Services.Data
 
             _log.LogInformation(firstOrder != null
                 ? $"Adding new open orders to database for {firstOrder.Exchange}"
-                : "Adding new open orders to database");
+                : "No new open orders need to be added to database");
 
 
             var context = _context.OpenOrders;
@@ -149,7 +149,7 @@ namespace CryptoGramBot.Services.Data
 
             _log.LogInformation(first != null
                 ? $"Added {newTrades.Count} new trades to database for {first.Exchange}"
-                : $"Added {newTrades.Count} new trades to database");
+                : "No new trades need to be added to database");
 
             return newTrades;
         }

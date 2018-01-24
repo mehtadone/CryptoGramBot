@@ -2,6 +2,7 @@
 using Binance.Account.Orders;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 {
@@ -11,13 +12,13 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         void SetAccountInfo(AccountInfo accountInfo);
 
-        List<Order> GetOrders(string symbol);
+        ImmutableList<Order> GetOrders(string symbol);
 
-        void SetOrders(string symbol, List<Order> orders);
+        void SetOrders(string symbol, ImmutableList<Order> orders);
 
-        List<AccountTrade> GetAccountTrades(string symbol);
+        ImmutableList<AccountTrade> GetAccountTrades(string symbol);
 
-        void SetAccountTrades(string symbol, List<AccountTrade> trades);
+        void SetAccountTrades(string symbol, ImmutableList<AccountTrade> trades);
 
         ConcurrentDictionary<string, decimal> GetSymbolPrices();
 

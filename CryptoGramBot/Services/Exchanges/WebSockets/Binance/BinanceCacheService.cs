@@ -3,7 +3,7 @@ using Binance.Account.Orders;
 using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 {
@@ -48,22 +48,22 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             _memoryCache.Set(ACCOUNT_INFO_KEY, accountInfo, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
-        public List<Order> GetOrders(string symbol)
+        public ImmutableList<Order> GetOrders(string symbol)
         {
-            return _memoryCache.Get<List<Order>>($"{symbol}{ORDERS_BY_SYMBOL_KEY}");
+            return _memoryCache.Get<ImmutableList<Order>>($"{symbol}{ORDERS_BY_SYMBOL_KEY}");
         }
 
-        public void SetOrders(string symbol, List<Order> orders)
+        public void SetOrders(string symbol, ImmutableList<Order> orders)
         {
             _memoryCache.Set($"{symbol}{ORDERS_BY_SYMBOL_KEY}", orders, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
-        public List<AccountTrade> GetAccountTrades(string symbol)
+        public ImmutableList<AccountTrade> GetAccountTrades(string symbol)
         {
-            return _memoryCache.Get<List<AccountTrade>>($"{symbol}{ACCOUNT_TRADES_BY_SYMBOL_KEY}");
+            return _memoryCache.Get<ImmutableList<AccountTrade>>($"{symbol}{ACCOUNT_TRADES_BY_SYMBOL_KEY}");
         }
 
-        public void SetAccountTrades(string symbol, List<AccountTrade> trades)
+        public void SetAccountTrades(string symbol, ImmutableList<AccountTrade> trades)
         {
             _memoryCache.Set($"{symbol}{ACCOUNT_TRADES_BY_SYMBOL_KEY}", trades, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }

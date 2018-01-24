@@ -159,7 +159,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             using (var user = new BinanceApiUser(_config.Key, _config.Secret))
             {
-                return await _binanceApi.GetAccountInfoAsync(user);
+                return await _binanceApi.GetAccountInfoAsync(user, 10000000);
             }
         }
 
@@ -167,7 +167,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             using (var user = new BinanceApiUser(_config.Key, _config.Secret))
             {
-                var openOrders = await _binanceApi.GetOpenOrdersAsync(user, symbol);
+                var openOrders = await _binanceApi.GetOpenOrdersAsync(user, symbol, 10000000);
 
                 return openOrders.ToList();
             }
@@ -177,7 +177,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             using (var user = new BinanceApiUser(_config.Key, _config.Secret))
             {
-                var accountTrades = await _binanceApi.GetAccountTradesAsync(user, symbol);
+                var accountTrades = await _binanceApi.GetAccountTradesAsync(user, symbol, -1L, 0, 10000000);
 
                 return accountTrades.ToList();
             }

@@ -23,6 +23,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private readonly string SYMBOL_STATISTICS = "statistics";
 
         private readonly int CACHE_TIME_IN_MINUTES = 60;
+        private readonly int EVERY_SECOND_UPDATED_ITEM_CACHE_TIME_IN_MINUTES = 1;
 
         #endregion
 
@@ -90,7 +91,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public void SetCandlestick(string symbol, CandlestickInterval interval, ImmutableList<Candlestick> candlesticks)
         {
-            _memoryCache.Set($"{symbol}{SYMBOL_CANDLESTICK}{interval.AsString()}", candlesticks, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
+            _memoryCache.Set($"{symbol}{SYMBOL_CANDLESTICK}{interval.AsString()}", candlesticks, TimeSpan.FromMinutes(EVERY_SECOND_UPDATED_ITEM_CACHE_TIME_IN_MINUTES));
         }
 
         public ImmutableDictionary<string, decimal> GetSymbolPrices()
@@ -100,7 +101,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public void SetSymbolPrices(ImmutableDictionary<string, decimal> prices)
         {
-            _memoryCache.Set(SYMBOL_PRICES_KEY, prices, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
+            _memoryCache.Set(SYMBOL_PRICES_KEY, prices, TimeSpan.FromMinutes(EVERY_SECOND_UPDATED_ITEM_CACHE_TIME_IN_MINUTES));
         }
 
         public ImmutableDictionary<string, SymbolStatistics> GetSymbolStatistics()
@@ -110,7 +111,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public void SetSymbolStatistics(ImmutableDictionary<string, SymbolStatistics> statistics)
         {
-            _memoryCache.Set(SYMBOL_STATISTICS, statistics, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
+            _memoryCache.Set(SYMBOL_STATISTICS, statistics, TimeSpan.FromMinutes(EVERY_SECOND_UPDATED_ITEM_CACHE_TIME_IN_MINUTES));
         }
 
         #endregion

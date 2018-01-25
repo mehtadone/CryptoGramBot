@@ -21,7 +21,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         Task<IEnumerable<SymbolPrice>> GetPricesAsync();
 
-        Task<IEnumerable<Candlestick>> GetCandlestickAsync(string symbol, CandlestickInterval interval);
+        Task<IEnumerable<Candlestick>> GetCandlesticksAsync(string symbol, CandlestickInterval interval);
 
         Task<IEnumerable<SymbolStatistics>> Get24HourStatisticsAsync();
     }

@@ -79,7 +79,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             return await GetSymbolPrices();
         }
 
-        public async Task<IEnumerable<Candlestick>> GetCandlestickAsync(string symbol, CandlestickInterval interval)
+        public async Task<IEnumerable<Candlestick>> GetCandlesticksAsync(string symbol, CandlestickInterval interval)
         {
             return await GetCandlestick(symbol, interval);
         }

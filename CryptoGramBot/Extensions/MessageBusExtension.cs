@@ -15,7 +15,7 @@ namespace CryptoGramBot.Extensions
 {
     public static class MessageBusExtension
     {
-        public static BusBuilder ConfigureCore(this BusBuilder busBuilder, bool coinigyEnabled, bool bittrexEnabled, bool poloniexEnabled, bool binanceEnabled, bool bagEnabled, bool dustEnabled)
+        public static BusBuilder ConfigureCore(this BusBuilder busBuilder, bool coinigyEnabled, bool bittrexEnabled, bool poloniexEnabled, bool binanceEnabled)
         {
             busBuilder.RegisterCommandHandler<SendMessageCommand, SendMessageHandler>();
             busBuilder.RegisterCommandHandler<SendFileCommand, SendFileHandler>();
@@ -41,6 +41,8 @@ namespace CryptoGramBot.Extensions
                 busBuilder.RegisterEventHandler<NewTradesCheckEvent, PoloniexNewOrderCheckHandler>();
                 busBuilder.RegisterEventHandler<BalanceCheckEvent, PoloniexBalanceCheckHandler>();
                 busBuilder.RegisterCommandHandler<ResetPoloniexTrades, PoloniexResetAllTradesHandler>();
+                busBuilder.RegisterEventHandler<BagAndDustEvent, PoloniexBagAndDustHandler>();
+                busBuilder.RegisterEventHandler<DepositAndWithdrawalEvent, PoloniexDepositWithdrawalHandler>();
             }
 
             if (bittrexEnabled)
@@ -48,6 +50,8 @@ namespace CryptoGramBot.Extensions
                 busBuilder.RegisterCommandHandler<BittrexTradeExportCommand, BittrexTradeExportHandler>();
                 busBuilder.RegisterEventHandler<NewTradesCheckEvent, BittrexNewOrderCheckHandler>();
                 busBuilder.RegisterEventHandler<BalanceCheckEvent, BittrexBalanceCheckHandler>();
+                busBuilder.RegisterEventHandler<BagAndDustEvent, BittrexBagAndDustHandler>();
+                busBuilder.RegisterEventHandler<DepositAndWithdrawalEvent, BittrexDepositWithdrawalHandler>();
             }
 
             if (binanceEnabled)
@@ -55,22 +59,6 @@ namespace CryptoGramBot.Extensions
                 busBuilder.RegisterEventHandler<NewTradesCheckEvent, BinanceNewOrderCheckHandler>();
                 busBuilder.RegisterEventHandler<BalanceCheckEvent, BinanceBalanceCheckHandler>();
                 busBuilder.RegisterCommandHandler<BinanceQuerySymbolsCommand, BinanceSymbolGenerateHandler>();
-            }
-
-            if ((bagEnabled || dustEnabled) && bittrexEnabled)
-            {
-                busBuilder.RegisterEventHandler<BagAndDustEvent, BittrexBagAndDustHandler>();
-                busBuilder.RegisterEventHandler<DepositAndWithdrawalEvent, BittrexDepositWithdrawalHandler>();
-            }
-
-            if ((bagEnabled || dustEnabled) && poloniexEnabled)
-            {
-                busBuilder.RegisterEventHandler<BagAndDustEvent, PoloniexBagAndDustHandler>();
-                busBuilder.RegisterEventHandler<DepositAndWithdrawalEvent, PoloniexDepositWithdrawalHandler>();
-            }
-
-            if ((bagEnabled || dustEnabled) && binanceEnabled)
-            {
                 busBuilder.RegisterEventHandler<BagAndDustEvent, BinanceBagAndDustHandler>();
                 busBuilder.RegisterEventHandler<DepositAndWithdrawalEvent, BinanceDepositWithdrawalHandler>();
             }

@@ -297,3 +297,6 @@ __pycache__/
 /CryptoGramBot/Database/cryptogrambot-journal.db
 /CryptoGramBot/Database/cryptogrambot.db
 /CryptoGramBot/database/cryptogrambot.sqlite
+
+# VS Code Editor
+.vscode

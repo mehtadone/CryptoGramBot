@@ -77,11 +77,11 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
                 foreach (var openOrder in newOrders)
                 {
                     var sb = new StringBuffer();
-                    sb.Append(string.Format("{0}", openOrder.Opened.ToString("g")));
-                    sb.Append(string.Format("New {0} OPEN order", openOrder.Exchange));
-                    sb.Append(string.Format("{3}{0} {1}-{2}{4}", openOrder.Side, openOrder.Base, openOrder.Terms, StringContants.StrongOpen, StringContants.StrongClose));
-                    sb.Append(string.Format("Price: {0}", openOrder.Price));
-                    sb.Append(string.Format("Quanitity: {0}", openOrder.Quantity));
+                    sb.Append($"{openOrder.Opened:g}\n");
+                    sb.Append($"New {openOrder.Exchange} OPEN order\n");
+                    sb.Append($"{StringContants.StrongOpen}{openOrder.Side} {openOrder.Base}-{openOrder.Terms}{StringContants.StrongClose}\n");
+                    sb.Append($"Price: {openOrder.Price}\n");
+                    sb.Append($"Quanitity: {openOrder.Quantity}");
                     await _bus.SendAsync(new SendMessageCommand(sb));
                 }
             }

@@ -41,7 +41,7 @@ namespace CryptoGramBot.Services.Data
 
         public async Task<List<Deposit>> AddDeposits(List<Deposit> deposits, string exchange)
         {
-            _log.LogInformation($"Adding new deposits to database");
+            _log.LogInformation($"Adding new deposits to database for {exchange}");
 
             var context = _context.Deposits;
             var list = new List<Deposit>();
@@ -57,7 +57,7 @@ namespace CryptoGramBot.Services.Data
 
                 if (foundDeposit == null)
                 {
-                    context.Add(deposit);
+                    await context.AddAsync(deposit);
                     list.Add(deposit);
                 }
             }
@@ -73,7 +73,7 @@ namespace CryptoGramBot.Services.Data
 
             if (lastChecked == null)
             {
-                lastCheckeds.Add(new LastChecked
+                await lastCheckeds.AddAsync(new LastChecked
                 {
                     Exchange = key,
                     Timestamp = timestamp
@@ -89,7 +89,13 @@ namespace CryptoGramBot.Services.Data
 
         public async Task<List<OpenOrder>> AddOpenOrders(List<OpenOrder> orders)
         {
-            _log.LogInformation("Adding new open orders to database");
+            var firstOrder = orders.FirstOrDefault();
+
+            _log.LogInformation(firstOrder != null
+                ? $"Adding new open orders to database for {firstOrder.Exchange}"
+                : "Adding new open orders to database");
+
+
             var context = _context.OpenOrders;
 
             var list = new List<OpenOrder>();
@@ -103,7 +109,7 @@ namespace CryptoGramBot.Services.Data
 
                 if (foundOpenOrder == null)
                 {
-                    context.Add(openOrder);
+                    await context.AddAsync(openOrder);
                     list.Add(openOrder);
                 }
             }
@@ -132,27 +138,32 @@ namespace CryptoGramBot.Services.Data
 
                 if (foundTrade == null)
                 {
-                    _context.Trades.Add(trade);
+                    await _context.Trades.AddAsync(trade);
                     newTrades.Add(trade);
                 }
             }
 
             await _context.SaveChangesAsync();
 
-            _log.LogInformation($"Added {newTrades.Count} new trades to database");
+            var first = newTrades.FirstOrDefault();
+
+            _log.LogInformation(first != null
+                ? $"Added {newTrades.Count} new trades to database for {first.Exchange}"
+                : $"Added {newTrades.Count} new trades to database");
+
             return newTrades;
         }
 
         public async Task AddWalletBalances(List<WalletBalance> walletBalances)
         {
             var walletBalancesDb = _context.WalletBalances;
-            walletBalancesDb.AddRange(walletBalances);
+            await walletBalancesDb.AddRangeAsync(walletBalances);
             await _context.SaveChangesAsync();
         }
 
         public async Task<List<Withdrawal>> AddWithdrawals(List<Withdrawal> withdrawals, string exchange)
         {
-            _log.LogInformation($"Adding new withdrawals to database");
+            _log.LogInformation($"Adding new withdrawals to database for {exchange}");
             var context = _context.Withdrawals;
 
             var list = new List<Withdrawal>();
@@ -168,7 +179,7 @@ namespace CryptoGramBot.Services.Data
 
                 if (foundWithdrawal == null)
                 {
-                    context.Add(withdrawal);
+                    await context.AddAsync(withdrawal);
                     list.Add(withdrawal);
                 }
             }
@@ -357,12 +368,12 @@ namespace CryptoGramBot.Services.Data
             _log.LogInformation($"Adding pnl for {pnl.Pair} to database");
 
             var contextProfitAndLosses = _context.ProfitAndLosses;
-            contextProfitAndLosses.Add(pnl);
+            await contextProfitAndLosses.AddAsync(pnl);
 
             await _context.SaveChangesAsync();
         }
 
-        public void SaveSetting(Setting setting)
+        public async Task SaveSetting(Setting setting)
         {
             var contextSettings = _context.Settings;
 
@@ -370,7 +381,7 @@ namespace CryptoGramBot.Services.Data
 
             if (foundSetting == null)
             {
-                _context.Settings.Add(setting);
+                await _context.Settings.AddAsync(setting);
             }
         }
 
@@ -378,7 +389,7 @@ namespace CryptoGramBot.Services.Data
         {
             var balanceHistories = _context.BalanceHistories;
             balanceHistory.Name = name;
-            balanceHistories.Add(balanceHistory);
+            await balanceHistories.AddAsync(balanceHistory);
             _context.BalanceHistories.Add(balanceHistory);
             _log.LogInformation($"Saved new balance in database for: {name}");
             _lastBalances[name] = balanceHistory;

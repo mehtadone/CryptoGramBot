@@ -115,9 +115,13 @@ namespace CryptoGramBot.Services.Exchanges
             try
             {
                 var binanceClient = GetApi();
+                var lastChecked = _databaseService.GetLastChecked("Binance.DepositCheck");
                 using (var user = new BinanceApiUser(_config.Key, _config.Secret))
                 {
-                    var binanceDesposits = await binanceClient.GetDepositsAsync(user, _generalConfig.TradingCurrency);
+                    var start = Helpers.Helpers.DateTimeToUnixTimestamp(lastChecked);
+                        var binanceDesposits = await binanceClient.GetDepositsAsync(user,
+                            _generalConfig.TradingCurrency, null, start , 0, 10000000);
+
                     list = BinanceConverter.BinanceToDeposits(binanceDesposits);
                 }
             }
@@ -166,10 +170,11 @@ namespace CryptoGramBot.Services.Exchanges
             try
             {
                 var binanceClient = GetApi();
-
+                var lastChecked = _databaseService.GetLastChecked("Binance.DepositCheck");
                 using (var user = new BinanceApiUser(_config.Key, _config.Secret))
                 {
-                    var binanceDesposits = await binanceClient.GetWithdrawalsAsync(user, _generalConfig.TradingCurrency);
+                    var start = Helpers.Helpers.DateTimeToUnixTimestamp(lastChecked);
+                    var binanceDesposits = await binanceClient.GetWithdrawalsAsync(user, _generalConfig.TradingCurrency, null, start, 0, 10000000);
                     list = BinanceConverter.BinanceToWithdrawals(binanceDesposits);
                 }
             }

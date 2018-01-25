@@ -221,7 +221,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             using (var user = new BinanceApiUser(_config.Key, _config.Secret))
             {
-                var accountInfo = await _binanceApi.GetAccountInfoAsync(user);
+                var accountInfo = await _binanceApi.GetAccountInfoAsync(user, 10000000);
 
                 _cache.SetAccountInfo(accountInfo);
             }
@@ -231,7 +231,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             using (var user = new BinanceApiUser(_config.Key, _config.Secret))
             {
-                var openOrders = await _binanceApi.GetOpenOrdersAsync(user, symbol);
+                var openOrders = await _binanceApi.GetOpenOrdersAsync(user, symbol, 10000000);
 
                 _cache.SetOrders(symbol, openOrders.ToImmutableList());
             }
@@ -241,7 +241,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             using (var user = new BinanceApiUser(_config.Key, _config.Secret))
             {
-                var accountTrades = await _binanceApi.GetAccountTradesAsync(user, symbol);
+                var accountTrades = await _binanceApi.GetAccountTradesAsync(user, symbol, -1L, 0, 10000000);
 
                 _cache.SetAccountTrades(symbol, accountTrades.ToImmutableList());
             }

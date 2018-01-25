@@ -105,8 +105,7 @@ namespace CryptoGramBot.Services
                 registry.Schedule(() => CheckDepositAndWithdrawals().Wait()).ToRunEvery(2).Minutes();
             }
 
-            //                registry.Schedule(() => CheckForBags().Wait()).ToRunEvery(8).Hours();
-            registry.Schedule(() => CheckForBags().Wait()).ToRunNow();
+            registry.Schedule(() => CheckForBags().Wait()).ToRunEvery(8).Hours();
 
             if (_coinigyConfig.Enabled)
             {

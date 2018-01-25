@@ -112,14 +112,11 @@ namespace CryptoGramBot
             CheckWhatIsEnabled(out bool coinigyEnabled,
                 out bool bittrexEnabled,
                 out bool poloniexEnabled,
-                out bool binanceEnabled,
-                out bool bagEnabled,
-                out bool dustEnabled,
-                out bool lowBtcEnabled);
+                out bool binanceEnabled);
 
             var busBuilder = new BusBuilder();
 
-            busBuilder.ConfigureCore(coinigyEnabled, bittrexEnabled, poloniexEnabled, binanceEnabled, bagEnabled, dustEnabled);
+            busBuilder.ConfigureCore(coinigyEnabled, bittrexEnabled, poloniexEnabled, binanceEnabled);
 
             containerBuilder.RegisterMicroBus(busBuilder);
             Container = containerBuilder.Build();
@@ -127,7 +124,7 @@ namespace CryptoGramBot
             var loggerFactory = Container.Resolve<ILoggerFactory>();
             var log = loggerFactory.CreateLogger<Program>();
 
-            log.LogInformation($"Services\nCoinigy: {coinigyEnabled}\nBittrex: {bittrexEnabled}\nBinance: {binanceEnabled}\nPoloniex: {poloniexEnabled}\nBag Management: {bagEnabled}\nDust Notifications: {dustEnabled}\nLow BTC Notifications: {lowBtcEnabled}");
+            log.LogInformation($"Services\nCoinigy: {coinigyEnabled}\nBittrex: {bittrexEnabled}\nBinance: {binanceEnabled}\nPoloniex: {poloniexEnabled}");
             ConfigureConfig(Container, Configuration, log);
         }
 
@@ -210,36 +207,17 @@ namespace CryptoGramBot
                     out bool coinigyEnabled,
             out bool bittrexEnabled,
             out bool poloniexEnabled,
-            out bool binanceEnabled,
-            out bool bagEnabled,
-            out bool dustNotification,
-            out bool lowBtcNotification)
+            out bool binanceEnabled)
         {
             string coinigyEnabledString = Configuration.GetSection("Coinigy").GetValue("Enabled", "false");
             string binanceEnabledString = Configuration.GetSection("Binance").GetValue("Enabled", "false");
             string bittrexEnabledString = Configuration.GetSection("Bittrex").GetValue("Enabled", "false");
             string poloniexEnabledString = Configuration.GetSection("Poloniex").GetValue("Enabled", "false");
-            string bagManagementEnabledString = Configuration.GetSection("BagManagement").GetValue("Enabled", "false");
-            string dustNotifcationEnabledString = Configuration.GetSection("DustNotification").GetValue("Enabled", "false");
-            string lowBtcNotificationString = Configuration.GetSection("LowBtcNotification").GetValue("Enabled", "false");
 
             coinigyEnabled = bool.Parse(coinigyEnabledString);
             bittrexEnabled = bool.Parse(bittrexEnabledString);
             poloniexEnabled = bool.Parse(poloniexEnabledString);
             binanceEnabled = bool.Parse(binanceEnabledString);
-
-            if (bittrexEnabled || poloniexEnabled || binanceEnabled)
-            {
-                bagEnabled = bool.Parse(bagManagementEnabledString);
-                dustNotification = bool.Parse(dustNotifcationEnabledString);
-                lowBtcNotification = bool.Parse(lowBtcNotificationString);
-            }
-            else
-            {
-                bagEnabled = false;
-                dustNotification = false;
-                lowBtcNotification = false;
-            }
         }
 
         private void OnStarting()

@@ -148,6 +148,16 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 _symbolStatisticCancellationTokenSource?.Dispose();
                 _userDataCancellationTokenSource?.Dispose();
 
+                if(_candlestickSubscribers != null)
+                {
+                    foreach (var item in _candlestickSubscribers)
+                    {
+                        item.Value.CandlestickReConnectionTimer?.Dispose();
+                        item.Value.TokenSource?.Cancel();
+                        item.Value.TokenSource?.Dispose();
+                    }
+                }              
+
                 _isDisposed = true;
             }
         }

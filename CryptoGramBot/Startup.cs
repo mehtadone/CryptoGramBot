@@ -95,7 +95,7 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<BinanceService>().SingleInstance(); // because symbols is saved in it. //todo move this out into a cache
             containerBuilder.RegisterType<BinanceCacheService>().As<IBinanceCacheService>();
             containerBuilder.RegisterType<BinanceSubscriberService>().As<IBinanceSubscriberService>();
-            containerBuilder.RegisterType<BinanceWebsocketService>();
+            containerBuilder.RegisterType<BinanceWebsocketService>().As<IBinanceWebsocketService>();
             containerBuilder.RegisterType<DatabaseService>();
             containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
             containerBuilder.RegisterType<TelegramMessageSendingService>();

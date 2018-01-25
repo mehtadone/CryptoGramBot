@@ -1,7 +1,7 @@
-﻿using Binance.Account;
+﻿using Binance;
+using Binance.Account;
 using Binance.Account.Orders;
 using Binance.Market;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
@@ -21,22 +21,20 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         void SetAccountTrades(string symbol, ImmutableList<AccountTrade> trades);
 
-        List<string> GetSymbols();
+        List<Symbol> GetSymbols();
 
-        void SetSymbols(List<string> symbolPrices);
+        void SetSymbols(List<Symbol> symbols);
 
-        decimal GetSymbolPrice(string symbol);
+        ImmutableDictionary<string, decimal> GetSymbolPrices();
 
-        void SetSymbolPrice(string symbol, decimal price);
+        void SetSymbolPrices(ImmutableDictionary<string, decimal> prices);
 
-        SymbolStatistics GetSymbolStatistic(string symbol);
+        ImmutableDictionary<string, SymbolStatistics> GetSymbolStatistics();
 
-        void SetSymbolStatistic(string symbol, SymbolStatistics statistics);
+        void SetSymbolStatistics(ImmutableDictionary<string, SymbolStatistics> statistics);
 
         ImmutableList<Candlestick> GetCandlesticks(string symbol, CandlestickInterval interval);
 
         void SetCandlestick(string symbol, CandlestickInterval interval, ImmutableList<Candlestick> candlestick);
-
-
     }
 }

@@ -8,7 +8,6 @@ using CryptoGramBot.Services.Exchanges.WebSockets.Binance;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace CryptoGramBot.Services.Exchanges
@@ -18,14 +17,14 @@ namespace CryptoGramBot.Services.Exchanges
         private readonly IBinanceApi _client;
         private readonly BinanceConfig _config;
         private readonly DatabaseService _databaseService;
-        private readonly BinanceWebsocketService _binanceWebsocketService;
+        private readonly IBinanceWebsocketService _binanceWebsocketService;
         private readonly GeneralConfig _generalConfig;
         private readonly ILogger<BinanceService> _log;
         private readonly List<string> _symbols = new List<string>();
 
         public BinanceService(BinanceConfig config,
             DatabaseService databaseService,
-            BinanceWebsocketService binanceWebsocketService,
+            IBinanceWebsocketService binanceWebsocketService,
             GeneralConfig generalConfig,
             IBinanceApi binanceApi,
             ILogger<BinanceService> log)
@@ -209,7 +208,7 @@ namespace CryptoGramBot.Services.Exchanges
 
         public async Task<decimal> GetPrice(string baseCcy, string termsCurrency)
         {
-            var sym = await _binanceWebsocketService.GetPrice($"{termsCurrency}{baseCcy}");
+            var sym = await _binanceWebsocketService.GetPriceAsync($"{termsCurrency}{baseCcy}");
 
             if (sym != null)
             {
@@ -222,11 +221,10 @@ namespace CryptoGramBot.Services.Exchanges
         public async Task GetSymbols()
         {
             _symbols.Clear();
-            var binanceClient = GetApi();
 
-            var symbolPriceResponses = await binanceClient.GetSymbolsAsync();
+            var symbols = await _binanceWebsocketService.GetSymbolsAsync();
 
-            foreach (var response in symbolPriceResponses)
+            foreach (var response in symbols)
             {
                 if (response.QuoteAsset.Equals(_generalConfig.TradingCurrency))
                 {

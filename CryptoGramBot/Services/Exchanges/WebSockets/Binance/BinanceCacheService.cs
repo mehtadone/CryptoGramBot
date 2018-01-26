@@ -99,7 +99,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public void SetSymbolPrices(ImmutableDictionary<string, decimal> prices)
         {
-            _memoryCache.Set(SYMBOL_PRICES_KEY, prices, TimeSpan.FromSeconds(CACHE_TIME_IN_MINUTES));
+            _memoryCache.Set(SYMBOL_PRICES_KEY, prices, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
         public ImmutableDictionary<string, SymbolStatistics> GetSymbolStatistics()

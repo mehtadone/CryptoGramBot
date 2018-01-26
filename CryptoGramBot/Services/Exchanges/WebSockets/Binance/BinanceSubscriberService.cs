@@ -4,6 +4,7 @@ using Binance.Api.WebSocket.Events;
 using Binance.Market;
 using CryptoGramBot.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
@@ -77,6 +78,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private readonly IServiceProvider _serviceProvider;
         private readonly BinanceConfig _config;
+        private readonly ILogger<BinanceSubscriberService> _log;
 
         #endregion
 
@@ -191,9 +193,11 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                 await _symbolsSubscribeTask;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 _symbolsSubscribeTask = null;
+
+                _log.LogError($"Error with symbols statistic websocket {ex.Message}", ex);
             }
         }
 
@@ -237,9 +241,11 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                 await _userDataSubscribeTask;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 _userDataSubscribeTask = null;
+
+                _log.LogError($"Error with user data websocket {ex.Message}", ex);
             }
         }
 
@@ -280,8 +286,25 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                 await subscriber.SubscribeTask;
             }
-            catch (Exception)
-            { }
+            catch (Exception ex)
+            {
+                if (_candlestickSubscribers.ContainsKey(key))
+                {
+                    var subscriber = _candlestickSubscribers[key];
+
+                    subscriber.CandlestickReConnectionTimer?.Dispose();
+                    subscriber.TokenSource?.Dispose();
+
+                    CandlestickSubscriber removedSubscriber = null;
+
+                    if(_candlestickSubscribers.TryRemove(key, out removedSubscriber))
+                    {
+                        _log.LogInformation($"subscriber removed for key {key}");
+                    }
+                }
+
+                _log.LogError($"Error with candlestick websocket {ex.Message}", ex);
+            }
         }
 
         private static string GetKey(string symbol, CandlestickInterval interval)
@@ -326,10 +349,10 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             subscriber.CandlestickReConnectionTimer?.Dispose();
 
-            subscriber.CandlestickReConnectionTimer = new Timer((object state) =>
+            subscriber.CandlestickReConnectionTimer = new Timer(async(object state) =>
             {
                 var _subscriber = state as CandlestickSubscriber;
-                SubscribeToCandlestick(_subscriber.Symbol, _subscriber.Interval, reConnect: true);
+                await SubscribeToCandlestick(_subscriber.Symbol, _subscriber.Interval, reConnect: true);
             }, 
             subscriber,
             TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES),

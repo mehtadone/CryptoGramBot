@@ -85,10 +85,12 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         #region Constructor
 
         public BinanceSubscriberService(BinanceConfig config,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            ILogger<BinanceSubscriberService> log)
         {
             _config = config;
             _serviceProvider = serviceProvider;
+            _log = log;
         }
 
         #endregion
@@ -101,6 +103,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             {
                 _onSymbolStatisticUpdate = onUpdate ?? throw new ArgumentException(nameof(onUpdate));
 
+                _log.LogInformation($"Subscribe to symbols");
+
                 await SubscribeToSymbols();
             }
         }
@@ -112,6 +116,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 _onOrderUpdate = onOrderUpdate ?? throw new ArgumentException(nameof(onOrderUpdate));
                 _onAccountUpdate = onAccountUpdate ?? throw new ArgumentException(nameof(onAccountUpdate));
                 _onAccountTradeUpdate = onAccountTradeUpdate ?? throw new ArgumentException(nameof(onAccountTradeUpdate));
+
+                _log.LogInformation($"Subscribe user data");
 
                 await SubscribeToUserData();
             }
@@ -127,6 +133,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 {
                     _candlestickSubscribers = new ConcurrentDictionary<string, CandlestickSubscriber>();
                 }
+
+                _log.LogInformation($"Subscribe to candlestick {symbol} {interval.AsString()}");
 
                 await SubscribeToCandlestick(symbol, interval);
             }
@@ -299,7 +307,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                     if(_candlestickSubscribers.TryRemove(key, out removedSubscriber))
                     {
-                        _log.LogInformation($"subscriber removed for key {key}");
+                        _log.LogInformation($"subscriber removed for {symbol} {interval.AsString()}");
                     }
                 }
 

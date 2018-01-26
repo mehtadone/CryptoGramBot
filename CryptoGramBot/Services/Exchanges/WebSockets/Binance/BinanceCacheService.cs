@@ -20,10 +20,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private readonly string SYMBOLS = "symbols";
         private readonly string SYMBOL_CANDLESTICK = "_candlesTick_";
         private readonly string SYMBOL_STATISTICS = "statistics";
-
-        /// <summary>
-        /// For objects that are updated when updating data in a Web socket
-        /// </summary>
+        
         private readonly int CACHE_TIME_IN_MINUTES = 60;
 
         #endregion

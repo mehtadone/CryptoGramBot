@@ -26,11 +26,6 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         /// </summary>
         private readonly int CACHE_TIME_IN_MINUTES = 60;
 
-        /// <summary>
-        /// For objects that are updated every second from the web sockets, in order to prevent the incorrect interpretation of old data if something is wrong with the web socket
-        /// </summary>
-        private readonly int FAST_CHANGING_OBJECTS_CACHE_TIME_IN_SECONDS = 5;
-
         #endregion
 
         #region Dependecies
@@ -97,7 +92,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public void SetCandlestick(string symbol, CandlestickInterval interval, ImmutableList<Candlestick> candlesticks)
         {
-            _memoryCache.Set($"{symbol}{SYMBOL_CANDLESTICK}{interval.AsString()}", candlesticks, TimeSpan.FromSeconds(FAST_CHANGING_OBJECTS_CACHE_TIME_IN_SECONDS));
+            _memoryCache.Set($"{symbol}{SYMBOL_CANDLESTICK}{interval.AsString()}", candlesticks, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
         public ImmutableDictionary<string, decimal> GetSymbolPrices()
@@ -107,7 +102,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public void SetSymbolPrices(ImmutableDictionary<string, decimal> prices)
         {
-            _memoryCache.Set(SYMBOL_PRICES_KEY, prices, TimeSpan.FromSeconds(FAST_CHANGING_OBJECTS_CACHE_TIME_IN_SECONDS));
+            _memoryCache.Set(SYMBOL_PRICES_KEY, prices, TimeSpan.FromSeconds(CACHE_TIME_IN_MINUTES));
         }
 
         public ImmutableDictionary<string, SymbolStatistics> GetSymbolStatistics()
@@ -117,7 +112,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public void SetSymbolStatistics(ImmutableDictionary<string, SymbolStatistics> statistics)
         {
-            _memoryCache.Set(SYMBOL_STATISTICS, statistics, TimeSpan.FromMinutes(FAST_CHANGING_OBJECTS_CACHE_TIME_IN_SECONDS));
+            _memoryCache.Set(SYMBOL_STATISTICS, statistics, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
         #endregion

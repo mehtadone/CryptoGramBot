@@ -1,9 +1,12 @@
 ﻿using Binance.Api;
 using Binance.Api.WebSocket;
 using Binance.Api.WebSocket.Events;
+using Binance.Market;
 using CryptoGramBot.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +14,25 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 {
     public class BinanceSubscriberService : IBinanceSubscriberService
     {
+        #region Private Classes
+
+        private class CandlestickSubscriber
+        {
+            public string Symbol { get; set; }
+
+            public CandlestickInterval Interval { get; set; }
+
+            public Timer CandlestickReConnectionTimer { get; set; }
+
+            public CancellationTokenSource TokenSource { get; set; }
+
+            public ICandlestickWebSocketClient CandlestickWebSocketClient { get; set; }
+
+            public Task SubscribeTask { get; set; }
+        }
+
+        #endregion
+
         #region Consts
 
         /// <summary>
@@ -30,6 +52,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private CancellationTokenSource _userDataCancellationTokenSource;
         private CancellationTokenSource _symbolStatisticCancellationTokenSource;
 
+        private ConcurrentDictionary<string, CandlestickSubscriber> _candlestickSubscribers;
+
         private ISymbolStatisticsWebSocketClient _symbolStatisticsWebSocketClient;
         private IUserDataWebSocketClient _userDataWebSocketClient;
 
@@ -44,6 +68,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private Action<AccountTradeUpdateEventArgs> _onAccountTradeUpdate;
         private Action<SymbolStatisticsEventArgs> _onSymbolStatisticUpdate;
 
+        private Action<CandlestickEventArgs> _onCandlestickUpdate;
+
         private BinanceApiUser _user;
 
         #endregion
@@ -52,16 +78,19 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private readonly IServiceProvider _serviceProvider;
         private readonly BinanceConfig _config;
+        private readonly ILogger<BinanceSubscriberService> _log;
 
         #endregion
 
         #region Constructor
 
         public BinanceSubscriberService(BinanceConfig config,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            ILogger<BinanceSubscriberService> log)
         {
             _config = config;
             _serviceProvider = serviceProvider;
+            _log = log;
         }
 
         #endregion
@@ -73,6 +102,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             if (_symbolsSubscribeTask == null)
             {
                 _onSymbolStatisticUpdate = onUpdate ?? throw new ArgumentException(nameof(onUpdate));
+
+                _log.LogInformation($"Subscribe to symbols");
 
                 await SubscribeToSymbols();
             }
@@ -86,7 +117,26 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 _onAccountUpdate = onAccountUpdate ?? throw new ArgumentException(nameof(onAccountUpdate));
                 _onAccountTradeUpdate = onAccountTradeUpdate ?? throw new ArgumentException(nameof(onAccountTradeUpdate));
 
+                _log.LogInformation($"Subscribe user data");
+
                 await SubscribeToUserData();
+            }
+        }
+
+        public async Task Candlestick(string symbol, CandlestickInterval interval, Action<CandlestickEventArgs> onUpdate)
+        {
+            if (_candlestickSubscribers == null || !_candlestickSubscribers.ContainsKey($"{symbol}{interval.AsString()}"))
+            {
+                _onCandlestickUpdate = onUpdate ?? throw new ArgumentException(nameof(onUpdate));
+
+                if (_candlestickSubscribers == null)
+                {
+                    _candlestickSubscribers = new ConcurrentDictionary<string, CandlestickSubscriber>();
+                }
+
+                _log.LogInformation($"Subscribe to candlestick {symbol} {interval.AsString()}");
+
+                await SubscribeToCandlestick(symbol, interval);
             }
         }
 
@@ -107,6 +157,16 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                 _symbolStatisticCancellationTokenSource?.Dispose();
                 _userDataCancellationTokenSource?.Dispose();
+
+                if(_candlestickSubscribers != null)
+                {
+                    foreach (var item in _candlestickSubscribers)
+                    {
+                        item.Value.CandlestickReConnectionTimer?.Dispose();
+                        item.Value.TokenSource?.Cancel();
+                        item.Value.TokenSource?.Dispose();
+                    }
+                }              
 
                 _isDisposed = true;
             }
@@ -141,9 +201,11 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                 await _symbolsSubscribeTask;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 _symbolsSubscribeTask = null;
+
+                _log.LogError($"Error with symbols statistic websocket {ex.Message}", ex);
             }
         }
 
@@ -187,10 +249,75 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                 await _userDataSubscribeTask;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 _userDataSubscribeTask = null;
+
+                _log.LogError($"Error with user data websocket {ex.Message}", ex);
             }
+        }
+
+        private async Task SubscribeToCandlestick(string symbol, CandlestickInterval interval, bool reConnect = false)
+        {
+            var key = GetKey(symbol, interval);
+
+            if (_candlestickSubscribers.ContainsKey(key) && !reConnect)
+            {
+                return;
+            }
+
+            try
+            {
+                CandlestickSubscriber subscriber = _candlestickSubscribers.ContainsKey(key) ? _candlestickSubscribers[key] : null;
+
+                if(subscriber != null)
+                {
+                    subscriber.TokenSource.Cancel();
+                    subscriber.TokenSource.Dispose();
+                }
+                else
+                {
+                    subscriber = new CandlestickSubscriber()
+                    {
+                        Symbol = symbol,
+                        Interval = interval
+                    };
+
+                    CandlestickReConnectionTimerInitialize(subscriber);
+
+                    _candlestickSubscribers[key] = subscriber;
+                }
+
+                subscriber.TokenSource = new CancellationTokenSource();
+                subscriber.CandlestickWebSocketClient = _serviceProvider.GetService<ICandlestickWebSocketClient>();
+                subscriber.SubscribeTask = subscriber.CandlestickWebSocketClient.SubscribeAsync(symbol, interval, _onCandlestickUpdate, subscriber.TokenSource.Token);
+
+                await subscriber.SubscribeTask;
+            }
+            catch (Exception ex)
+            {
+                if (_candlestickSubscribers.ContainsKey(key))
+                {
+                    var subscriber = _candlestickSubscribers[key];
+
+                    subscriber.CandlestickReConnectionTimer?.Dispose();
+                    subscriber.TokenSource?.Dispose();
+
+                    CandlestickSubscriber removedSubscriber = null;
+
+                    if(_candlestickSubscribers.TryRemove(key, out removedSubscriber))
+                    {
+                        _log.LogInformation($"subscriber removed for {symbol} {interval.AsString()}");
+                    }
+                }
+
+                _log.LogError($"Error with candlestick websocket {ex.Message}", ex);
+            }
+        }
+
+        private static string GetKey(string symbol, CandlestickInterval interval)
+        {
+            return $"{symbol}{interval.AsString()}";
         }
 
         private void OnAccountTradeUpdate(object sender, AccountTradeUpdateEventArgs args)
@@ -224,7 +351,21 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             _userDataReConnectionTimer = new Timer(async s => await SubscribeToUserData(reConnect: true), null,
                 TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES),
                 TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES));
-        } 
+        }
+
+        private void CandlestickReConnectionTimerInitialize(CandlestickSubscriber subscriber)
+        {
+            subscriber.CandlestickReConnectionTimer?.Dispose();
+
+            subscriber.CandlestickReConnectionTimer = new Timer(async(object state) =>
+            {
+                var _subscriber = state as CandlestickSubscriber;
+                await SubscribeToCandlestick(_subscriber.Symbol, _subscriber.Interval, reConnect: true);
+            }, 
+            subscriber,
+            TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES),
+            TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES));
+        }
 
         #endregion
     }

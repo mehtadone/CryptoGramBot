@@ -1,8 +1,10 @@
-﻿using Binance.Account;
+﻿using Binance;
+using Binance.Account;
 using Binance.Account.Orders;
+using Binance.Market;
 using Microsoft.Extensions.Caching.Memory;
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 
 namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
@@ -14,9 +16,11 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private readonly string ACCOUNT_INFO_KEY = "account_info";
         private readonly string ORDERS_BY_SYMBOL_KEY = "_orders";
         private readonly string ACCOUNT_TRADES_BY_SYMBOL_KEY = "_accountTrades";
-        private readonly string SYMBOL_PRICES_KEY = "symbols";
-        private readonly string SYMBOL_PRICE_KEY = "_price";
-
+        private readonly string SYMBOL_PRICES_KEY = "symbols_prices";
+        private readonly string SYMBOLS = "symbols";
+        private readonly string SYMBOL_CANDLESTICK = "_candlesTick_";
+        private readonly string SYMBOL_STATISTICS = "statistics";
+        
         private readonly int CACHE_TIME_IN_MINUTES = 60;
 
         #endregion
@@ -68,24 +72,44 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             _memoryCache.Set($"{symbol}{ACCOUNT_TRADES_BY_SYMBOL_KEY}", trades, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
-        public ConcurrentDictionary<string, decimal> GetSymbolPrices()
+        public List<Symbol> GetSymbols()
         {
-            return _memoryCache.Get<ConcurrentDictionary<string, decimal>>(SYMBOL_PRICES_KEY);
+            return _memoryCache.Get<List<Symbol>>(SYMBOLS);
         }
 
-        public void SetSymbolPrices(ConcurrentDictionary<string, decimal> symbolPrices)
+        public void SetSymbols(List<Symbol> symbols)
         {
-            _memoryCache.Set(SYMBOL_PRICES_KEY, symbolPrices, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
+            _memoryCache.Set(SYMBOLS, symbols, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
-        public decimal GetSymbolPrice(string symbol)
+        public ImmutableList<Candlestick> GetCandlesticks(string symbol, CandlestickInterval interval)
         {
-            return _memoryCache.Get<decimal>($"{symbol}{SYMBOL_PRICE_KEY}");
+            return _memoryCache.Get<ImmutableList<Candlestick>>($"{symbol}{SYMBOL_CANDLESTICK}{interval.AsString()}");
         }
 
-        public void SetSymbolPrice(string symbol, decimal price)
+        public void SetCandlestick(string symbol, CandlestickInterval interval, ImmutableList<Candlestick> candlesticks)
         {
-            _memoryCache.Set($"{symbol}{SYMBOL_PRICE_KEY}", price, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
+            _memoryCache.Set($"{symbol}{SYMBOL_CANDLESTICK}{interval.AsString()}", candlesticks, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
+        }
+
+        public ImmutableDictionary<string, decimal> GetSymbolPrices()
+        {
+            return _memoryCache.Get<ImmutableDictionary<string, decimal>>(SYMBOL_PRICES_KEY);
+        }
+
+        public void SetSymbolPrices(ImmutableDictionary<string, decimal> prices)
+        {
+            _memoryCache.Set(SYMBOL_PRICES_KEY, prices, TimeSpan.FromSeconds(CACHE_TIME_IN_MINUTES));
+        }
+
+        public ImmutableDictionary<string, SymbolStatistics> GetSymbolStatistics()
+        {
+            return _memoryCache.Get<ImmutableDictionary<string, SymbolStatistics>>(SYMBOL_STATISTICS);
+        }
+
+        public void SetSymbolStatistics(ImmutableDictionary<string, SymbolStatistics> statistics)
+        {
+            _memoryCache.Set(SYMBOL_STATISTICS, statistics, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
         #endregion

@@ -112,6 +112,36 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             _memoryCache.Set(SYMBOL_STATISTICS, statistics, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
+        public void ClearAccountInfo()
+        {
+            _memoryCache.Remove(ACCOUNT_INFO_KEY);
+        }
+
+        public void ClearOrders(string symbol)
+        {
+            _memoryCache.Remove($"{symbol}{ORDERS_BY_SYMBOL_KEY}");
+        }
+
+        public void ClearAccountTrades(string symbol)
+        {
+            _memoryCache.Remove($"{symbol}{ACCOUNT_TRADES_BY_SYMBOL_KEY}");
+        }
+
+        public void ClearSymbolPrices()
+        {
+            _memoryCache.Remove(SYMBOL_PRICES_KEY);
+        }
+
+        public void ClearSymbolStatistics()
+        {
+            _memoryCache.Remove(SYMBOL_STATISTICS);
+        }
+
+        public void ClearCandlestick(string symbol, CandlestickInterval interval)
+        {
+            _memoryCache.Remove($"{symbol}{SYMBOL_CANDLESTICK}{interval.AsString()}");
+        }
+        
         #endregion
     }
 }

@@ -106,9 +106,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             if (_symbolsSubscribeTask == null)
             {
                 _onSymbolStatisticUpdate = onUpdate ?? throw new ArgumentException(nameof(onUpdate));
-                _onSymbolStatisticError = onError ?? throw new ArgumentException(nameof(onError));
-
-                _log.LogInformation($"Subscribe to symbols");
+                _onSymbolStatisticError = onError ?? throw new ArgumentException(nameof(onError));                
 
                 await SubscribeToSymbols();
             }
@@ -145,8 +143,6 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 {
                     _candlestickSubscribers = new ConcurrentDictionary<string, CandlestickSubscriber>();
                 }
-
-                _log.LogInformation($"Subscribe to candlestick {symbol} {interval.AsString()}");
 
                 await SubscribeToCandlestick(symbol, interval);
             }
@@ -190,6 +186,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private async Task SubscribeToSymbols(bool reConnect = false)
         {
+            _log.LogInformation($"Subscribe to symbols");
+
             if (_symbolsSubscribeTask != null && !reConnect)
             {
                 return;
@@ -275,6 +273,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private async Task SubscribeToCandlestick(string symbol, CandlestickInterval interval, bool reConnect = false)
         {
+            _log.LogInformation($"Subscribe to candlestick {symbol} {interval.AsString()}");
+
             var key = GetKey(symbol, interval);
 
             if (_candlestickSubscribers.ContainsKey(key) && !reConnect)

@@ -47,14 +47,6 @@ namespace CryptoGramBot.Services
 
             var registry = new Registry();
 
-            if (_binanceConfig.Enabled)
-            {
-                registry.Schedule(() => FindBinanceSymbols().Wait())
-                    .ToRunNow()
-                    .AndEvery(30)
-                    .Minutes();
-            }
-
             if (_bittrexConfig.Enabled || _poloniexConfig.Enabled || _binanceConfig.Enabled)
             {
                 registry.Schedule(() => GetNewOrders().Wait())
@@ -138,11 +130,6 @@ namespace CryptoGramBot.Services
         {
             var balanceCheckEvent = new BalanceCheckEvent(true, exchange);
             await _bus.PublishAsync(balanceCheckEvent);
-        }
-
-        private async Task FindBinanceSymbols()
-        {
-            await _bus.SendAsync(new BinanceQuerySymbolsCommand());
         }
 
         private void ForceGC()

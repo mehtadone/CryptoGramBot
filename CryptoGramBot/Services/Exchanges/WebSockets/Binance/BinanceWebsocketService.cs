@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
@@ -18,6 +19,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         #region Fields
 
         private bool isDisposed;
+        private Semaphore _semaphore;
 
         #endregion
 
@@ -41,6 +43,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             _binanceApi = binanceApi;
             _cache = cache;
             _subscriber = subscriber;
+            _semaphore = new Semaphore(1, 1);
         } 
 
         #endregion
@@ -65,6 +68,13 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         public async Task<IEnumerable<Symbol>> GetSymbolsAsync()
         {
             return await GetSymbols();
+        }
+
+        public async Task<IEnumerable<string>> GetSymbolStringsAsync()
+        {
+            var symbols = await GetSymbols();
+
+            return symbols.Select(symbol => $"{symbol.BaseAsset}{symbol.QuoteAsset}").ToList();
         }
 
         public async Task<SymbolPrice> GetPriceAsync(string symbol)
@@ -97,7 +107,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             if (!isDisposed)
             {
-                _subscriber.Dispose();
+                _semaphore?.Dispose();
+                _subscriber?.Dispose();
 
                 isDisposed = true;
             }
@@ -207,16 +218,25 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             Action subscribeTo = null)
             where T : class
         {
-            var cacheValue = getFromCache();
-
-            if (cacheValue == default(T))
+            try
             {
-                cacheValue = await initialize();
+                _semaphore.WaitOne();
+
+                var cacheValue = getFromCache();
+
+                if (cacheValue == default(T))
+                {
+                    cacheValue = await initialize();
+                }
+
+                subscribeTo?.Invoke();
+
+                return cacheValue;
             }
-
-            subscribeTo?.Invoke();
-
-            return cacheValue;
+            finally
+            {
+                _semaphore.Release();
+            }
         }
 
         private async Task<AccountInfo> InitializeAccountInfo()

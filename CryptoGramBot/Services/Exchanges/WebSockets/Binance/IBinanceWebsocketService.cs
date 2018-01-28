@@ -17,6 +17,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         Task<IEnumerable<Symbol>> GetSymbolsAsync();
 
+        Task<IEnumerable<string>> GetSymbolStringsAsync();
+
         Task<SymbolPrice> GetPriceAsync(string symbol);
 
         Task<IEnumerable<SymbolPrice>> GetPricesAsync();

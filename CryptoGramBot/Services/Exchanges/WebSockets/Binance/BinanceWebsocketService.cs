@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
@@ -18,6 +19,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         #region Fields
 
         private bool isDisposed;
+        private Semaphore _semaphore;
 
         #endregion
 
@@ -41,6 +43,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             _binanceApi = binanceApi;
             _cache = cache;
             _subscriber = subscriber;
+            _semaphore = new Semaphore(1, 1);
         } 
 
         #endregion
@@ -65,6 +68,13 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         public async Task<IEnumerable<Symbol>> GetSymbolsAsync()
         {
             return await GetSymbols();
+        }
+
+        public async Task<IEnumerable<string>> GetSymbolStringsAsync()
+        {
+            var symbols = await GetSymbols();
+
+            return symbols.Select(symbol => $"{symbol.BaseAsset}{symbol.QuoteAsset}").ToList();
         }
 
         public async Task<SymbolPrice> GetPriceAsync(string symbol)
@@ -97,7 +107,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             if (!isDisposed)
             {
-                _subscriber.Dispose();
+                _semaphore?.Dispose();
+                _subscriber?.Dispose();
 
                 isDisposed = true;
             }
@@ -185,17 +196,17 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private void SubscribeSymbols()
         {
-            _subscriber.SymbolsStatistics(OnStatisticsUpdate);
+            _subscriber.SymbolsStatistics(OnStatisticsUpdate, OnStatisticError);
         }
 
         private void SubscribeUserData()
         {
-            _subscriber.UserData(OnOrderUpdate, OnAccountUpdate, OnAccountTradeUpdate);
+            _subscriber.UserData(OnOrderUpdate, OnAccountUpdate, OnAccountTradeUpdate, OnUserDataError);
         }
 
         private void SubscribeCandlestick(string symbol, CandlestickInterval interval)
         {
-            _subscriber.Candlestick(symbol, interval, OnCandletickUpdate);
+            _subscriber.Candlestick(symbol, interval, OnCandletickUpdate, OnCandlestickError);
         }
 
         #endregion
@@ -203,76 +214,111 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         #region Initial initialization
 
         private async Task<T> GetOrCreateObject<T>(Func<T> getFromCache,
-            Func<Task> initialize,
+            Func<Task<T>> initialize,
             Action subscribeTo = null)
             where T : class
         {
-            if (getFromCache() == default(T))
+            try
             {
-                await initialize();
+                _semaphore.WaitOne();
+
+                var cacheValue = getFromCache();
+
+                if (cacheValue == default(T))
+                {
+                    cacheValue = await initialize();
+                }
+
+                subscribeTo?.Invoke();
+
+                return cacheValue;
             }
-
-            subscribeTo?.Invoke();
-
-            return getFromCache();
+            finally
+            {
+                _semaphore.Release();
+            }
         }
 
-        private async Task InitializeAccountInfo()
+        private async Task<AccountInfo> InitializeAccountInfo()
         {
             using (var user = new BinanceApiUser(_config.Key, _config.Secret))
             {
                 var accountInfo = await _binanceApi.GetAccountInfoAsync(user, 10000000);
 
                 _cache.SetAccountInfo(accountInfo);
+
+                return accountInfo;
             }
         }
 
-        private async Task InitializeOpenOrders(string symbol)
+        private async Task<ImmutableList<Order>> InitializeOpenOrders(string symbol)
         {
             using (var user = new BinanceApiUser(_config.Key, _config.Secret))
             {
                 var openOrders = await _binanceApi.GetOpenOrdersAsync(user, symbol, 10000000);
 
-                _cache.SetOrders(symbol, openOrders.ToImmutableList());
+                var immutableOrders = openOrders.ToImmutableList();
+
+                _cache.SetOrders(symbol, immutableOrders);
+
+                return immutableOrders;
             }
         }
 
-        private async Task InitializeAccountTrades(string symbol)
+        private async Task<ImmutableList<AccountTrade>> InitializeAccountTrades(string symbol)
         {
             using (var user = new BinanceApiUser(_config.Key, _config.Secret))
             {
                 var accountTrades = await _binanceApi.GetAccountTradesAsync(user, symbol, -1L, 0, 10000000);
 
-                _cache.SetAccountTrades(symbol, accountTrades.ToImmutableList());
+                var immutableAccountTrades = accountTrades.ToImmutableList();
+
+                _cache.SetAccountTrades(symbol, immutableAccountTrades);
+
+                return immutableAccountTrades;
             }
         }
 
-        private async Task InitializeCandleticks(string symbol, CandlestickInterval interval)
+        private async Task<ImmutableList<Candlestick>> InitializeCandleticks(string symbol, CandlestickInterval interval)
         {
             var candlesticks = await _binanceApi.GetCandlesticksAsync(symbol, interval);
 
-            _cache.SetCandlestick(symbol, interval, candlesticks.ToImmutableList());
+            var immutableCandlesticks = candlesticks.ToImmutableList();
+
+            _cache.SetCandlestick(symbol, interval, immutableCandlesticks);
+
+            return immutableCandlesticks;
         }
 
-        private async Task InitializeSymbols()
+        private async Task<List<Symbol>> InitializeSymbols()
         {
             var symbols = await _binanceApi.GetSymbolsAsync();
 
             _cache.SetSymbols(symbols.ToList());
+
+            return symbols.ToList();
         }
 
-        private async Task InitializeSymbolPrices()
+        private async Task<ImmutableDictionary<string, decimal>> InitializeSymbolPrices()
         {
             var symbolPrices = await _binanceApi.GetPricesAsync();
 
-            _cache.SetSymbolPrices(symbolPrices.ToImmutableDictionary(s => s.Symbol, s => s.Value));
+            var immutablePrices = symbolPrices.ToImmutableDictionary(s => s.Symbol, s => s.Value);
+
+            _cache.SetSymbolPrices(immutablePrices);
+
+            return immutablePrices;
         }
 
-        private async Task InitializeSymbolStatistics()
+        private async Task<ImmutableDictionary<string, SymbolStatistics>> InitializeSymbolStatistics()
         {
             var symbolStatistics = await _binanceApi.Get24HourStatisticsAsync();
 
-            _cache.SetSymbolStatistics(symbolStatistics.ToImmutableDictionary(s => s.Symbol, s => s));
+            var immutableStatistics = symbolStatistics.ToImmutableDictionary(s => s.Symbol, s => s);
+
+            _cache.SetSymbolStatistics(immutableStatistics);
+
+            return immutableStatistics;
         }
 
         #endregion
@@ -336,6 +382,19 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
+        private async Task OnUserDataError()
+        {
+            _cache.ClearAccountInfo();
+
+            var symbols = await GetSymbols();
+
+            foreach(var symbol in symbols)
+            {
+                _cache.ClearAccountTrades(symbol.BaseAsset.Symbol);
+                _cache.ClearOrders(symbol.BaseAsset.Symbol);
+            }           
+        }
+
         private void OnStatisticsUpdate(SymbolStatisticsEventArgs e)
         {
             var statistics = e.Statistics;
@@ -368,6 +427,19 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
+        private void OnStatisticError()
+        {
+            if (_cache.GetSymbolPrices() != null)
+            {
+                _cache.ClearSymbolPrices();
+            }
+
+            if (_cache.GetSymbolStatistics() != null)
+            {
+                _cache.ClearSymbolStatistics();
+            }
+        }
+
         private void OnCandletickUpdate(CandlestickEventArgs args)
         {
             var immutableCandleticks = _cache.GetCandlesticks(args.Candlestick.Symbol, args.Candlestick.Interval);
@@ -383,6 +455,14 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 mutableCandletickes.Add(args.Candlestick);
 
                 _cache.SetCandlestick(args.Candlestick.Symbol, args.Candlestick.Interval, mutableCandletickes.ToImmutable());
+            }
+        }
+
+        private void OnCandlestickError(string symbol, CandlestickInterval interval)
+        {
+            if (_cache.GetCandlesticks(symbol, interval) != null)
+            {
+                _cache.ClearCandlestick(symbol, interval);
             }
         }
 

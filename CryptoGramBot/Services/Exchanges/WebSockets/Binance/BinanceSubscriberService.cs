@@ -38,10 +38,10 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         /// <summary>
         /// Binance websocket connection life time.
         /// "A single connection to stream.binance.com is only valid for 24 hours; expect to be disconnected at the 24 hour mark"        
-        /// on 10 minutes less than 24 hours, to prevent Binance disconnect
+        /// on 60 minutes less than 24 hours, to prevent Binance disconnect
         /// <see cref="https://github.com/binance-exchange/binance-official-api-docs/blob/master/web-socket-streams.md"/>
         /// </summary>
-        private readonly int WEBSOCKET_LIFE_TIME_IN_MINUTES = 1430;
+        private readonly int WEBSOCKET_LIFE_TIME_IN_MINUTES = 1380;
 
         #endregion
 
@@ -70,6 +70,10 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private Action<CandlestickEventArgs> _onCandlestickUpdate;
 
+        private Action _onSymbolStatisticError;
+        private Action<string, CandlestickInterval> _onCandlestickError;
+        private Func<Task> _onUserDataError;
+
         private BinanceApiUser _user;
 
         #endregion
@@ -97,25 +101,28 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         #region IBinanceSubscribersService
 
-        public async Task SymbolsStatistics(Action<SymbolStatisticsEventArgs> onUpdate)
+        public async Task SymbolsStatistics(Action<SymbolStatisticsEventArgs> onUpdate, Action onError)
         {
             if (_symbolsSubscribeTask == null)
             {
                 _onSymbolStatisticUpdate = onUpdate ?? throw new ArgumentException(nameof(onUpdate));
-
-                _log.LogInformation($"Subscribe to symbols");
+                _onSymbolStatisticError = onError ?? throw new ArgumentException(nameof(onError));                
 
                 await SubscribeToSymbols();
             }
         }
 
-        public async Task UserData(Action<OrderUpdateEventArgs> onOrderUpdate, Action<AccountUpdateEventArgs> onAccountUpdate, Action<AccountTradeUpdateEventArgs> onAccountTradeUpdate)
+        public async Task UserData(Action<OrderUpdateEventArgs> onOrderUpdate, 
+            Action<AccountUpdateEventArgs> onAccountUpdate, 
+            Action<AccountTradeUpdateEventArgs> onAccountTradeUpdate,
+            Func<Task> onError)
         {
             if (_userDataSubscribeTask == null)
             {
                 _onOrderUpdate = onOrderUpdate ?? throw new ArgumentException(nameof(onOrderUpdate));
                 _onAccountUpdate = onAccountUpdate ?? throw new ArgumentException(nameof(onAccountUpdate));
                 _onAccountTradeUpdate = onAccountTradeUpdate ?? throw new ArgumentException(nameof(onAccountTradeUpdate));
+                _onUserDataError = onError ?? throw new ArgumentException(nameof(onError));
 
                 _log.LogInformation($"Subscribe user data");
 
@@ -123,18 +130,19 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
-        public async Task Candlestick(string symbol, CandlestickInterval interval, Action<CandlestickEventArgs> onUpdate)
+        public async Task Candlestick(string symbol, CandlestickInterval interval,
+            Action<CandlestickEventArgs> onUpdate,
+            Action<string, CandlestickInterval> onError)
         {
             if (_candlestickSubscribers == null || !_candlestickSubscribers.ContainsKey($"{symbol}{interval.AsString()}"))
             {
                 _onCandlestickUpdate = onUpdate ?? throw new ArgumentException(nameof(onUpdate));
+                _onCandlestickError = onError ?? throw new ArgumentException(nameof(onError));
 
                 if (_candlestickSubscribers == null)
                 {
                     _candlestickSubscribers = new ConcurrentDictionary<string, CandlestickSubscriber>();
                 }
-
-                _log.LogInformation($"Subscribe to candlestick {symbol} {interval.AsString()}");
 
                 await SubscribeToCandlestick(symbol, interval);
             }
@@ -178,6 +186,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private async Task SubscribeToSymbols(bool reConnect = false)
         {
+            _log.LogInformation($"Subscribe to symbols");
+
             if (_symbolsSubscribeTask != null && !reConnect)
             {
                 return;
@@ -206,6 +216,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 _symbolsSubscribeTask = null;
 
                 _log.LogError($"Error with symbols statistic websocket {ex.Message}", ex);
+
+                _onSymbolStatisticError?.Invoke();
             }
         }
 
@@ -254,11 +266,15 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 _userDataSubscribeTask = null;
 
                 _log.LogError($"Error with user data websocket {ex.Message}", ex);
+
+                await _onUserDataError?.Invoke();
             }
         }
 
         private async Task SubscribeToCandlestick(string symbol, CandlestickInterval interval, bool reConnect = false)
         {
+            _log.LogInformation($"Subscribe to candlestick {symbol} {interval.AsString()}");
+
             var key = GetKey(symbol, interval);
 
             if (_candlestickSubscribers.ContainsKey(key) && !reConnect)
@@ -312,6 +328,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 }
 
                 _log.LogError($"Error with candlestick websocket {ex.Message}", ex);
+
+                _onCandlestickError?.Invoke(symbol, interval);
             }
         }
 

@@ -34,7 +34,7 @@ namespace CryptoGramBot
     {
         #region Fields
 
-        private readonly int KEEP_ALIVE_PERIOD_IN_MILLISECONDS = 60 * 1000;//900000;
+        private readonly int KEEP_ALIVE_PERIOD_IN_MILLISECONDS = 900000;
 
         #endregion
 

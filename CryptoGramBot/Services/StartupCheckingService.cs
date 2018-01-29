@@ -67,8 +67,8 @@ namespace CryptoGramBot.Services
                 if (!string.IsNullOrEmpty(_bittrexConfig.DailyNotifications))
                 {
                     var dailyBalance = _bittrexConfig.DailyNotifications.Split(':');
-                    int.TryParse(dailyBalance[0], out int hour);
-                    int.TryParse(dailyBalance[1], out int min);
+                    int.TryParse(dailyBalance[0], out var hour);
+                    int.TryParse(dailyBalance[1], out var min);
 
                     registry.Schedule(() => DailyBalanceCheck(Constants.Bittrex).Wait()).ToRunEvery(1).Days().At(hour, min);
                 }
@@ -79,8 +79,8 @@ namespace CryptoGramBot.Services
                 if (!string.IsNullOrEmpty(_bittrexConfig.DailyNotifications))
                 {
                     var dailyBalance = _bittrexConfig.DailyNotifications.Split(':');
-                    int.TryParse(dailyBalance[0], out int hour);
-                    int.TryParse(dailyBalance[1], out int min);
+                    int.TryParse(dailyBalance[0], out var hour);
+                    int.TryParse(dailyBalance[1], out var min);
 
                     registry.Schedule(() => DailyBalanceCheck(Constants.Binance).Wait()).ToRunEvery(1).Days().At(hour, min);
                 }
@@ -91,8 +91,8 @@ namespace CryptoGramBot.Services
                 if (!string.IsNullOrEmpty(_poloniexConfig.DailyNotifications))
                 {
                     var dailyBalance = _poloniexConfig.DailyNotifications.Split(':');
-                    int.TryParse(dailyBalance[0], out int hour);
-                    int.TryParse(dailyBalance[1], out int min);
+                    int.TryParse(dailyBalance[0], out var hour);
+                    int.TryParse(dailyBalance[1], out var min);
 
                     registry.Schedule(() => DailyBalanceCheck(Constants.Poloniex).Wait()).ToRunEvery(1).Days().At(hour, min);
                 }

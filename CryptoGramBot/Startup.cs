@@ -23,27 +23,46 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Serilog;
 using System;
+using System.Threading.Tasks;
 
 namespace CryptoGramBot
 {
     public class Startup
     {
+        #region Fields
+
+        private readonly int KEEP_ALIVE_PERIOD_IN_MILLISECONDS = 900000;
+
+        #endregion
+
+        #region Properites
+
+        public IConfiguration Configuration { get; }
+
+        public IContainer Container { get; set; }
+
+        #endregion
+
+        #region Constructor
+
         public Startup(IConfiguration configuration)
         {
             TelemetryConfiguration.Active.DisableTelemetry = true;
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
+        #endregion
 
-        public IContainer Container { get; set; }
+
+        #region Startup
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime applicationLifetime)
         {
-            applicationLifetime.ApplicationStarted.Register(OnStarting);
+            applicationLifetime.ApplicationStarted.Register(async () => await OnStarting());
 
             app.UseDeveloperExceptionPage();
 
@@ -73,15 +92,21 @@ namespace CryptoGramBot
             var serviceCollection = new ServiceCollection().AddLogging(loggingBuilder =>
                 loggingBuilder.AddSerilog(dispose: true));
 
-            serviceCollection.AddDbContext<CryptoGramBotDbContext>(options =>
+            serviceCollection.AddDbContextPool<CryptoGramBotDbContext>(options =>
                 options.UseSqlite(StringContants.DatabaseLocation)
             );
 
             serviceCollection.AddBinance();
 
-            serviceCollection.BuildServiceProvider();           
+            serviceCollection.BuildServiceProvider();
 
             containerBuilder.Populate(serviceCollection);
+
+            containerBuilder.Register(c => new OptionsWrapper<UserDataWebSocketClientOptions>(new UserDataWebSocketClientOptions
+            {
+                KeepAliveTimerPeriod = KEEP_ALIVE_PERIOD_IN_MILLISECONDS //If you set the default time(30 minutes) when the keep alive connection occurs unspecified error.
+            }))
+            .As<IOptions<UserDataWebSocketClientOptions>>();
 
             containerBuilder.RegisterType<CoinigyConfig>().SingleInstance();
             containerBuilder.RegisterType<TelegramConfig>().SingleInstance();
@@ -92,10 +117,10 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<CoinigyApiService>();
             containerBuilder.RegisterType<BittrexService>();
             containerBuilder.RegisterType<PoloniexService>();
-            containerBuilder.RegisterType<BinanceService>().SingleInstance(); // because symbols is saved in it. //todo move this out into a cache
+            containerBuilder.RegisterType<BinanceService>();
             containerBuilder.RegisterType<BinanceCacheService>().As<IBinanceCacheService>();
-            containerBuilder.RegisterType<BinanceSubscriberService>().As<IBinanceSubscriberService>();
-            containerBuilder.RegisterType<BinanceWebsocketService>();
+            containerBuilder.RegisterType<BinanceSubscriberService>().As<IBinanceSubscriberService>().SingleInstance();
+            containerBuilder.RegisterType<BinanceWebsocketService>().As<IBinanceWebsocketService>().SingleInstance();
             containerBuilder.RegisterType<DatabaseService>();
             containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
             containerBuilder.RegisterType<TelegramMessageSendingService>();
@@ -126,7 +151,11 @@ namespace CryptoGramBot
 
             log.LogInformation($"Services\nCoinigy: {coinigyEnabled}\nBittrex: {bittrexEnabled}\nBinance: {binanceEnabled}\nPoloniex: {poloniexEnabled}");
             ConfigureConfig(Container, Configuration, log);
-        }
+        } 
+
+        #endregion
+
+        #region Methods
 
         private static void ConfigureConfig(IContainer container, IConfiguration configuration, ILogger<Program> log)
         {
@@ -220,12 +249,12 @@ namespace CryptoGramBot
             binanceEnabled = bool.Parse(binanceEnabledString);
         }
 
-        private void OnStarting()
+        private async Task OnStarting()
         {
             var startupService = Container.Resolve<StartupCheckingService>();
             var context = Container.Resolve<CryptoGramBotDbContext>();
 
-            DbInitializer.Initialize(context).Wait();
+            await DbInitializer.Initialize(context);
 
             var limiterTotal = new RateLimiterPerEndpoint(1, TimeSpan.FromSeconds(1));
             var limiterPerEndpoint = new RateLimiterPerEndpoint(1, TimeSpan.FromSeconds(1));
@@ -234,6 +263,8 @@ namespace CryptoGramBot
             BittrexDefaults.AddDefaultRateLimiter(limiterPerEndpoint);
 
             startupService.Start();
-        }
+        } 
+
+        #endregion
     }
 }

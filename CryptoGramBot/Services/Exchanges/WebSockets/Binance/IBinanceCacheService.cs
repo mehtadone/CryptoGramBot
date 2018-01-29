@@ -1,6 +1,7 @@
-﻿using Binance.Account;
+﻿using Binance;
+using Binance.Account;
 using Binance.Account.Orders;
-using System.Collections.Concurrent;
+using Binance.Market;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
@@ -12,20 +13,40 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         void SetAccountInfo(AccountInfo accountInfo);
 
+        void ClearAccountInfo();
+
         ImmutableList<Order> GetOrders(string symbol);
 
         void SetOrders(string symbol, ImmutableList<Order> orders);
+
+        void ClearOrders(string symbol);
 
         ImmutableList<AccountTrade> GetAccountTrades(string symbol);
 
         void SetAccountTrades(string symbol, ImmutableList<AccountTrade> trades);
 
-        ConcurrentDictionary<string, decimal> GetSymbolPrices();
+        void ClearAccountTrades(string symbol);
 
-        void SetSymbolPrices(ConcurrentDictionary<string, decimal> symbolPrices);
+        List<Symbol> GetSymbols();
 
-        decimal GetSymbolPrice(string symbol);
+        void SetSymbols(List<Symbol> symbols);
 
-        void SetSymbolPrice(string symbol, decimal price);
+        ImmutableDictionary<string, decimal> GetSymbolPrices();
+
+        void SetSymbolPrices(ImmutableDictionary<string, decimal> prices);
+
+        void ClearSymbolPrices();
+
+        ImmutableDictionary<string, SymbolStatistics> GetSymbolStatistics();
+
+        void SetSymbolStatistics(ImmutableDictionary<string, SymbolStatistics> statistics);
+
+        void ClearSymbolStatistics();
+
+        ImmutableList<Candlestick> GetCandlesticks(string symbol, CandlestickInterval interval);
+
+        void SetCandlestick(string symbol, CandlestickInterval interval, ImmutableList<Candlestick> candlestick);
+
+        void ClearCandlestick(string symbol, CandlestickInterval interval);
     }
 }

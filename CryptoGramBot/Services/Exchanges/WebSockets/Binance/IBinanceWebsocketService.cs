@@ -1,8 +1,8 @@
-﻿using Binance.Account;
+﻿using Binance;
+using Binance.Account;
 using Binance.Account.Orders;
-using System;
+using Binance.Market;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
@@ -12,5 +12,19 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         Task<AccountInfo> GetAccountInfoAsync();
 
         Task<IEnumerable<Order>> GetOpenOrdersAsync(string symbol);
+
+        Task<IEnumerable<AccountTrade>> GetAccountTradesAsync(string symbol);
+
+        Task<IEnumerable<Symbol>> GetSymbolsAsync();
+
+        Task<IEnumerable<string>> GetSymbolStringsAsync();
+
+        Task<SymbolPrice> GetPriceAsync(string symbol);
+
+        Task<IEnumerable<SymbolPrice>> GetPricesAsync();
+
+        Task<IEnumerable<Candlestick>> GetCandlesticksAsync(string symbol, CandlestickInterval interval);
+
+        Task<IEnumerable<SymbolStatistics>> Get24HourStatisticsAsync();
     }
 }

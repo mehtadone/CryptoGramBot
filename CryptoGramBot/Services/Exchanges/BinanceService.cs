@@ -8,7 +8,6 @@ using CryptoGramBot.Services.Exchanges.WebSockets.Binance;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace CryptoGramBot.Services.Exchanges
@@ -18,14 +17,13 @@ namespace CryptoGramBot.Services.Exchanges
         private readonly IBinanceApi _client;
         private readonly BinanceConfig _config;
         private readonly DatabaseService _databaseService;
-        private readonly BinanceWebsocketService _binanceWebsocketService;
+        private readonly IBinanceWebsocketService _binanceWebsocketService;
         private readonly GeneralConfig _generalConfig;
         private readonly ILogger<BinanceService> _log;
-        private List<string> _symbols = new List<string>();
 
         public BinanceService(BinanceConfig config,
             DatabaseService databaseService,
-            BinanceWebsocketService binanceWebsocketService,
+            IBinanceWebsocketService binanceWebsocketService,
             GeneralConfig generalConfig,
             IBinanceApi binanceApi,
             ILogger<BinanceService> log)
@@ -144,7 +142,9 @@ namespace CryptoGramBot.Services.Exchanges
 
             try
             {
-                foreach (var symbol in _symbols)
+                var symbols = await _binanceWebsocketService.GetSymbolStringsAsync();
+
+                foreach (var symbol in symbols)
                 {
                     var response = await _binanceWebsocketService.GetOpenOrdersAsync(symbol);
                     var ccy2 = symbol.Remove(symbol.Length - _generalConfig.TradingCurrency.Length);
@@ -195,7 +195,9 @@ namespace CryptoGramBot.Services.Exchanges
 
             try
             {
-                foreach (var symbol in _symbols)
+                var symbols = await _binanceWebsocketService.GetSymbolStringsAsync();
+
+                foreach (var symbol in symbols)
                 {
                     var response = await _binanceWebsocketService.GetAccountTradesAsync(symbol);
                     var ccy2 = symbol.Remove(symbol.Length - _generalConfig.TradingCurrency.Length);
@@ -214,7 +216,7 @@ namespace CryptoGramBot.Services.Exchanges
 
         public async Task<decimal> GetPrice(string baseCcy, string termsCurrency)
         {
-            var sym = await _binanceWebsocketService.GetPrice($"{termsCurrency}{baseCcy}");
+            var sym = await _binanceWebsocketService.GetPriceAsync($"{termsCurrency}{baseCcy}");
 
             if (sym != null)
             {
@@ -222,25 +224,6 @@ namespace CryptoGramBot.Services.Exchanges
             }
 
             return decimal.Zero;
-        }
-
-        public async Task GetSymbols()
-        {
-
-            var newSymbols = new List<string>();
-            var binanceClient = GetApi();
-
-            var symbolPriceResponses = await binanceClient.GetSymbolsAsync();
-
-            foreach (var response in symbolPriceResponses)
-            {
-                if (response.QuoteAsset.Equals(_generalConfig.TradingCurrency))
-                {
-                    newSymbols.Add($"{response.BaseAsset}{response.QuoteAsset}");
-                }
-            }
-
-            _symbols = newSymbols;
         }
 
         private IBinanceApi GetApi()

@@ -1,23 +1,25 @@
-﻿using Binance.Account;
+﻿using Binance;
+using Binance.Account;
 using Binance.Account.Orders;
 using Binance.Api;
 using Binance.Api.WebSocket.Events;
 using Binance.Market;
 using CryptoGramBot.Configuration;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 {
-    public class BinanceWebsocketService : IDisposable
+    public class BinanceWebsocketService : IBinanceWebsocketService, IDisposable
     {
         #region Fields
 
         private bool isDisposed;
+        private Semaphore _semaphore;
 
         #endregion
 
@@ -41,6 +43,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             _binanceApi = binanceApi;
             _cache = cache;
             _subscriber = subscriber;
+            _semaphore = new Semaphore(1, 1);
         } 
 
         #endregion
@@ -62,11 +65,38 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             return await GetAccountTrades(symbol);
         }
 
-        public async Task<SymbolPrice> GetPrice(string symbol)
+        public async Task<IEnumerable<Symbol>> GetSymbolsAsync()
+        {
+            return await GetSymbols();
+        }
+
+        public async Task<IEnumerable<string>> GetSymbolStringsAsync()
+        {
+            var symbols = await GetSymbols();
+
+            return symbols.Select(symbol => $"{symbol.BaseAsset}{symbol.QuoteAsset}").ToList();
+        }
+
+        public async Task<SymbolPrice> GetPriceAsync(string symbol)
         {
             var symbolPrice = await GetSymbolPrice(symbol);
 
-            return new SymbolPrice(symbol, symbolPrice);
+            return symbolPrice == null ? null : new SymbolPrice(symbol, symbolPrice.Value);
+        }
+
+        public async Task<IEnumerable<SymbolPrice>> GetPricesAsync()
+        {
+            return await GetSymbolPrices();
+        }
+
+        public async Task<IEnumerable<Candlestick>> GetCandlesticksAsync(string symbol, CandlestickInterval interval)
+        {
+            return await GetCandlestick(symbol, interval);
+        }
+
+        public async Task<IEnumerable<SymbolStatistics>> Get24HourStatisticsAsync()
+        {
+            return await GetSymbolStatistics();
         }
 
         #endregion
@@ -77,7 +107,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             if (!isDisposed)
             {
-                _subscriber.Dispose();
+                _semaphore?.Dispose();
+                _subscriber?.Dispose();
 
                 isDisposed = true;
             }
@@ -91,74 +122,132 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private Task<AccountInfo> GetAccountInfo()
         {
-            return GetOrCreateUserObject(
+            return GetOrCreateObject(
                 () => _cache.GetAccountInfo(),
                 () => InitializeAccountInfo(),
-                (accountInfo) => _cache.SetAccountInfo(accountInfo));
+                () => SubscribeUserData());
         }
 
         private Task<ImmutableList<Order>> GetOrders(string symbol)
         {
-            return GetOrCreateUserObject(
+            return GetOrCreateObject(
                 () => _cache.GetOrders(symbol),
                 () => InitializeOpenOrders(symbol),
-                (orders) => _cache.SetOrders(symbol, orders));
+                () => SubscribeUserData());
         }
 
         private Task<ImmutableList<AccountTrade>> GetAccountTrades(string symbol)
         {
-            return GetOrCreateUserObject(
+            return GetOrCreateObject(
                 () => _cache.GetAccountTrades(symbol),
                 () => InitializeAccountTrades(symbol),
-                (trades) => _cache.SetAccountTrades(symbol, trades));
+                () => SubscribeUserData());
         }
 
-        private async Task<decimal> GetSymbolPrice(string symbol)
+        private Task<ImmutableList<Candlestick>> GetCandlestick(string symbol, CandlestickInterval interval)
         {
-            if (_cache.GetSymbolPrices() == null)
-            {
-                await InitializeSymbolPrices();
-            }
-
-            SubscribeSymbols();
-
-            return _cache.GetSymbolPrice(symbol);
+            return GetOrCreateObject(
+                () => _cache.GetCandlesticks(symbol, interval),
+                () => InitializeCandleticks(symbol, interval),
+                () => SubscribeCandlestick(symbol, interval));
         }
 
-        private async Task<T> GetOrCreateUserObject<T>(Func<T> getFromCache, Func<Task<T>> initialize, Action<T> saveToCache)
-            where T : class
+        private Task<List<Symbol>> GetSymbols()
         {
-            if (getFromCache() == null)
-            {
-                var @object = await initialize();
+            return GetOrCreateObject(
+                () => _cache.GetSymbols(),
+                () => InitializeSymbols());
+        }
 
-                saveToCache(@object);
+        private async Task<decimal?> GetSymbolPrice(string symbol)
+        {
+            var symbolPrices = await GetOrCreateObject(
+                   () => _cache.GetSymbolPrices(),
+                   () => InitializeSymbolPrices(),
+                   () => SubscribeSymbols());
+
+            if (symbolPrices.ContainsKey(symbol))
+            {
+                return symbolPrices[symbol];
             }
 
-            SubscribeUserData();
+            return null;
+        }
 
-            return getFromCache();
+        private async Task<List<SymbolPrice>> GetSymbolPrices()
+        {
+            var dictionary = await GetOrCreateObject(
+                () => _cache.GetSymbolPrices(),
+                () => InitializeSymbolPrices(),
+                () => SubscribeSymbols());
+
+            return dictionary.Select(p => new SymbolPrice(p.Key, p.Value)).ToList();
+        }
+
+        private async Task<List<SymbolStatistics>> GetSymbolStatistics()
+        {
+            var dictionary = await GetOrCreateObject(
+                () => _cache.GetSymbolStatistics(),
+                () => InitializeSymbolStatistics(),
+                () => SubscribeSymbols());
+
+            return dictionary.Select(p => p.Value).ToList();
         }
 
         private void SubscribeSymbols()
         {
-            _subscriber.SymbolsStatistics(OnStatisticsUpdate);
+            _subscriber.SymbolsStatistics(OnStatisticsUpdate, OnStatisticError);
         }
 
         private void SubscribeUserData()
         {
-            _subscriber.UserData(OnOrderUpdate, OnAccountUpdate, OnAccountTradeUpdate);
+            _subscriber.UserData(OnOrderUpdate, OnAccountUpdate, OnAccountTradeUpdate, OnUserDataError);
+        }
+
+        private void SubscribeCandlestick(string symbol, CandlestickInterval interval)
+        {
+            _subscriber.Candlestick(symbol, interval, OnCandletickUpdate, OnCandlestickError);
         }
 
         #endregion
 
         #region Initial initialization
 
+        private async Task<T> GetOrCreateObject<T>(Func<T> getFromCache,
+            Func<Task<T>> initialize,
+            Action subscribeTo = null)
+            where T : class
+        {
+            try
+            {
+                _semaphore.WaitOne();
+
+                var cacheValue = getFromCache();
+
+                if (cacheValue == default(T))
+                {
+                    cacheValue = await initialize();
+                }
+
+                subscribeTo?.Invoke();
+
+                return cacheValue;
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
         private async Task<AccountInfo> InitializeAccountInfo()
         {
             using (var user = new BinanceApiUser(_config.Key, _config.Secret))
             {
-                return await _binanceApi.GetAccountInfoAsync(user, 10000000);
+                var accountInfo = await _binanceApi.GetAccountInfoAsync(user, 10000000);
+
+                _cache.SetAccountInfo(accountInfo);
+
+                return accountInfo;
             }
         }
 
@@ -168,7 +257,11 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             {
                 var openOrders = await _binanceApi.GetOpenOrdersAsync(user, symbol, 10000000);
 
-                return openOrders.ToImmutableList();
+                var immutableOrders = openOrders.ToImmutableList();
+
+                _cache.SetOrders(symbol, immutableOrders);
+
+                return immutableOrders;
             }
         }
 
@@ -178,20 +271,54 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             {
                 var accountTrades = await _binanceApi.GetAccountTradesAsync(user, symbol, -1L, 0, 10000000);
 
-                return accountTrades.ToImmutableList();
+                var immutableAccountTrades = accountTrades.ToImmutableList();
+
+                _cache.SetAccountTrades(symbol, immutableAccountTrades);
+
+                return immutableAccountTrades;
             }
         }
 
-        private async Task InitializeSymbolPrices()
+        private async Task<ImmutableList<Candlestick>> InitializeCandleticks(string symbol, CandlestickInterval interval)
+        {
+            var candlesticks = await _binanceApi.GetCandlesticksAsync(symbol, interval);
+
+            var immutableCandlesticks = candlesticks.ToImmutableList();
+
+            _cache.SetCandlestick(symbol, interval, immutableCandlesticks);
+
+            return immutableCandlesticks;
+        }
+
+        private async Task<List<Symbol>> InitializeSymbols()
+        {
+            var symbols = await _binanceApi.GetSymbolsAsync();
+
+            _cache.SetSymbols(symbols.ToList());
+
+            return symbols.ToList();
+        }
+
+        private async Task<ImmutableDictionary<string, decimal>> InitializeSymbolPrices()
         {
             var symbolPrices = await _binanceApi.GetPricesAsync();
 
-            _cache.SetSymbolPrices(new ConcurrentDictionary<string, decimal>());
+            var immutablePrices = symbolPrices.ToImmutableDictionary(s => s.Symbol, s => s.Value);
 
-            foreach (var symbolPrice in symbolPrices)
-            {
-                _cache.SetSymbolPrice(symbolPrice.Symbol, symbolPrice.Value);
-            }
+            _cache.SetSymbolPrices(immutablePrices);
+
+            return immutablePrices;
+        }
+
+        private async Task<ImmutableDictionary<string, SymbolStatistics>> InitializeSymbolStatistics()
+        {
+            var symbolStatistics = await _binanceApi.Get24HourStatisticsAsync();
+
+            var immutableStatistics = symbolStatistics.ToImmutableDictionary(s => s.Symbol, s => s);
+
+            _cache.SetSymbolStatistics(immutableStatistics);
+
+            return immutableStatistics;
         }
 
         #endregion
@@ -255,13 +382,87 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
+        private async Task OnUserDataError()
+        {
+            _cache.ClearAccountInfo();
+
+            var symbols = await GetSymbols();
+
+            foreach(var symbol in symbols)
+            {
+                _cache.ClearAccountTrades(symbol.BaseAsset.Symbol);
+                _cache.ClearOrders(symbol.BaseAsset.Symbol);
+            }           
+        }
+
         private void OnStatisticsUpdate(SymbolStatisticsEventArgs e)
         {
             var statistics = e.Statistics;
 
-            foreach (var statistic in statistics)
+            var immutableStatistics = _cache.GetSymbolStatistics();
+            var immutablePrices = _cache.GetSymbolPrices();
+
+            if (immutableStatistics != null)
             {
-                _cache.SetSymbolPrice(statistic.Symbol, statistic.LastPrice);
+                var mutableStatistics = immutableStatistics.ToBuilder();
+
+                foreach (var statistic in statistics)
+                {
+                    mutableStatistics[statistic.Symbol] = statistic;
+                }
+
+                _cache.SetSymbolStatistics(mutableStatistics.ToImmutable());
+            }
+
+            if (immutablePrices != null)
+            {
+                var mutablePrice = immutablePrices.ToBuilder();
+
+                foreach (var statistic in statistics)
+                {
+                    mutablePrice[statistic.Symbol] = statistic.LastPrice;
+                }
+
+                _cache.SetSymbolPrices(mutablePrice.ToImmutable());
+            }
+        }
+
+        private void OnStatisticError()
+        {
+            if (_cache.GetSymbolPrices() != null)
+            {
+                _cache.ClearSymbolPrices();
+            }
+
+            if (_cache.GetSymbolStatistics() != null)
+            {
+                _cache.ClearSymbolStatistics();
+            }
+        }
+
+        private void OnCandletickUpdate(CandlestickEventArgs args)
+        {
+            var immutableCandleticks = _cache.GetCandlesticks(args.Candlestick.Symbol, args.Candlestick.Interval);
+
+            if(immutableCandleticks != null && immutableCandleticks.Any())
+            {
+                var mutableCandletickes = immutableCandleticks.ToBuilder();
+
+                var previousCandletick = mutableCandletickes.FirstOrDefault(p => p.OpenTime == args.Candlestick.OpenTime);
+
+                mutableCandletickes.Remove(previousCandletick ?? mutableCandletickes.FirstOrDefault());
+
+                mutableCandletickes.Add(args.Candlestick);
+
+                _cache.SetCandlestick(args.Candlestick.Symbol, args.Candlestick.Interval, mutableCandletickes.ToImmutable());
+            }
+        }
+
+        private void OnCandlestickError(string symbol, CandlestickInterval interval)
+        {
+            if (_cache.GetCandlesticks(symbol, interval) != null)
+            {
+                _cache.ClearCandlestick(symbol, interval);
             }
         }
 

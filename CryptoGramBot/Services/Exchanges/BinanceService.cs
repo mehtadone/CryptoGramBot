@@ -20,7 +20,6 @@ namespace CryptoGramBot.Services.Exchanges
         private readonly IBinanceWebsocketService _binanceWebsocketService;
         private readonly GeneralConfig _generalConfig;
         private readonly ILogger<BinanceService> _log;
-        private readonly List<string> _symbols = new List<string>();
 
         public BinanceService(BinanceConfig config,
             DatabaseService databaseService,
@@ -143,7 +142,9 @@ namespace CryptoGramBot.Services.Exchanges
 
             try
             {
-                foreach (var symbol in _symbols)
+                var symbols = await _binanceWebsocketService.GetSymbolStringsAsync();
+
+                foreach (var symbol in symbols)
                 {
                     var response = await _binanceWebsocketService.GetOpenOrdersAsync(symbol);
                     var ccy2 = symbol.Remove(symbol.Length - _generalConfig.TradingCurrency.Length);
@@ -194,7 +195,9 @@ namespace CryptoGramBot.Services.Exchanges
 
             try
             {
-                foreach (var symbol in _symbols)
+                var symbols = await _binanceWebsocketService.GetSymbolStringsAsync();
+
+                foreach (var symbol in symbols)
                 {
                     var response = await _binanceWebsocketService.GetAccountTradesAsync(symbol);
                     var ccy2 = symbol.Remove(symbol.Length - _generalConfig.TradingCurrency.Length);
@@ -221,21 +224,6 @@ namespace CryptoGramBot.Services.Exchanges
             }
 
             return decimal.Zero;
-        }
-
-        public async Task GetSymbols()
-        {
-            _symbols.Clear();
-
-            var symbols = await _binanceWebsocketService.GetSymbolsAsync();
-
-            foreach (var response in symbols)
-            {
-                if (response.QuoteAsset.Equals(_generalConfig.TradingCurrency))
-                {
-                    _symbols.Add($"{response.BaseAsset}{response.QuoteAsset}");
-                }
-            }
         }
 
         private IBinanceApi GetApi()

@@ -58,7 +58,6 @@ namespace CryptoGramBot.Extensions
             {
                 busBuilder.RegisterEventHandler<NewTradesCheckEvent, BinanceNewOrderCheckHandler>();
                 busBuilder.RegisterEventHandler<BalanceCheckEvent, BinanceBalanceCheckHandler>();
-                busBuilder.RegisterCommandHandler<BinanceQuerySymbolsCommand, BinanceSymbolGenerateHandler>();
                 busBuilder.RegisterEventHandler<BagAndDustEvent, BinanceBagAndDustHandler>();
                 busBuilder.RegisterEventHandler<DepositAndWithdrawalEvent, BinanceDepositWithdrawalHandler>();
             }

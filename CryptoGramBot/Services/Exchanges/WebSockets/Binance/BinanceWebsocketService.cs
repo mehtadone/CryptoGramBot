@@ -6,6 +6,7 @@ using Binance.Api.WebSocket.Events;
 using Binance.Market;
 using CryptoGramBot.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -32,12 +33,13 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         
         #endregion
 
-        #region Dependecies
+        #region Dependencies
 
         private readonly BinanceConfig _config;
         private readonly IBinanceApi _binanceApi;
         private readonly IBinanceCacheService _cache;
         private readonly IBinanceSubscriberService _subscriber;
+        private readonly ILogger<IBinanceWebsocketService> _log;
 
         #endregion
 
@@ -46,12 +48,14 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         public BinanceWebsocketService(BinanceConfig config,
            IBinanceApi binanceApi,
            IBinanceCacheService cache,
-           IServiceProvider serviceProvider)
+           IServiceProvider serviceProvider,
+           ILogger<IBinanceWebsocketService> log)
         {
             _config = config;
             _binanceApi = binanceApi;
             _cache = cache;
             _subscriber = serviceProvider.GetService<IBinanceSubscriberService>();
+            _log = log;
         } 
 
         #endregion
@@ -358,12 +362,16 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
             if (immutableAccountTrades != null)
             {
+                _log.LogDebug($"new account trade recieved {e.Trade?.Id}", e);
+
                 var mutableTrades = immutableAccountTrades.ToBuilder();
 
                 var previousTrade = mutableTrades.FirstOrDefault(p => p.Id == e.Trade.Id);
 
                 if (previousTrade != null)
                 {
+                    _log.LogDebug($"previous account trade removed {e.Trade?.Id}", e);
+
                     mutableTrades.Remove(previousTrade);
                 }
 
@@ -372,12 +380,18 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 _cache.SetAccountTrades(symbol, mutableTrades.ToImmutable());
 
                 UpdateOrders(e.Order, symbol);
+
+                _log.LogDebug($"new account trade added {e.Trade?.Id}", e);
             }
         }
 
         private void OnAccountUpdate(AccountUpdateEventArgs e)
         {
+            _log.LogDebug($"account info update recieved", e);
+
             _cache.SetAccountInfo(e.AccountInfo);
+
+            _log.LogDebug($"account info update added", e);
         }
 
         private void OnOrderUpdate(OrderUpdateEventArgs args)
@@ -393,6 +407,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
             if (immutableOrders != null)
             {
+                _log.LogDebug($"new order recieved {updatedOrder?.Id}", updatedOrder, symbol);
+
                 var mutableOrders = immutableOrders.ToBuilder();
 
                 var previousOrder = mutableOrders.FirstOrDefault(p => updatedOrder.Id == p.Id);
@@ -400,11 +416,15 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 if (previousOrder != null)
                 {
                     mutableOrders.Remove(previousOrder);
+
+                    _log.LogDebug($"previous order removed {updatedOrder?.Id}", updatedOrder, symbol);
                 }
 
                 mutableOrders.Add(updatedOrder);
 
                 _cache.SetOrders(symbol, mutableOrders.ToImmutable());
+
+                _log.LogDebug($"new order added {updatedOrder?.Id}", updatedOrder, symbol);
             }
         }
 

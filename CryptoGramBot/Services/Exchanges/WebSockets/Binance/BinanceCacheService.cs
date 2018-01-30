@@ -20,6 +20,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private readonly string SYMBOLS = "symbols";
         private readonly string SYMBOL_CANDLESTICK = "_candlesTick_";
         private readonly string SYMBOL_STATISTICS = "statistics";
+        private readonly string SYMBOL_PRICE = "price_";
         
         private readonly int CACHE_TIME_IN_MINUTES = 60;
 
@@ -141,7 +142,24 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             _memoryCache.Remove($"{symbol}{SYMBOL_CANDLESTICK}{interval.AsString()}");
         }
-        
+
+        public decimal? GetSymbolPrice(string symbol)
+        {
+            return _memoryCache.Get<decimal?>($"{SYMBOL_PRICE}{symbol}");
+        }
+
+        public void ClearSymbolPrice(string symbol)
+        {
+            _memoryCache.Remove($"{SYMBOL_PRICE}{symbol}");
+        }
+
+        public void SetSymbolPrice(string symbol, decimal? value)
+        {
+            _memoryCache.Set($"{SYMBOL_PRICE}{symbol}", value, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
+        }
+
+
+
         #endregion
     }
 }

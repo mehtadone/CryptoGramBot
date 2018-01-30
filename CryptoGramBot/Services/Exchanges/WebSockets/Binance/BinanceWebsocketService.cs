@@ -5,6 +5,7 @@ using Binance.Api;
 using Binance.Api.WebSocket.Events;
 using Binance.Market;
 using CryptoGramBot.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -18,9 +19,17 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
     {
         #region Fields
 
-        private bool isDisposed;
-        private Semaphore _semaphore;
+        private bool _isDisposed;
 
+        private SemaphoreSlim _accountInfoSync = new SemaphoreSlim(1, 1);
+        private SemaphoreSlim _openOrdersSync = new SemaphoreSlim(1, 1);
+        private SemaphoreSlim _tradesSync = new SemaphoreSlim(1, 1);
+        private SemaphoreSlim _symbolsSync = new SemaphoreSlim(1, 1);
+        private SemaphoreSlim _symbolPricesSync = new SemaphoreSlim(1, 1);
+        private SemaphoreSlim _symbolPriceSync = new SemaphoreSlim(1, 1);
+        private SemaphoreSlim _candlestickSync = new SemaphoreSlim(1, 1);
+        private SemaphoreSlim _symbolStatisticsSync = new SemaphoreSlim(1, 1);
+        
         #endregion
 
         #region Dependecies
@@ -37,13 +46,12 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         public BinanceWebsocketService(BinanceConfig config,
            IBinanceApi binanceApi,
            IBinanceCacheService cache,
-           IBinanceSubscriberService subscriber)
+           IServiceProvider serviceProvider)
         {
             _config = config;
             _binanceApi = binanceApi;
             _cache = cache;
-            _subscriber = subscriber;
-            _semaphore = new Semaphore(1, 1);
+            _subscriber = serviceProvider.GetService<IBinanceSubscriberService>();
         } 
 
         #endregion
@@ -105,12 +113,18 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public void Dispose()
         {
-            if (!isDisposed)
+            if (!_isDisposed)
             {
-                _semaphore?.Dispose();
-                _subscriber?.Dispose();
+                _accountInfoSync?.Dispose();
+                _tradesSync?.Dispose();
+                _openOrdersSync?.Dispose();
+                _symbolPricesSync?.Dispose();
+                _symbolPriceSync?.Dispose();
+                _symbolsSync?.Dispose();
+                _candlestickSync?.Dispose();
+                _symbolStatisticsSync?.Dispose();
 
-                isDisposed = true;
+                _isDisposed = true;
             }
         }
 
@@ -123,6 +137,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private Task<AccountInfo> GetAccountInfo()
         {
             return GetOrCreateObject(
+                _accountInfoSync,
                 () => _cache.GetAccountInfo(),
                 () => InitializeAccountInfo(),
                 () => SubscribeUserData());
@@ -131,6 +146,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private Task<ImmutableList<Order>> GetOrders(string symbol)
         {
             return GetOrCreateObject(
+                _openOrdersSync,
                 () => _cache.GetOrders(symbol),
                 () => InitializeOpenOrders(symbol),
                 () => SubscribeUserData());
@@ -139,6 +155,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private Task<ImmutableList<AccountTrade>> GetAccountTrades(string symbol)
         {
             return GetOrCreateObject(
+                _tradesSync,
                 () => _cache.GetAccountTrades(symbol),
                 () => InitializeAccountTrades(symbol),
                 () => SubscribeUserData());
@@ -147,6 +164,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private Task<ImmutableList<Candlestick>> GetCandlestick(string symbol, CandlestickInterval interval)
         {
             return GetOrCreateObject(
+                _candlestickSync,
                 () => _cache.GetCandlesticks(symbol, interval),
                 () => InitializeCandleticks(symbol, interval),
                 () => SubscribeCandlestick(symbol, interval));
@@ -155,28 +173,26 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private Task<List<Symbol>> GetSymbols()
         {
             return GetOrCreateObject(
+                _symbolsSync,
                 () => _cache.GetSymbols(),
                 () => InitializeSymbols());
         }
 
         private async Task<decimal?> GetSymbolPrice(string symbol)
         {
-            var symbolPrices = await GetOrCreateObject(
-                   () => _cache.GetSymbolPrices(),
-                   () => InitializeSymbolPrices(),
-                   () => SubscribeSymbols());
+            await GetOrCreateObject(
+                _symbolPriceSync,
+                () => _cache.GetSymbolPrices(),
+                () => InitializeSymbolPrices(),
+                () => SubscribeSymbols());
 
-            if (symbolPrices.ContainsKey(symbol))
-            {
-                return symbolPrices[symbol];
-            }
-
-            return null;
+            return _cache.GetSymbolPrice(symbol);
         }
 
         private async Task<List<SymbolPrice>> GetSymbolPrices()
         {
             var dictionary = await GetOrCreateObject(
+                _symbolPricesSync,
                 () => _cache.GetSymbolPrices(),
                 () => InitializeSymbolPrices(),
                 () => SubscribeSymbols());
@@ -187,6 +203,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private async Task<List<SymbolStatistics>> GetSymbolStatistics()
         {
             var dictionary = await GetOrCreateObject(
+                _symbolStatisticsSync,
                 () => _cache.GetSymbolStatistics(),
                 () => InitializeSymbolStatistics(),
                 () => SubscribeSymbols());
@@ -213,15 +230,17 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         #region Initial initialization
 
-        private async Task<T> GetOrCreateObject<T>(Func<T> getFromCache,
+        private async Task<T> GetOrCreateObject<T>(
+            SemaphoreSlim semaphore, 
+            Func<T> getFromCache,
             Func<Task<T>> initialize,
             Action subscribeTo = null)
             where T : class
         {
+            await semaphore.WaitAsync();
+
             try
             {
-                _semaphore.WaitOne();
-
                 var cacheValue = getFromCache();
 
                 if (cacheValue == default(T))
@@ -235,7 +254,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
             finally
             {
-                _semaphore.Release();
+                semaphore.Release();
             }
         }
 
@@ -303,9 +322,16 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             var symbolPrices = await _binanceApi.GetPricesAsync();
 
+            var immutableSymbolPrices = symbolPrices.ToImmutableList();
+
             var immutablePrices = symbolPrices.ToImmutableDictionary(s => s.Symbol, s => s.Value);
 
             _cache.SetSymbolPrices(immutablePrices);
+
+            foreach(var symbolPrice in immutableSymbolPrices)
+            {
+                _cache.SetSymbolPrice(symbolPrice.Symbol, symbolPrice.Value);
+            }
 
             return immutablePrices;
         }
@@ -421,6 +447,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 foreach (var statistic in statistics)
                 {
                     mutablePrice[statistic.Symbol] = statistic.LastPrice;
+
+                    _cache.SetSymbolPrice(statistic.Symbol, statistic.LastPrice);
                 }
 
                 _cache.SetSymbolPrices(mutablePrice.ToImmutable());
@@ -429,8 +457,20 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private void OnStatisticError()
         {
-            if (_cache.GetSymbolPrices() != null)
+            var symbolPrices = _cache.GetSymbolPrices();
+
+            if (symbolPrices != null)
             {
+                var symbols = symbolPrices.Select(p => p.Key).ToList();
+
+                if (symbols.Any())
+                {
+                    foreach(var symbol in symbols)
+                    {
+                        _cache.ClearSymbolPrice(symbol);
+                    }
+                }
+
                 _cache.ClearSymbolPrices();
             }
 

@@ -6,6 +6,7 @@ using CryptoGramBot.Models;
 using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Exchanges.WebSockets.Binance;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -23,14 +24,14 @@ namespace CryptoGramBot.Services.Exchanges
 
         public BinanceService(BinanceConfig config,
             DatabaseService databaseService,
-            IBinanceWebsocketService binanceWebsocketService,
+            IServiceProvider serviceProvider,
             GeneralConfig generalConfig,
             IBinanceApi binanceApi,
             ILogger<BinanceService> log)
         {
             _config = config;
             _databaseService = databaseService;
-            _binanceWebsocketService = binanceWebsocketService;
+            _binanceWebsocketService = serviceProvider.GetService<IBinanceWebsocketService>();
             _generalConfig = generalConfig;
             _log = log;
 

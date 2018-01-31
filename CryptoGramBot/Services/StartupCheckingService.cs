@@ -48,8 +48,9 @@ namespace CryptoGramBot.Services
             var registry = new Registry();
 
             if (_bittrexConfig.Enabled || _poloniexConfig.Enabled || _binanceConfig.Enabled)
-            {
+            {   
                 registry.Schedule(() => GetNewOrders().Wait())
+                    .NonReentrant() //first time account trades request it is longest than one minute, and will be good if we will wait end of requests and next sheduler will run after fully completed previous.
                     .ToRunEvery(1)
                     .Minutes();
             }

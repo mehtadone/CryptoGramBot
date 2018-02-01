@@ -23,6 +23,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private readonly string SYMBOL_PRICE = "price_";
         
         private readonly int CACHE_TIME_IN_MINUTES = 60;
+        private readonly int USER_CACHE_TIME_IN_HOURS = 23;
 
         #endregion
 
@@ -50,7 +51,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public void SetAccountInfo(AccountInfo accountInfo)
         {
-            _memoryCache.Set(ACCOUNT_INFO_KEY, accountInfo, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
+            _memoryCache.Set(ACCOUNT_INFO_KEY, accountInfo, TimeSpan.FromHours(USER_CACHE_TIME_IN_HOURS));
         }
 
         public ImmutableList<Order> GetOrders(string symbol)
@@ -60,7 +61,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public void SetOrders(string symbol, ImmutableList<Order> orders)
         {
-            _memoryCache.Set($"{symbol}{ORDERS_BY_SYMBOL_KEY}", orders, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
+            _memoryCache.Set($"{symbol}{ORDERS_BY_SYMBOL_KEY}", orders, TimeSpan.FromHours(USER_CACHE_TIME_IN_HOURS));
         }
 
         public ImmutableList<AccountTrade> GetAccountTrades(string symbol)
@@ -70,7 +71,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         public void SetAccountTrades(string symbol, ImmutableList<AccountTrade> trades)
         {
-            _memoryCache.Set($"{symbol}{ACCOUNT_TRADES_BY_SYMBOL_KEY}", trades, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
+            _memoryCache.Set($"{symbol}{ACCOUNT_TRADES_BY_SYMBOL_KEY}", trades, TimeSpan.FromHours(USER_CACHE_TIME_IN_HOURS));
         }
 
         public List<Symbol> GetSymbols()

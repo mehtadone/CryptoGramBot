@@ -211,11 +211,11 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                 await _symbolsSubscribeTask;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 _symbolsSubscribeTask = null;
 
-                _log.LogError($"Error with symbols statistic websocket {ex.Message}", ex);
+                _log.LogError($"Error with symbols statistic websocket. Cache will be clear");
 
                 _onSymbolStatisticError?.Invoke();
             }
@@ -261,11 +261,11 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                 await _userDataSubscribeTask;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 _userDataSubscribeTask = null;
 
-                _log.LogError($"Error with user data websocket {ex.Message}", ex);
+                _log.LogError($"Error with user data websocket. Cache will be clear");
 
                 await _onUserDataError?.Invoke();
             }
@@ -310,7 +310,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                 await subscriber.SubscribeTask;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 if (_candlestickSubscribers.ContainsKey(key))
                 {
@@ -327,7 +327,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                     }
                 }
 
-                _log.LogError($"Error with candlestick websocket {ex.Message}", ex);
+                _log.LogError($"Error with candlestick websocket {symbol} {interval.AsString()}. Cache will be clear");
 
                 _onCandlestickError?.Invoke(symbol, interval);
             }

@@ -22,7 +22,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
             public CandlestickInterval Interval { get; set; }
 
-            public Timer CandlestickReConnectionTimer { get; set; }
+            public Timer CandlestickDisconnectionTimer { get; set; }
 
             public CancellationTokenSource TokenSource { get; set; }
 
@@ -57,8 +57,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private ISymbolStatisticsWebSocketClient _symbolStatisticsWebSocketClient;
         private IUserDataWebSocketClient _userDataWebSocketClient;
 
-        private Timer _symbolsReConnectionTimer;
-        private Timer _userDataReConnectionTimer;
+        private Timer _symbolsDisconnectionTimer;
+        private Timer _userDataDisconnectionTimer;
 
         private Task _userDataSubscribeTask;
         private Task _symbolsSubscribeTask;
@@ -70,9 +70,9 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private Action<CandlestickEventArgs> _onCandlestickUpdate;
 
-        private Action _onSymbolStatisticError;
-        private Action<string, CandlestickInterval> _onCandlestickError;
-        private Func<Task> _onUserDataError;
+        private Action _onSymbolStatisticErrorOrDisconnect;
+        private Action<string, CandlestickInterval> _onCandlestickErrorOrDisconnect;
+        private Func<Task> _onUserDataErrorOrDisconnect;
 
         private BinanceApiUser _user;
 
@@ -106,7 +106,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             if (_symbolsSubscribeTask == null)
             {
                 _onSymbolStatisticUpdate = onUpdate ?? throw new ArgumentException(nameof(onUpdate));
-                _onSymbolStatisticError = onError ?? throw new ArgumentException(nameof(onError));                
+                _onSymbolStatisticErrorOrDisconnect = onError ?? throw new ArgumentException(nameof(onError));                
 
                 await SubscribeToSymbols();
             }
@@ -122,7 +122,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 _onOrderUpdate = onOrderUpdate ?? throw new ArgumentException(nameof(onOrderUpdate));
                 _onAccountUpdate = onAccountUpdate ?? throw new ArgumentException(nameof(onAccountUpdate));
                 _onAccountTradeUpdate = onAccountTradeUpdate ?? throw new ArgumentException(nameof(onAccountTradeUpdate));
-                _onUserDataError = onError ?? throw new ArgumentException(nameof(onError));
+                _onUserDataErrorOrDisconnect = onError ?? throw new ArgumentException(nameof(onError));
 
                 _log.LogInformation($"Subscribe user data");
 
@@ -137,7 +137,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             if (_candlestickSubscribers == null || !_candlestickSubscribers.ContainsKey($"{symbol}{interval.AsString()}"))
             {
                 _onCandlestickUpdate = onUpdate ?? throw new ArgumentException(nameof(onUpdate));
-                _onCandlestickError = onError ?? throw new ArgumentException(nameof(onError));
+                _onCandlestickErrorOrDisconnect = onError ?? throw new ArgumentException(nameof(onError));
 
                 if (_candlestickSubscribers == null)
                 {
@@ -157,8 +157,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             if (!_isDisposed)
             {
 
-                _symbolsReConnectionTimer?.Dispose();
-                _userDataReConnectionTimer?.Dispose();
+                _symbolsDisconnectionTimer?.Dispose();
+                _userDataDisconnectionTimer?.Dispose();
 
                 _symbolStatisticCancellationTokenSource?.Cancel();
                 _userDataCancellationTokenSource?.Cancel();
@@ -170,7 +170,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                 {
                     foreach (var item in _candlestickSubscribers)
                     {
-                        item.Value.CandlestickReConnectionTimer?.Dispose();
+                        item.Value.CandlestickDisconnectionTimer?.Dispose();
                         item.Value.TokenSource?.Cancel();
                         item.Value.TokenSource?.Dispose();
                     }
@@ -184,11 +184,11 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         #region Private methods
 
-        private async Task SubscribeToSymbols(bool reConnect = false)
+        private async Task SubscribeToSymbols()
         {
             _log.LogInformation($"Subscribe to symbols");
 
-            if (_symbolsSubscribeTask != null && !reConnect)
+            if (_symbolsSubscribeTask != null)
             {
                 return;
             }
@@ -204,26 +204,19 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                 _symbolsSubscribeTask = _symbolStatisticsWebSocketClient.SubscribeAsync(_onSymbolStatisticUpdate, _symbolStatisticCancellationTokenSource.Token);
 
-                if (!reConnect)
-                {
-                    SymbolsReConnectionTimerInitialize();
-                }
+                SymbolsDisconnectionTimerInitialize();
 
                 await _symbolsSubscribeTask;
             }
             catch (Exception)
             {
-                _symbolsSubscribeTask = null;
-
-                _log.LogError($"Error with symbols statistic websocket. Cache will be clear");
-
-                _onSymbolStatisticError?.Invoke();
+                OnSymbolStatisticDisconnect(true);
             }
         }
 
-        private async Task SubscribeToUserData(bool reConnect = false)
+        private async Task SubscribeToUserData()
         {
-            if (_userDataSubscribeTask != null && !reConnect)
+            if (_userDataSubscribeTask != null)
             {
                 return;
             }
@@ -254,30 +247,23 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
                 _userDataSubscribeTask = _userDataWebSocketClient.SubscribeAsync(_user, _userDataCancellationTokenSource.Token);
 
-                if (!reConnect)
-                {
-                    UserDataReConnectionTimerInitialize();
-                }
+                UserDataDisconnectionTimerInitialize();
 
                 await _userDataSubscribeTask;
             }
             catch (Exception)
             {
-                _userDataSubscribeTask = null;
-
-                _log.LogError($"Error with user data websocket. Cache will be clear");
-
-                await _onUserDataError?.Invoke();
+                await OnUserDataDisconnect(true);
             }
         }
 
-        private async Task SubscribeToCandlestick(string symbol, CandlestickInterval interval, bool reConnect = false)
+        private async Task SubscribeToCandlestick(string symbol, CandlestickInterval interval)
         {
             _log.LogInformation($"Subscribe to candlestick {symbol} {interval.AsString()}");
 
             var key = GetKey(symbol, interval);
 
-            if (_candlestickSubscribers.ContainsKey(key) && !reConnect)
+            if (_candlestickSubscribers.ContainsKey(key))
             {
                 return;
             }
@@ -299,7 +285,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                         Interval = interval
                     };
 
-                    CandlestickReConnectionTimerInitialize(subscriber);
+                    CandlestickDisconnectionTimerInitialize(subscriber);
 
                     _candlestickSubscribers[key] = subscriber;
                 }
@@ -312,24 +298,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
             catch (Exception)
             {
-                if (_candlestickSubscribers.ContainsKey(key))
-                {
-                    var subscriber = _candlestickSubscribers[key];
-
-                    subscriber.CandlestickReConnectionTimer?.Dispose();
-                    subscriber.TokenSource?.Dispose();
-
-                    CandlestickSubscriber removedSubscriber = null;
-
-                    if(_candlestickSubscribers.TryRemove(key, out removedSubscriber))
-                    {
-                        _log.LogInformation($"subscriber removed for {symbol} {interval.AsString()}");
-                    }
-                }
-
-                _log.LogError($"Error with candlestick websocket {symbol} {interval.AsString()}. Cache will be clear");
-
-                _onCandlestickError?.Invoke(symbol, interval);
+                OnCandlesticDisconnect(symbol, interval, true);
             }
         }
 
@@ -353,36 +322,85 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             _onOrderUpdate?.Invoke(args);
         }
 
-        private void SymbolsReConnectionTimerInitialize()
+        private void OnSymbolStatisticDisconnect(bool error = false)
         {
-            _symbolsReConnectionTimer?.Dispose();
+            _symbolsSubscribeTask = null;
 
-            _symbolsReConnectionTimer = new Timer(async s => await SubscribeToSymbols(reConnect: true), null,
-                TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES),
-                TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES));
+            var logMessage = error ? "Error with symbol statistic websocket" : "Symbol statistic websocket disconnected!";
+
+            _log.LogInformation($"{logMessage} Cache will be clear");
+
+            _onSymbolStatisticErrorOrDisconnect?.Invoke();
         }
 
-        private void UserDataReConnectionTimerInitialize()
+        private async Task OnUserDataDisconnect(bool error = false)
         {
-            _userDataReConnectionTimer?.Dispose();
+            _userDataSubscribeTask = null;
 
-            _userDataReConnectionTimer = new Timer(async s => await SubscribeToUserData(reConnect: true), null,
-                TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES),
-                TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES));
+            var logMessage = error ? "Error with user data websocket" : "User data websocket disconnected!";
+
+            _log.LogInformation($"{logMessage} Cache will be clear");
+
+            await _onUserDataErrorOrDisconnect?.Invoke();
         }
 
-        private void CandlestickReConnectionTimerInitialize(CandlestickSubscriber subscriber)
+        private void OnCandlesticDisconnect(string symbol, CandlestickInterval interval, bool error = false)
         {
-            subscriber.CandlestickReConnectionTimer?.Dispose();
+            var key = GetKey(symbol, interval);
 
-            subscriber.CandlestickReConnectionTimer = new Timer(async(object state) =>
+            if (_candlestickSubscribers.ContainsKey(key))
+            {
+                var subscriber = _candlestickSubscribers[key];
+
+                subscriber.CandlestickDisconnectionTimer?.Dispose();
+                subscriber.TokenSource?.Dispose();
+
+                CandlestickSubscriber removedSubscriber = null;
+
+                if (_candlestickSubscribers.TryRemove(key, out removedSubscriber))
+                {
+                    _log.LogInformation($"subscriber removed for {symbol} {interval.AsString()}");
+                }
+            }
+
+            var logMessage = error ? "Error with candlestick websocket" : "Candlestick websocket disconnected";
+
+            _log.LogInformation($"{logMessage} {symbol} {interval.AsString()}. Cache will be clear");
+
+            _onCandlestickErrorOrDisconnect(symbol, interval);
+        }
+
+        private void SymbolsDisconnectionTimerInitialize()
+        {
+            _symbolsDisconnectionTimer?.Dispose();
+
+            _symbolsDisconnectionTimer = new Timer(s => OnSymbolStatisticDisconnect(), null,
+                TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES),
+                TimeSpan.FromMilliseconds(-1));
+        }
+
+        private void UserDataDisconnectionTimerInitialize()
+        {
+            _userDataDisconnectionTimer?.Dispose();
+
+            _userDataDisconnectionTimer = new Timer(async s => await OnUserDataDisconnect(), null,
+                TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES),
+                TimeSpan.FromMilliseconds(-1));
+        }
+
+        private void CandlestickDisconnectionTimerInitialize(CandlestickSubscriber subscriber)
+        {
+            subscriber.CandlestickDisconnectionTimer?.Dispose();
+
+            subscriber.CandlestickDisconnectionTimer = new Timer((object state) =>
             {
                 var _subscriber = state as CandlestickSubscriber;
-                await SubscribeToCandlestick(_subscriber.Symbol, _subscriber.Interval, reConnect: true);
+
+                OnCandlesticDisconnect(_subscriber.Symbol, _subscriber.Interval);
             }, 
             subscriber,
             TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES),
-            TimeSpan.FromMinutes(WEBSOCKET_LIFE_TIME_IN_MINUTES));
+            TimeSpan.FromMilliseconds(-1));
         }
 
         #endregion

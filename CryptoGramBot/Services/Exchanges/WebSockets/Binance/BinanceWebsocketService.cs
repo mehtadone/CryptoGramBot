@@ -217,17 +217,17 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private void SubscribeSymbols()
         {
-            _subscriber.SymbolsStatistics(OnStatisticsUpdate, OnStatisticError);
+            _subscriber.SymbolsStatistics(OnStatisticsUpdate, OnStatisticErrorOrDisconnect);
         }
 
         private void SubscribeUserData()
         {
-            _subscriber.UserData(OnOrderUpdate, OnAccountUpdate, OnAccountTradeUpdate, OnUserDataError);
+            _subscriber.UserData(OnOrderUpdate, OnAccountUpdate, OnAccountTradeUpdate, OnUserDataErrorOrDisconnect);
         }
 
         private void SubscribeCandlestick(string symbol, CandlestickInterval interval)
         {
-            _subscriber.Candlestick(symbol, interval, OnCandletickUpdate, OnCandlestickError);
+            _subscriber.Candlestick(symbol, interval, OnCandletickUpdate, OnCandlestickErrorOrDisconnect);
         }
 
         #endregion
@@ -428,7 +428,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
-        private async Task OnUserDataError()
+        private async Task OnUserDataErrorOrDisconnect()
         {
             _cache.ClearAccountInfo();
 
@@ -475,7 +475,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
-        private void OnStatisticError()
+        private void OnStatisticErrorOrDisconnect()
         {
             var symbolPrices = _cache.GetSymbolPrices();
 
@@ -518,7 +518,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
-        private void OnCandlestickError(string symbol, CandlestickInterval interval)
+        private void OnCandlestickErrorOrDisconnect(string symbol, CandlestickInterval interval)
         {
             if (_cache.GetCandlesticks(symbol, interval) != null)
             {

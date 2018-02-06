@@ -352,9 +352,9 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
             catch (Exception)
             {
-                RemoveSubscriber(symbol, interval);
-
                 OnCandlesticDisconnect(symbol, interval, true);
+
+                RemoveSubscriber(symbol, interval);
             }
         }
 
@@ -407,16 +407,12 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             if (_candlestickSubscribers.ContainsKey(key))
             {
                 var subscriber = _candlestickSubscribers[key];
-
-                subscriber.CandlestickDisconnectionTimer?.Dispose();
-
                 subscriber.TokenSource?.Cancel();
-                subscriber.TokenSource?.Dispose();
             }
 
             var logMessage = error ? "Error with candlestick websocket" : "Candlestick websocket disconnected";
-
-            _log.LogInformation($"{logMessage} {symbol} {interval.AsString()}. Cache will be clear");
+            
+            _log.LogInformation($"{logMessage} {symbol} {interval.AsString()}. Cache will be cleared");
 
             _onCandlestickErrorOrDisconnect(symbol, interval);
         }
@@ -424,6 +420,14 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         private void RemoveSubscriber(string symbol, CandlestickInterval interval)
         {
             var key = GetKey(symbol, interval);
+
+            if (_candlestickSubscribers.ContainsKey(key))
+            {
+                var subscriber = _candlestickSubscribers[key];
+
+                subscriber.CandlestickDisconnectionTimer?.Dispose();
+                subscriber.TokenSource?.Dispose();
+            }
 
             CandlestickSubscriber removedSubscriber = null;
 

@@ -510,12 +510,12 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
         {
             _cache.ClearAccountInfo();
 
-            var symbols = await GetSymbols();
+            var symbols = await GetSymbolStringsAsync();
 
             foreach(var symbol in symbols)
             {
-                _cache.ClearAccountTrades(symbol.BaseAsset.Symbol);
-                _cache.ClearOrders(symbol.BaseAsset.Symbol);
+                _cache.ClearAccountTrades(symbol);
+                _cache.ClearOrders(symbol);
             }           
         }
 

@@ -31,6 +31,8 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         void SetSymbols(List<Symbol> symbols);
 
+        void ClearSymbols();
+
         ImmutableDictionary<string, decimal> GetSymbolPrices();
 
         void SetSymbolPrices(ImmutableDictionary<string, decimal> prices);

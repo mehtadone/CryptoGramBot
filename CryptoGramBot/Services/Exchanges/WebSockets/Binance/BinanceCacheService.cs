@@ -84,6 +84,11 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             _memoryCache.Set(SYMBOLS, symbols, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
+        public void ClearSymbols()
+        {
+            _memoryCache.Remove(SYMBOLS);
+        }
+
         public ImmutableList<Candlestick> GetCandlesticks(string symbol, CandlestickInterval interval)
         {
             return _memoryCache.Get<ImmutableList<Candlestick>>($"{symbol}{SYMBOL_CANDLESTICK}{interval.AsString()}");

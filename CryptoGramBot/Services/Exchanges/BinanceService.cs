@@ -46,6 +46,11 @@ namespace CryptoGramBot.Services.Exchanges
             {
                 var accountInfo = await _binanceWebsocketService.GetAccountInfoAsync();
 
+                if(accountInfo == null)
+                {
+                    throw new Exception("Account info not had get from binance");
+                }
+
                 balances = BinanceConverter.BinanceToWalletBalances(accountInfo.Balances);
             }
             catch (Exception e)

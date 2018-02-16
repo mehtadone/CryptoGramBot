@@ -88,7 +88,6 @@ This app needs to be run all the time to have the bot running. I might look at c
 * Profit calculations are wrong on a sell if we don't have the data in the database. 
 
 ## Support
-* Send me a [telegram](https://t.me/mehtadone)
 * Join the [telegram group](https://t.me/joinchat/AYGQfg7ZauzhAxe5QyU4Tg)
 
 ## Screenshots

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Services.Telegram;
@@ -12,12 +12,12 @@ namespace CryptoGramBot.Services
     public class TelegramBot
     {
         private readonly ILogger<TelegramBot> _log;
-        private readonly TelegramMessageRecieveService _telegramMessageRecieveService;
+        private readonly TelegramMessageReceiveService _telegramMessageReceiveService;
         private TelegramBotClient _bot;
 
-        public TelegramBot(TelegramMessageRecieveService telegramMessageRecieveService, ILogger<TelegramBot> log)
+        public TelegramBot(TelegramMessageReceiveService telegramMessageReceiveService, ILogger<TelegramBot> log)
         {
-            _telegramMessageRecieveService = telegramMessageRecieveService;
+            _telegramMessageReceiveService = telegramMessageReceiveService;
             _log = log;
         }
 
@@ -53,7 +53,7 @@ namespace CryptoGramBot.Services
                 ChatId = config.ChatId;
                 _bot = new TelegramBotClient(config.BotToken);
                 // Start the bot so we can start receiving messages
-                _telegramMessageRecieveService.StartReceivingMessages(_bot);
+                _telegramMessageReceiveService.StartReceivingMessages(_bot);
             }
             catch (Exception ex)
             {

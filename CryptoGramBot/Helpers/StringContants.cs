@@ -11,7 +11,7 @@ namespace CryptoGramBot.Helpers
             "30 or more open binance orders available to send. Will not send them to avoid spam.";
 
         public static string BinanceMoreThan30Trades =
-            "There are more than 30 binance trades to send. Not going to send them to avoid spamming you";
+            "There are more than 30 binance trades to send. Not going to send them to avoid spamming you.";
 
         public static string BinanceMoreThan30Withdrawals = "30 or more binance withdrawals available to send. Will not send them to avoid spam.";
 
@@ -23,7 +23,7 @@ namespace CryptoGramBot.Helpers
             "30 or more open bittrex orders available to send. Will not send them to avoid spam.";
 
         public static string BittrexMoreThan30Trades =
-            "There are more than 30 bittrex trades to send. Not going to send them to avoid spamming you";
+            "There are more than 30 bittrex trades to send. Not going to send them to avoid spamming you.";
 
         public static string BittrexMoreThan30Withdrawals = "30 or more bittrex withdrawals available to send. Will not send them to avoid spam.";
 
@@ -32,13 +32,13 @@ namespace CryptoGramBot.Helpers
 
         public static string CommonCommands = $"{StringContants.StrongOpen}Common commands{StringContants.StrongClose}\n";
 
-        public static string CouldNotProcessCommand = "Could not process your command. Check your logs";
+        public static string CouldNotProcessCommand = "Could not process your command. Check your logs.";
         public static string CouldNotProcessFile = "Could not process file.";
         public static string CouldNotWorkOutPair = "Could not work out what the pair you typed was";
         public static string DatabaseLocation = "Data Source=" + Directory.GetCurrentDirectory() + "/database/cryptogrambot.sqlite;cache=shared";
-        public static string DidNotRecieveFile = "Did not receive a file";
+        public static string DidNotReceiveFile = "Did not receive a file";
         public static string Help = $"{StringContants.StrongOpen}Help{StringContants.StrongClose}\n\n";
-        public static string No24HourOfData = "Could not calculate percentages. Probably because we don't have 24 hours of data yet";
+        public static string No24HourOfData = "Could not calculate percentages. Probably because we don't have 24 hours of data yet.";
 
         public static string PairProfitError = "Something went wrong. Probably because you entered in a dud currency or I have no trade details";
         public static string PoloCommands = $"\n{StringContants.StrongOpen}Poloniex commands{StringContants.StrongClose})\n";

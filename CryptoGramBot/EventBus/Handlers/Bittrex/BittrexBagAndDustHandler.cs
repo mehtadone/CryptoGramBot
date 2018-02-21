@@ -4,7 +4,6 @@ using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
-using CryptoGramBot.Services;
 using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Exchanges;
 using Enexure.MicroBus;

@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using CryptoGramBot.Models;
 using Jojatekok.PoloniexAPI.TradingTools;
 using Jojatekok.PoloniexAPI.WalletTools;
@@ -79,7 +76,7 @@ namespace CryptoGramBot.Helpers
                     Terms = ccy[1],
                     ExchangeId = completedOrder.IdOrder.ToString(),
                     Limit = Convert.ToDecimal(completedOrder.PricePerCoin),
-                    TimeStamp = completedOrder.Time,
+                    Timestamp = completedOrder.Time,
                 };
 
                 var baseAmount = Convert.ToDecimal(completedOrder.AmountBase);

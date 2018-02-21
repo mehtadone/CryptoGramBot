@@ -440,7 +440,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
             if (immutableAccountTrades != null)
             {
-                _log.LogDebug($"new account trade recieved {e.Trade?.Id}", e);
+                _log.LogDebug($"new account trade received {e.Trade?.Id}", e);
 
                 var mutableTrades = immutableAccountTrades.ToBuilder();
 
@@ -465,7 +465,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private void OnAccountUpdate(AccountUpdateEventArgs e)
         {
-            _log.LogDebug($"account info update recieved", e);
+            _log.LogDebug($"account info update received", e);
 
             _cache.SetAccountInfo(e.AccountInfo);
 
@@ -485,7 +485,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
             if (immutableOrders != null)
             {
-                _log.LogDebug($"new order recieved {updatedOrder?.Id}", updatedOrder, symbol);
+                _log.LogDebug($"new order received {updatedOrder?.Id}", updatedOrder, symbol);
 
                 var mutableOrders = immutableOrders.ToBuilder();
 

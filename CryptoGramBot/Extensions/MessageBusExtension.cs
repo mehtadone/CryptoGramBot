@@ -1,5 +1,4 @@
-﻿using CryptoGramBot.Configuration;
-using CryptoGramBot.EventBus;
+﻿using CryptoGramBot.EventBus;
 using CryptoGramBot.EventBus.Commands;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
@@ -8,7 +7,6 @@ using CryptoGramBot.EventBus.Handlers.Binance;
 using CryptoGramBot.EventBus.Handlers.Bittrex;
 using CryptoGramBot.EventBus.Handlers.Coinigy;
 using CryptoGramBot.EventBus.Handlers.Poloniex;
-using CryptoGramBot.Services;
 using Enexure.MicroBus;
 
 namespace CryptoGramBot.Extensions

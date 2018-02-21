@@ -27,7 +27,7 @@ namespace CryptoGramBot.Services.Telegram
             if (document == null)
             {
                 var message = new StringBuffer();
-                message.Append(StringContants.DidNotRecieveFile);
+                message.Append(StringContants.DidNotReceiveFile);
                 await _bus.SendAsync(new SendMessageCommand(message));
                 BittrexFileUploadState.Reset();
                 return true;

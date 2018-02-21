@@ -49,7 +49,7 @@ namespace CryptoGramBot.EventBus.Handlers
 
             var sb = new StringBuffer();
 
-            sb.Append(string.Format("{0}\n", (newTrade.TimeStamp + TimeSpan.FromHours(_config.TimeOffset)).ToString("g")));
+            sb.Append(string.Format("{0}\n", (newTrade.Timestamp + TimeSpan.FromHours(_config.TimeOffset)).ToString("g")));
             sb.Append(string.Format("New {0} order\n", newTrade.Exchange));
             sb.Append(string.Format("{3}{0} {1}-{2}{4}\n", newTrade.Side.ToString(), newTrade.Base, newTrade.Terms, StringContants.StrongOpen, StringContants.StrongClose));
             sb.Append(string.Format("Quantity: {0}\n", newTrade.QuantityOfTrade.ToString("##0.###########")));

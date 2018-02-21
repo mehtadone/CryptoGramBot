@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Services.Exchanges;
 

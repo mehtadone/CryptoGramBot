@@ -102,7 +102,7 @@ namespace CryptoGramBot.Helpers
                     Limit = completedOrder.Limit,
                     Quantity = completedOrder.Quantity,
                     QuantityRemaining = completedOrder.QuantityRemaining,
-                    TimeStamp = completedOrder.Closed.GetValueOrDefault(),
+                    Timestamp = completedOrder.Closed.GetValueOrDefault(),
                     Side = completedOrder.OrderType == OrderTypeExtended.LimitBuy ? TradeSide.Buy : TradeSide.Sell
                 };
 
@@ -192,7 +192,7 @@ namespace CryptoGramBot.Helpers
                 Limit = Decimal.Parse(csvCurrentRecord[4]),
                 Commission = Decimal.Parse(csvCurrentRecord[5]),
                 Cost = Decimal.Parse(csvCurrentRecord[6]) * Decimal.Parse(csvCurrentRecord[3]),
-                TimeStamp = DateTime.Parse(csvCurrentRecord[8], CultureInfo.CreateSpecificCulture("en-US"))
+                Timestamp = DateTime.Parse(csvCurrentRecord[8], CultureInfo.CreateSpecificCulture("en-US"))
             };
 
             if (csvCurrentRecord[2] == "LIMIT_BUY")

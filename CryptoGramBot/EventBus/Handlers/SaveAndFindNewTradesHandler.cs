@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using CryptoGramBot.Models;
-using CryptoGramBot.Services;
 using CryptoGramBot.Services.Data;
 using Enexure.MicroBus;
 
@@ -40,7 +39,7 @@ namespace CryptoGramBot.EventBus.Handlers
         public async Task<FindNewTradesResponse> Handle(FindNewTradeQuery query)
         {
             var newTrades = await _databaseService.AddTrades(query.OrderHistory);
-            IOrderedEnumerable<Trade> orderedEnumerable = newTrades.OrderBy(x => x.TimeStamp);
+            IOrderedEnumerable<Trade> orderedEnumerable = newTrades.OrderBy(x => x.Timestamp);
             return new FindNewTradesResponse(orderedEnumerable);
         }
     }

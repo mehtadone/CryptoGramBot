@@ -10,7 +10,6 @@ using Jojatekok.PoloniexAPI.MarketTools;
 using Jojatekok.PoloniexAPI.WalletTools;
 using Microsoft.Extensions.Logging;
 using Deposit = CryptoGramBot.Models.Deposit;
-using IOrder = Jojatekok.PoloniexAPI.TradingTools.IOrder;
 using Order = Jojatekok.PoloniexAPI.TradingTools.Order;
 using Trade = CryptoGramBot.Models.Trade;
 using Withdrawal = CryptoGramBot.Models.Withdrawal;

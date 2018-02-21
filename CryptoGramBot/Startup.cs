@@ -38,7 +38,7 @@ namespace CryptoGramBot
 
         #endregion
 
-        #region Properites
+        #region Properties
 
         public IConfiguration Configuration { get; }
 
@@ -122,7 +122,7 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<BinanceSubscriberService>().As<IBinanceSubscriberService>().SingleInstance();
             containerBuilder.RegisterType<BinanceWebsocketService>().As<IBinanceWebsocketService>().SingleInstance();
             containerBuilder.RegisterType<DatabaseService>();
-            containerBuilder.RegisterType<TelegramMessageRecieveService>().SingleInstance();
+            containerBuilder.RegisterType<TelegramMessageReceiveService>().SingleInstance();
             containerBuilder.RegisterType<TelegramMessageSendingService>();
             containerBuilder.RegisterType<StartupCheckingService>().SingleInstance();
             containerBuilder.RegisterType<CoinigyBalanceService>();
@@ -149,7 +149,7 @@ namespace CryptoGramBot
             var loggerFactory = Container.Resolve<ILoggerFactory>();
             var log = loggerFactory.CreateLogger<Program>();
 
-            log.LogInformation($"Services\nCoinigy: {coinigyEnabled}\nBittrex: {bittrexEnabled}\nBinance: {binanceEnabled}\nPoloniex: {poloniexEnabled}");
+            log.LogInformation($"Services\nCoinigy: {coinigyEnabled}\nBinance: {binanceEnabled}\nBittrex: {bittrexEnabled}\nPoloniex: {poloniexEnabled}");
             ConfigureConfig(Container, Configuration, log);
         } 
 
@@ -159,18 +159,6 @@ namespace CryptoGramBot
 
         private static void ConfigureConfig(IContainer container, IConfiguration configuration, ILogger<Program> log)
         {
-            try
-            {
-                var config = container.Resolve<CoinigyConfig>();
-                configuration.GetSection("Coinigy").Bind(config);
-                log.LogInformation("Created coinigy config");
-            }
-            catch (Exception)
-            {
-                log.LogError("Error in reading coinigy config");
-                throw;
-            }
-
             try
             {
                 var config = container.Resolve<GeneralConfig>();
@@ -197,13 +185,13 @@ namespace CryptoGramBot
 
             try
             {
-                var config = container.Resolve<BittrexConfig>();
-                configuration.GetSection("Bittrex").Bind(config);
-                log.LogInformation("Created bittrex Config");
+                var config = container.Resolve<CoinigyConfig>();
+                configuration.GetSection("Coinigy").Bind(config);
+                log.LogInformation("Created coinigy config");
             }
             catch (Exception)
             {
-                log.LogError("Error in reading bittrex config");
+                log.LogError("Error in reading coinigy config");
                 throw;
             }
 
@@ -221,6 +209,18 @@ namespace CryptoGramBot
 
             try
             {
+                var config = container.Resolve<BittrexConfig>();
+                configuration.GetSection("Bittrex").Bind(config);
+                log.LogInformation("Created bittrex Config");
+            }
+            catch (Exception)
+            {
+                log.LogError("Error in reading bittrex config");
+                throw;
+            }
+
+            try
+            {
                 var config = container.Resolve<PoloniexConfig>();
                 configuration.GetSection("Poloniex").Bind(config);
                 log.LogInformation("Created poloniex config");
@@ -233,7 +233,7 @@ namespace CryptoGramBot
         }
 
         private void CheckWhatIsEnabled(
-                    out bool coinigyEnabled,
+            out bool coinigyEnabled,
             out bool bittrexEnabled,
             out bool poloniexEnabled,
             out bool binanceEnabled)
@@ -244,9 +244,9 @@ namespace CryptoGramBot
             string poloniexEnabledString = Configuration.GetSection("Poloniex").GetValue("Enabled", "false");
 
             coinigyEnabled = bool.Parse(coinigyEnabledString);
+            binanceEnabled = bool.Parse(binanceEnabledString);
             bittrexEnabled = bool.Parse(bittrexEnabledString);
             poloniexEnabled = bool.Parse(poloniexEnabledString);
-            binanceEnabled = bool.Parse(binanceEnabledString);
         }
 
         private async Task OnStarting()

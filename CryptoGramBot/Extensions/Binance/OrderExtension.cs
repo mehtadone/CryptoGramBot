@@ -4,7 +4,7 @@
     {
         public static bool IsOpen(this Order order)
         {
-            if(order == null)
+            if (order == null)
             {
                 return false;
             }

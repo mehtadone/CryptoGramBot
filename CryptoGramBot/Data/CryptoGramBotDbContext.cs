@@ -1,9 +1,7 @@
-﻿using System.IO;
-using CryptoGramBot.Helpers;
+﻿using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.Extensions.Configuration;
 
 namespace CryptoGramBot.Data
 {

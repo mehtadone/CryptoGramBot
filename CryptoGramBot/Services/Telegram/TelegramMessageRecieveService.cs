@@ -14,9 +14,9 @@ using MessageType = Telegram.Bot.Types.Enums.MessageType;
 
 namespace CryptoGramBot.Services.Telegram
 {
-    public class TelegramMessageRecieveService
+    public class TelegramMessageReceiveService
     {
-        private static ILogger<TelegramMessageRecieveService> _log;
+        private static ILogger<TelegramMessageReceiveService> _log;
         private readonly IMicroBus _bus;
         private readonly TelegramConfig _config;
         private readonly TelegramBittrexFileUploadService _fileImportService;
@@ -24,13 +24,13 @@ namespace CryptoGramBot.Services.Telegram
         private readonly TelegramMessageSendingService _sendingService;
         private TelegramBotClient _bot;
 
-        public TelegramMessageRecieveService(
+        public TelegramMessageReceiveService(
             IMicroBus bus,
             TelegramMessageSendingService sendingService,
             TelegramBittrexFileUploadService fileImportService,
             TelegramPairProfitService pairProfitService,
             TelegramConfig config,
-            ILogger<TelegramMessageRecieveService> log)
+            ILogger<TelegramMessageReceiveService> log)
         {
             _bus = bus;
             _sendingService = sendingService;

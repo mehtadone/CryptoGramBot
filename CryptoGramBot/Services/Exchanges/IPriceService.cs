@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using CryptoGramBot.Models;
 
 namespace CryptoGramBot.Services
 {

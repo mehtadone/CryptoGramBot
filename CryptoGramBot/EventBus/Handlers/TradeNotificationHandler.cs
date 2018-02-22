@@ -44,7 +44,7 @@ namespace CryptoGramBot.EventBus.Handlers
                 profitPercentage = tradesProfitResponse.ProfitPercentage;
                 btcProfit = tradesProfitResponse.BtcProfit;
                 dollarProfit = tradesProfitResponse.DollarProfit;
-                lastBought = tradesProfitResponse.LastBoughtTime + TimeSpan.FromHours(_config.TimeOffset);
+                lastBought = tradesProfitResponse.LastBoughtTime;
             }
 
             var sb = new StringBuffer();

@@ -38,7 +38,7 @@ namespace CryptoGramBot.Helpers
         public static string DatabaseLocation = "Data Source=" + Directory.GetCurrentDirectory() + "/database/cryptogrambot.sqlite;cache=shared";
         public static string DidNotReceiveFile = "Did not receive a file";
         public static string Help = $"{StringContants.StrongOpen}Help{StringContants.StrongClose}\n\n";
-        public static string No24HourOfData = "Could not calculate percentages. Probably because we don't have 24 hours of data yet.";
+        public static string No24HourOfData = "Could not calculate percentages. Probably because we don't have 24 hours of data yet or the reporting currency has been changed.";
 
         public static string PairProfitError = "Something went wrong. Probably because you entered in a dud currency or I have no trade details";
         public static string PoloCommands = $"\n{StringContants.StrongOpen}Poloniex commands{StringContants.StrongClose})\n";

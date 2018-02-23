@@ -40,7 +40,7 @@ namespace CryptoGramBot.EventBus.Handlers
             sb.Append(previousFormat);
             sb.Append(differenceFormat);
 
-            if (lastBalance.Balance == 0 || lastBalance.DollarAmount == 0)
+            if (lastBalance.Balance == 0 || lastBalance.DollarAmount == 0 || lastBalance.ReportingCurrency != _generalConfig.ReportingCurrency)
             {
                 await No24HourOfDataNotify();
             }

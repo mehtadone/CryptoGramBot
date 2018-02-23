@@ -7,5 +7,6 @@
         public double TimeOffset { get; set; }
 
         public string TradingCurrency { get; set; }
+        public string ReportingCurrency { get; set; }
     }
 }

@@ -217,17 +217,17 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private void SubscribeSymbols()
         {
-            _subscriber.SymbolsStatistics(OnStatisticsUpdate, OnStatisticError);
+            _subscriber.SymbolsStatistics(OnStatisticsUpdate, OnStatisticErrorOrDisconnect);
         }
 
         private void SubscribeUserData()
         {
-            _subscriber.UserData(OnOrderUpdate, OnAccountUpdate, OnAccountTradeUpdate, OnUserDataError);
+            _subscriber.UserData(OnOrderUpdate, OnAccountUpdate, OnAccountTradeUpdate, OnUserDataErrorOrDisconnect);
         }
 
         private void SubscribeCandlestick(string symbol, CandlestickInterval interval)
         {
-            _subscriber.Candlestick(symbol, interval, OnCandletickUpdate, OnCandlestickError);
+            _subscriber.Candlestick(symbol, interval, OnCandletickUpdate, OnCandlestickErrorOrDisconnect);
         }
 
         #endregion
@@ -252,7 +252,10 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
                     cacheValue = await initialize();
                 }
 
-                subscribeTo?.Invoke();
+                if(cacheValue != null)
+                {
+                    subscribeTo?.Invoke();
+                }
 
                 return cacheValue;
             }
@@ -264,91 +267,166 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
 
         private async Task<AccountInfo> InitializeAccountInfo()
         {
-            using (var user = new BinanceApiUser(_config.Key, _config.Secret))
+            try
             {
-                var accountInfo = await _binanceApi.GetAccountInfoAsync(user, 10000000);
+                using (var user = new BinanceApiUser(_config.Key, _config.Secret))
+                {
+                    var accountInfo = await _binanceApi.GetAccountInfoAsync(user, 10000000);
 
-                _cache.SetAccountInfo(accountInfo);
+                    _cache.SetAccountInfo(accountInfo);
 
-                return accountInfo;
+                    return accountInfo;
+                }
+            }
+            catch (Exception ex)
+            {
+                _cache.ClearAccountInfo();
+
+                _log.LogError($"Account info initialization error {ex.Message}");
+
+                return null;
             }
         }
 
         private async Task<ImmutableList<Order>> InitializeOpenOrders(string symbol)
         {
-            using (var user = new BinanceApiUser(_config.Key, _config.Secret))
+            try
             {
-                var openOrders = await _binanceApi.GetOpenOrdersAsync(user, symbol, 10000000);
+                using (var user = new BinanceApiUser(_config.Key, _config.Secret))
+                {
+                    var openOrders = await _binanceApi.GetOpenOrdersAsync(user, symbol, 10000000);
 
-                var immutableOrders = openOrders.ToImmutableList();
+                    var immutableOrders = openOrders.ToImmutableList();
 
-                _cache.SetOrders(symbol, immutableOrders);
+                    _cache.SetOrders(symbol, immutableOrders);
 
-                return immutableOrders;
+                    return immutableOrders;
+                }
+            }
+            catch (Exception ex)
+            {
+                _cache.ClearOrders(symbol);
+
+                _log.LogError($"Orders initialization error {ex.Message}");
+
+                return new List<Order>().ToImmutableList();
             }
         }
 
         private async Task<ImmutableList<AccountTrade>> InitializeAccountTrades(string symbol)
         {
-            using (var user = new BinanceApiUser(_config.Key, _config.Secret))
+            try
             {
-                var accountTrades = await _binanceApi.GetAccountTradesAsync(user, symbol, -1L, 0, 10000000);
+                using (var user = new BinanceApiUser(_config.Key, _config.Secret))
+                {
+                    var accountTrades = await _binanceApi.GetAccountTradesAsync(user, symbol, -1L, 0, 10000000);
 
-                var immutableAccountTrades = accountTrades.ToImmutableList();
+                    var immutableAccountTrades = accountTrades.ToImmutableList();
 
-                _cache.SetAccountTrades(symbol, immutableAccountTrades);
+                    _cache.SetAccountTrades(symbol, immutableAccountTrades);
 
-                return immutableAccountTrades;
+                    return immutableAccountTrades;
+                }
+            }
+            catch (Exception ex)
+            {
+                _cache.ClearAccountTrades(symbol);
+
+                _log.LogError($"Account trades initialization error {ex.Message}");
+
+                return new List<AccountTrade>().ToImmutableList();
             }
         }
 
         private async Task<ImmutableList<Candlestick>> InitializeCandleticks(string symbol, CandlestickInterval interval)
         {
-            var candlesticks = await _binanceApi.GetCandlesticksAsync(symbol, interval);
+            try
+            {
+                var candlesticks = await _binanceApi.GetCandlesticksAsync(symbol, interval);
 
-            var immutableCandlesticks = candlesticks.ToImmutableList();
+                var immutableCandlesticks = candlesticks.ToImmutableList();
 
-            _cache.SetCandlestick(symbol, interval, immutableCandlesticks);
+                _cache.SetCandlestick(symbol, interval, immutableCandlesticks);
 
-            return immutableCandlesticks;
+                return immutableCandlesticks;
+            }
+            catch (Exception ex)
+            {
+                _cache.ClearCandlestick(symbol, interval);
+
+                _log.LogError($"Canlestick initialization error {ex.Message}");
+
+                return new List<Candlestick>().ToImmutableList();
+            }
         }
 
         private async Task<List<Symbol>> InitializeSymbols()
         {
-            var symbols = await _binanceApi.GetSymbolsAsync();
+            try
+            {
+                var symbols = await _binanceApi.GetSymbolsAsync();
 
-            _cache.SetSymbols(symbols.ToList());
+                _cache.SetSymbols(symbols.ToList());
 
-            return symbols.ToList();
+                return symbols.ToList();
+            }
+            catch (Exception ex)
+            {
+                _cache.ClearSymbols();
+
+                _log.LogError($"Symbols initialization error {ex.Message}");
+
+                return new List<Symbol>();
+            }
         }
 
         private async Task<ImmutableDictionary<string, decimal>> InitializeSymbolPrices()
         {
-            var symbolPrices = await _binanceApi.GetPricesAsync();
-
-            var immutableSymbolPrices = symbolPrices.ToImmutableList();
-
-            var immutablePrices = symbolPrices.ToImmutableDictionary(s => s.Symbol, s => s.Value);
-
-            _cache.SetSymbolPrices(immutablePrices);
-
-            foreach(var symbolPrice in immutableSymbolPrices)
+            try
             {
-                _cache.SetSymbolPrice(symbolPrice.Symbol, symbolPrice.Value);
-            }
+                var symbolPrices = await _binanceApi.GetPricesAsync();
 
-            return immutablePrices;
+                var immutableSymbolPrices = symbolPrices.ToImmutableList();
+
+                var immutablePrices = symbolPrices.ToImmutableDictionary(s => s.Symbol, s => s.Value);
+
+                _cache.SetSymbolPrices(immutablePrices);
+
+                foreach (var symbolPrice in immutableSymbolPrices)
+                {
+                    _cache.SetSymbolPrice(symbolPrice.Symbol, symbolPrice.Value);
+                }
+
+                return immutablePrices;
+            }
+            catch (Exception ex)
+            {
+                _cache.ClearSymbolPrices();
+
+                _log.LogError($"Symbol Prices initialization error {ex.Message}");
+
+                return new Dictionary<string, decimal>().ToImmutableDictionary();
+            }
         }
 
         private async Task<ImmutableDictionary<string, SymbolStatistics>> InitializeSymbolStatistics()
         {
-            var symbolStatistics = await _binanceApi.Get24HourStatisticsAsync();
+            try
+            {
+                var symbolStatistics = await _binanceApi.Get24HourStatisticsAsync();
 
-            var immutableStatistics = symbolStatistics.ToImmutableDictionary(s => s.Symbol, s => s);
+                var immutableStatistics = symbolStatistics.ToImmutableDictionary(s => s.Symbol, s => s);
 
-            _cache.SetSymbolStatistics(immutableStatistics);
+                _cache.SetSymbolStatistics(immutableStatistics);
 
-            return immutableStatistics;
+                return immutableStatistics;
+            }
+            catch (Exception ex)
+            {
+                _log.LogError($"Symbol statistics initialization error {ex.Message}");
+
+                return new Dictionary<string, SymbolStatistics>().ToImmutableDictionary();
+            }
         }
 
         #endregion
@@ -428,16 +506,16 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
-        private async Task OnUserDataError()
+        private async Task OnUserDataErrorOrDisconnect()
         {
             _cache.ClearAccountInfo();
 
-            var symbols = await GetSymbols();
+            var symbols = await GetSymbolStringsAsync();
 
             foreach(var symbol in symbols)
             {
-                _cache.ClearAccountTrades(symbol.BaseAsset.Symbol);
-                _cache.ClearOrders(symbol.BaseAsset.Symbol);
+                _cache.ClearAccountTrades(symbol);
+                _cache.ClearOrders(symbol);
             }           
         }
 
@@ -475,7 +553,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
-        private void OnStatisticError()
+        private void OnStatisticErrorOrDisconnect()
         {
             var symbolPrices = _cache.GetSymbolPrices();
 
@@ -518,7 +596,7 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             }
         }
 
-        private void OnCandlestickError(string symbol, CandlestickInterval interval)
+        private void OnCandlestickErrorOrDisconnect(string symbol, CandlestickInterval interval)
         {
             if (_cache.GetCandlesticks(symbol, interval) != null)
             {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
-using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
+using CryptoGramBot.Services;
 using CryptoGramBot.Services.Data;
 using Enexure.MicroBus;
 using Microsoft.Extensions.Logging;
@@ -21,25 +21,24 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
 
     public class BittrexTradeExportHandler : ICommandHandler<BittrexTradeExportCommand>
     {
+        private readonly TelegramBot _bot;
         private readonly IMicroBus _bus;
-        private readonly TelegramConfig _config;
         private readonly DatabaseService _databaseService;
         private readonly ILogger<BittrexTradeExportHandler> _log;
 
-        public BittrexTradeExportHandler(DatabaseService databaseService, IMicroBus bus, ILogger<BittrexTradeExportHandler> log, TelegramConfig config)
+        public BittrexTradeExportHandler(DatabaseService databaseService, IMicroBus bus, ILogger<BittrexTradeExportHandler> log, TelegramBot bot)
         {
             _databaseService = databaseService;
             _bus = bus;
             _log = log;
-            _config = config;
+            _bot = bot;
         }
 
         public async Task Handle(BittrexTradeExportCommand command)
         {
             try
             {
-                var bot = new TelegramBotClient(_config.BotToken);
-                var file = await bot.GetFileAsync(command.FileId);
+                var file = await _bot.GetFileAsync(command.FileId);
                 var trades = BittrexConvertor.BittrexFileToTrades(file.FileStream, _log);
                 await _databaseService.DeleteAllTrades(Constants.Bittrex);
                 var newTrades = await _databaseService.AddTrades(trades);

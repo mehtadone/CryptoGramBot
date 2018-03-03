@@ -14,8 +14,11 @@ namespace CryptoGramBot.EventBus
 {
     public class SendFileCommand : ICommand
     {
-        public SendFileCommand(string fileName, Stream stream)
+        private readonly TelegramBot _bot;
+
+        public SendFileCommand(string fileName, Stream stream, TelegramBot bot)
         {
+            _bot = bot;
             FileName = fileName;
             Stream = stream;
         }
@@ -37,8 +40,7 @@ namespace CryptoGramBot.EventBus
 
         public async Task Handle(SendFileCommand command)
         {
-            var bot = new TelegramBotClient(_config.BotToken);
-            await bot.SendDocumentAsync(_bot.ChatId, new FileToSend(command.FileName, command.Stream));
+            await _bot.SendDocumentAsync(_bot.ChatId, new FileToSend(command.FileName, command.Stream));
         }
     }
 }

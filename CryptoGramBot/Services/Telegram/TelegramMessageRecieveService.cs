@@ -90,8 +90,9 @@ namespace CryptoGramBot.Services.Telegram
             _bot.OnInlineResultChosen -= BotOnChosenInlineResultReceived;
             _bot.OnReceiveError -= BotOnReceiveError;
 
-            var bot = new TelegramBotClient(_config.BotToken);
-            SetupBot(bot);
+            _bot.StopReceiving();
+
+            SetupBot(_bot);
         }
 
         private async Task CheckMessage(string message)

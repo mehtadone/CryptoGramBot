@@ -4,6 +4,7 @@ using CryptoGramBot.Configuration;
 using CryptoGramBot.Services.Telegram;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
 namespace CryptoGramBot.Services
@@ -21,6 +22,16 @@ namespace CryptoGramBot.Services
         }
 
         public long ChatId { get; set; }
+
+        public async Task<File> GetFileAsync(string commandFileId)
+        {
+            return await _bot.GetFileAsync(commandFileId);
+        }
+
+        public async Task SendDocumentAsync(long botChatId, FileToSend fileToSend)
+        {
+            await _bot.SendDocumentAsync(botChatId, fileToSend);
+        }
 
         public async Task SendHtmlMessage(long botChatId, string message, string botToken)
         {

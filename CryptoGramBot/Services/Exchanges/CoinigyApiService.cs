@@ -98,7 +98,7 @@ namespace CryptoGramBot.Services
 
                 using (var content = new StringContent(stringContent, Encoding.Default, "application/json"))
                 {
-                    _log.LogInformation($"Querying coinigy api: {baseAddress}/{apiCall} and content is {stringContent}");
+                    _log.LogInformation($"Querying Coinigy API: {baseAddress}/{apiCall} and content is {stringContent}");
                     using (var response = await httpClient.PostAsync(apiCall, content))
                     {
                         try
@@ -110,7 +110,7 @@ namespace CryptoGramBot.Services
                         {
                             var ex = exception.Message;
                             _log.LogError(ex, "Exception when parsing response from Coinigy");
-                            // coinigy sometimes returns an odd object here when trying refresh balance
+                            // Coinigy sometimes returns an odd object here when trying refresh balance
                             return null;
                         }
                     }

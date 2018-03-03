@@ -7,6 +7,7 @@ using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using CryptoGramBot.Services.Data;
+using CryptoGramBot.Services.Pricing;
 using Microsoft.Extensions.Logging;
 using OpenOrder = CryptoGramBot.Models.OpenOrder;
 
@@ -16,17 +17,20 @@ namespace CryptoGramBot.Services.Exchanges
     {
         private readonly BittrexConfig _config;
         private readonly DatabaseService _databaseService;
+        private readonly CryptoCompareApiService _cryptoCompareService;
         private readonly GeneralConfig _generalConfig;
         private readonly ILogger<BittrexService> _log;
 
         public BittrexService(
             BittrexConfig config,
             DatabaseService databaseService,
+            CryptoCompareApiService cryptoCompareService,
             GeneralConfig generalConfig,
             ILogger<BittrexService> log)
         {
             _config = config;
             _databaseService = databaseService;
+            _cryptoCompareService = cryptoCompareService;
             _generalConfig = generalConfig;
             _log = log;
         }
@@ -52,7 +56,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting balances from bittrex: " + e.Message);
+                _log.LogError("Error in getting balances from Bittrex: " + e.Message);
             }
 
             var totalBtcBalance = 0m;
@@ -99,23 +103,33 @@ namespace CryptoGramBot.Services.Exchanges
 
             var lastBalance = await _databaseService.GetBalance24HoursAgo(Constants.Bittrex);
 
-            var dollarAmount = await GetDollarAmount(_generalConfig.TradingCurrency, totalBtcBalance);
+            var reportingAmount = await GetReportingAmount(_generalConfig.TradingCurrency, totalBtcBalance, _generalConfig.ReportingCurrency);
 
-            var currentBalance = await _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Bittrex);
+            var currentBalance = await _databaseService.AddBalance(totalBtcBalance, reportingAmount, _generalConfig.ReportingCurrency, Constants.Bittrex);
             await _databaseService.AddWalletBalances(bittrexBalances);
 
             return new BalanceInformation(currentBalance, lastBalance, Constants.Bittrex, bittrexBalances);
         }
 
-        public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
+        public async Task<decimal> GetReportingAmount(string baseCcy, decimal baseAmount, string reportingCurrency)
         {
-            if (baseCcy == "USDT")
+            // Bittrex supports USDT, use this for USD reporting
+            if (reportingCurrency == "USD")
             {
-                return Math.Round(btcAmount, 3);
-            }
+                if (baseCcy == "USDT")
+                {
+                    return Math.Round(baseAmount, 3);
+                }
 
-            var price = await GetPrice("USDT", baseCcy);
-            return Math.Round(price * btcAmount, 3);
+                var price = await GetPrice("USDT", baseCcy);
+                return Math.Round(price * baseAmount, 3);
+            }
+            else
+            {
+                // ReportingCurrency not supported by Bittrex - have to convert it externally
+                var result = await _cryptoCompareService.GetReportingAmount(baseCcy, baseAmount, reportingCurrency);
+                return result;
+            }
         }
 
         public async Task<List<Deposit>> GetNewDeposits()
@@ -140,7 +154,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting deposits from bittrex: " + e.Message);
+                _log.LogError("Error in getting deposits from Bittrex: " + e.Message);
             }
 
             var newDeposits = await _databaseService.AddDeposits(list, Constants.Bittrex);
@@ -171,7 +185,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting openOrders from bittrex: " + e.Message);
+                _log.LogError("Error in getting openOrders from Bittrex: " + e.Message);
             }
 
             var newOrders = await _databaseService.AddOpenOrders(openOrders);
@@ -201,7 +215,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting withdrawals from bittrex: " + e.Message);
+                _log.LogError("Error in getting withdrawals from Bittrex: " + e.Message);
             }
 
             var newWithdrawals = await _databaseService.AddWithdrawals(list, Constants.Bittrex);
@@ -231,7 +245,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting trades from bittrex: " + e.Message);
+                _log.LogError("Error in getting trades from Bittrex: " + e.Message);
             }
 
             return list;
@@ -239,6 +253,11 @@ namespace CryptoGramBot.Services.Exchanges
 
         public async Task<decimal> GetPrice(string baseCcy, string termsCurrency)
         {
+            if (Helpers.Helpers.CurrenciesAreEquivalent(baseCcy, termsCurrency))
+            {
+                return 1;
+            }
+                
             BittrexPrice tick = null;
             try
             {
@@ -246,7 +265,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting ticker from bittrex: " + e.Message);
+                _log.LogError($"Error in getting {baseCcy}-{termsCurrency} ticker from Bittrex: {e.Message}");
             }
 
             if (tick != null && tick.Last != Decimal.Zero)

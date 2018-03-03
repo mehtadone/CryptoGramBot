@@ -1,6 +1,7 @@
 ﻿using Enexure.MicroBus;
 using System;
 using System.Threading.Tasks;
+using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Pricing;
@@ -11,11 +12,13 @@ namespace CryptoGramBot.EventBus.Handlers
     {
         private readonly DatabaseService _databaseService;
         private readonly PriceService _priceService;
+        private readonly GeneralConfig _config;
 
-        public TradeProfitHandler(DatabaseService databaseService, PriceService priceService)
+        public TradeProfitHandler(DatabaseService databaseService, PriceService priceService, GeneralConfig config)
         {
             _databaseService = databaseService;
             _priceService = priceService;
+            _config = config;
         }
 
         public async Task<TradesProfitResponse> Handle(TradeProfitQuery query)
@@ -24,7 +27,7 @@ namespace CryptoGramBot.EventBus.Handlers
 
             if (averagePrice == 0m)
             {
-                return new TradesProfitResponse(null, null, null, null);
+                return new TradesProfitResponse(null, null, null, null, null);
             }
 
             var totalCost = averagePrice * query.Quantity;
@@ -33,8 +36,9 @@ namespace CryptoGramBot.EventBus.Handlers
             var lastBought = await _databaseService.GetLastBoughtAsync(query.BaseCcy, query.Terms, query.Exchange);
 
             decimal? btcProfit = query.SellReturns - totalCost;
-            decimal? dollarProfit = await _priceService.GetDollarAmount(query.BaseCcy, btcProfit.Value, query.Exchange);
-            return new TradesProfitResponse(profit, btcProfit, dollarProfit, lastBought);
+            string reportingCurrency = _config.ReportingCurrency;
+            decimal? reportingProfit = await _priceService.GetReportingAmount(query.BaseCcy, btcProfit.Value, reportingCurrency, query.Exchange);
+            return new TradesProfitResponse(profit, btcProfit, reportingProfit, reportingCurrency, lastBought);
         }
     }
 
@@ -58,16 +62,18 @@ namespace CryptoGramBot.EventBus.Handlers
 
     public class TradesProfitResponse
     {
-        public TradesProfitResponse(decimal? profitPercentage, decimal? btcProfit, decimal? dollarProfit, DateTime? lastBoughtTime)
+        public TradesProfitResponse(decimal? profitPercentage, decimal? btcProfit, decimal? reportingProfit, string reportingCurrency, DateTime? lastBoughtTime)
         {
             ProfitPercentage = profitPercentage;
             BtcProfit = btcProfit;
-            DollarProfit = dollarProfit;
+            ReportingProfit = reportingProfit;
+            ReportingCurrency = reportingCurrency;
             LastBoughtTime = lastBoughtTime;
         }
 
         public decimal? BtcProfit { get; }
-        public decimal? DollarProfit { get; }
+        public decimal? ReportingProfit { get; }
+        public string ReportingCurrency { get; }
         public DateTime? LastBoughtTime { get; }
         public decimal? ProfitPercentage { get; }
     }

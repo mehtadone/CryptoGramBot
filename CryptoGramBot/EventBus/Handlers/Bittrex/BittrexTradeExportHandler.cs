@@ -44,7 +44,7 @@ namespace CryptoGramBot.EventBus.Handlers.Bittrex
                 var newTrades = await _databaseService.AddTrades(trades);
 
                 var sb = new StringBuffer();
-                sb.Append(string.Format("{0} new bittrex trades added.", newTrades.Count));
+                sb.Append(string.Format("{0} new Bittrex trades added.", newTrades.Count));
 
                 await _bus.SendAsync(new SendMessageCommand(sb));
             }

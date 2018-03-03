@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CryptoGramBot.Configuration;
 using CryptoGramBot.Data;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
@@ -12,23 +13,26 @@ namespace CryptoGramBot.Services.Data
 {
     public class DatabaseService
     {
-        private readonly CryptoGramBotDbContext _context;
-        private readonly Dictionary<string, BalanceHistory> _lastBalances = new Dictionary<string, BalanceHistory>();
         private readonly ILogger<DatabaseService> _log;
+        private readonly CryptoGramBotDbContext _context;
+        private readonly GeneralConfig _config;
+        private readonly Dictionary<string, BalanceHistory> _lastBalances = new Dictionary<string, BalanceHistory>();
 
-        public DatabaseService(ILogger<DatabaseService> log, CryptoGramBotDbContext context)
+        public DatabaseService(ILogger<DatabaseService> log, CryptoGramBotDbContext context, GeneralConfig config)
         {
             _log = log;
             _context = context;
+            _config = config;
         }
 
-        public async Task<BalanceHistory> AddBalance(decimal balance, decimal dollarAmount, string name)
+        public async Task<BalanceHistory> AddBalance(decimal balance, decimal reportingAmount, string reportingCurrency, string name)
         {
             var balanceHistory = new BalanceHistory
             {
                 DateTime = DateTime.Now,
                 Balance = balance,
-                DollarAmount = dollarAmount,
+                ReportingAmount = reportingAmount,
+                ReportingCurrency = reportingCurrency,
                 Name = name
             };
 
@@ -280,7 +284,8 @@ namespace CryptoGramBot.Services.Data
                     hour24Balance = new BalanceHistory
                     {
                         Balance = 0,
-                        DollarAmount = 0,
+                        ReportingAmount = 0,
+                        ReportingCurrency = _config.ReportingCurrency,
                         Name = name
                     };
                     return hour24Balance;

@@ -29,28 +29,37 @@ namespace CryptoGramBot.EventBus.Handlers
             var lastBalance = requestedCommand.BalanceInformation.PreviousBalance;
             var walletBalances = requestedCommand.BalanceInformation.WalletBalances;
 
+            var currentReporting = Helpers.Helpers.FormatCurrencyAmount(current.ReportingAmount, current.ReportingCurrency);
+            var previousReporting = Helpers.Helpers.FormatCurrencyAmount(lastBalance.ReportingAmount, lastBalance.ReportingCurrency);
+
             var timeFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Time:", $"     {DateTime.Now:g}", StringContants.StrongOpen, StringContants.StrongClose);
-            var currentFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Current:", $"  {current.Balance:##0.#####} {_generalConfig.TradingCurrency} (${current.DollarAmount})", StringContants.StrongOpen, StringContants.StrongClose);
-            var previousFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Previous:", $" {lastBalance.Balance:##0.#####} {_generalConfig.TradingCurrency} (${lastBalance.DollarAmount})", StringContants.StrongOpen, StringContants.StrongClose);
-            var differenceFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Difference:", $"{(current.Balance - lastBalance.Balance):##0.#####} {_generalConfig.TradingCurrency} (${Math.Round(current.DollarAmount - lastBalance.DollarAmount, 2)})", StringContants.StrongOpen, StringContants.StrongClose);
+            var currentFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Current:", $"  {current.Balance:##0.#####} {_generalConfig.TradingCurrency} ({currentReporting})", StringContants.StrongOpen, StringContants.StrongClose);
+            var previousFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Previous:", $" {lastBalance.Balance:##0.#####} {_generalConfig.TradingCurrency} ({previousReporting})", StringContants.StrongOpen, StringContants.StrongClose);
 
             sb.Append(string.Format("{1}24 Hour Summary{2} for {1}{0}{2}\n\n", accountName, StringContants.StrongOpen, StringContants.StrongClose));
             sb.Append(timeFormat);
             sb.Append(currentFormat);
             sb.Append(previousFormat);
-            sb.Append(differenceFormat);
 
-            if (lastBalance.Balance == 0 || lastBalance.DollarAmount == 0 || lastBalance.ReportingCurrency != _generalConfig.ReportingCurrency)
+            // Only calculate difference if current/last reporting currencies are the same
+            if (current.ReportingCurrency == lastBalance.ReportingCurrency)
+            {
+                var differenceReporting = Helpers.Helpers.FormatCurrencyAmount(current.ReportingAmount - lastBalance.ReportingAmount, current.ReportingCurrency);
+                var differenceFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Difference:", $"{(current.Balance - lastBalance.Balance):##0.#####} {_generalConfig.TradingCurrency} ({differenceReporting})", StringContants.StrongOpen, StringContants.StrongClose);
+                sb.Append(differenceFormat);
+            }
+
+            if (lastBalance.Balance == 0 || lastBalance.ReportingAmount == 0 || lastBalance.ReportingCurrency != _generalConfig.ReportingCurrency)
             {
                 await No24HourOfDataNotify();
             }
             else
             {
                 var percentage = Math.Round((current.Balance - lastBalance.Balance) / lastBalance.Balance * 100, 2);
-                var dollarPercentage = Math.Round(
-                    (current.DollarAmount - lastBalance.DollarAmount) / lastBalance.DollarAmount * 100, 2);
+                var reportingPercentage = Math.Round(
+                    (current.ReportingAmount - lastBalance.ReportingAmount) / lastBalance.ReportingAmount * 100, 2);
 
-                var percentageFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Change:", $"  {percentage}% {_generalConfig.TradingCurrency} ({dollarPercentage}% USD)", StringContants.StrongOpen, StringContants.StrongClose);
+                var percentageFormat = string.Format("{2}{0,-13}{3}{1,-25}\n", "Change:", $"  {percentage}% {_generalConfig.TradingCurrency} ({reportingPercentage}% {_generalConfig.ReportingCurrency})", StringContants.StrongOpen, StringContants.StrongClose);
 
                 sb.Append(percentageFormat);
             }

@@ -4,7 +4,7 @@ namespace CryptoGramBot.Services
 {
     public interface IPriceService
     {
-        Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount);
+        Task<decimal> GetReportingAmount(string baseCcy, decimal baseAmount, string reportingCurrency);
         Task<decimal> GetPrice(string baseCcy, string termsCurrency);
     }
 }

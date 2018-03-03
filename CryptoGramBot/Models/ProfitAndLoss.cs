@@ -6,7 +6,8 @@
         public decimal AverageSellPrice { get; set; }
         public string Base { get; set; }
         public decimal CommissionPaid { get; set; }
-        public decimal DollarProfit { get; set; }
+        public decimal ReportingProfit { get; set; }
+        public string ReportingCurrency { get; set; }
         public int Id { get; set; }
         public string Pair => Base + "-" + Terms;
         public decimal Profit { get; set; }

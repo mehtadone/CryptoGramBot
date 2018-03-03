@@ -115,6 +115,7 @@ namespace CryptoGramBot
             containerBuilder.RegisterType<PoloniexConfig>().SingleInstance();
             containerBuilder.RegisterType<GeneralConfig>().SingleInstance();
             containerBuilder.RegisterType<CoinigyApiService>();
+            containerBuilder.RegisterType<CryptoCompareApiService>();
             containerBuilder.RegisterType<BittrexService>();
             containerBuilder.RegisterType<PoloniexService>();
             containerBuilder.RegisterType<BinanceService>();
@@ -163,11 +164,15 @@ namespace CryptoGramBot
             {
                 var config = container.Resolve<GeneralConfig>();
                 configuration.GetSection("General").Bind(config);
-                log.LogInformation("Created general config");
+                if (!config.IsValid())
+                {
+                    throw new ApplicationException("General config is invalid - please check contents!");
+                }
+                log.LogInformation("Created General config");
             }
             catch (Exception)
             {
-                log.LogError("Error in reading general config");
+                log.LogError("Error in reading General config");
                 throw;
             }
 
@@ -175,11 +180,15 @@ namespace CryptoGramBot
             {
                 var config = container.Resolve<TelegramConfig>();
                 configuration.GetSection("Telegram").Bind(config);
-                log.LogInformation("Created telegram config");
+                if (!config.IsValid())
+                {
+                    throw new ApplicationException("Telegram config is invalid - please check contents!");
+                }
+                log.LogInformation("Created Telegram config");
             }
             catch (Exception)
             {
-                log.LogError("Error in reading telegram config");
+                log.LogError("Error in reading Telegram config");
                 throw;
             }
 
@@ -187,11 +196,15 @@ namespace CryptoGramBot
             {
                 var config = container.Resolve<CoinigyConfig>();
                 configuration.GetSection("Coinigy").Bind(config);
-                log.LogInformation("Created coinigy config");
+                if (!config.IsValid())
+                {
+                    throw new ApplicationException("Coinigy config is invalid - please check contents!");
+                }
+                log.LogInformation("Created Coinigy config");
             }
             catch (Exception)
             {
-                log.LogError("Error in reading coinigy config");
+                log.LogError("Error in reading Coinigy config");
                 throw;
             }
 
@@ -199,11 +212,15 @@ namespace CryptoGramBot
             {
                 var config = container.Resolve<BinanceConfig>();
                 configuration.GetSection("Binance").Bind(config);
-                log.LogInformation("Created binance config");
+                if (!config.IsValid())
+                {
+                    throw new ApplicationException("Binance config is invalid - please check contents!");
+                }
+                log.LogInformation("Created Binance config");
             }
             catch (Exception)
             {
-                log.LogError("Error in reading binance config");
+                log.LogError("Error in reading Binance config");
                 throw;
             }
 
@@ -211,11 +228,15 @@ namespace CryptoGramBot
             {
                 var config = container.Resolve<BittrexConfig>();
                 configuration.GetSection("Bittrex").Bind(config);
-                log.LogInformation("Created bittrex Config");
+                if (!config.IsValid())
+                {
+                    throw new ApplicationException("Bittrex config is invalid - please check contents!");
+                }
+                log.LogInformation("Created Bittrex Config");
             }
             catch (Exception)
             {
-                log.LogError("Error in reading bittrex config");
+                log.LogError("Error in reading Bittrex config");
                 throw;
             }
 
@@ -223,11 +244,15 @@ namespace CryptoGramBot
             {
                 var config = container.Resolve<PoloniexConfig>();
                 configuration.GetSection("Poloniex").Bind(config);
-                log.LogInformation("Created poloniex config");
+                if (!config.IsValid())
+                {
+                    throw new ApplicationException("Poloniex config is invalid - please check contents!");
+                }
+                log.LogInformation("Created Poloniex config");
             }
             catch (Exception)
             {
-                log.LogError("Error in reading poloniex config");
+                log.LogError("Error in reading Poloniex config");
                 throw;
             }
         }

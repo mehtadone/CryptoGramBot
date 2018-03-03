@@ -34,7 +34,8 @@ namespace CryptoGramBot.EventBus.Handlers
 
             decimal? profitPercentage = null;
             decimal? btcProfit = null;
-            decimal? dollarProfit = null;
+            decimal? reportingProfit = null;
+            string reportingCurrency = null;
             DateTime? lastBought = DateTime.MinValue;
             ;
 
@@ -43,7 +44,8 @@ namespace CryptoGramBot.EventBus.Handlers
                 var tradesProfitResponse = await _bus.QueryAsync(new TradeProfitQuery(newTrade.Cost, newTrade.QuantityOfTrade, newTrade.Base, newTrade.Terms, newTrade.Exchange));
                 profitPercentage = tradesProfitResponse.ProfitPercentage;
                 btcProfit = tradesProfitResponse.BtcProfit;
-                dollarProfit = tradesProfitResponse.DollarProfit;
+                reportingProfit = tradesProfitResponse.ReportingProfit;
+                reportingCurrency = tradesProfitResponse.ReportingCurrency;
                 lastBought = tradesProfitResponse.LastBoughtTime;
             }
 
@@ -56,9 +58,9 @@ namespace CryptoGramBot.EventBus.Handlers
             sb.Append(string.Format("Rate: {0} {1}\n", newTrade.Limit.ToString("##0.##############"), newTrade.Base));
             sb.Append(string.Format("Total: {0} {1}\n", newTrade.Cost.ToString("##0.###########"), newTrade.Base));
 
-            if (profitPercentage.HasValue && btcProfit.HasValue && dollarProfit.HasValue)
+            if (profitPercentage.HasValue && btcProfit.HasValue && reportingProfit.HasValue && reportingCurrency != null)
             {
-                sb.Append(string.Format("Profit: {0} {1} (${2})\n", btcProfit.Value.ToString("##0.########"), newTrade.Base, dollarProfit.Value.ToString("###0.##")));
+                sb.Append(string.Format("Profit: {0} {1} ({2})\n", btcProfit.Value.ToString("##0.########"), newTrade.Base, Helpers.Helpers.FormatCurrencyAmount(reportingProfit.Value, reportingCurrency)));
                 sb.Append(string.Format("Bought on: {0}\n", (lastBought.Value + TimeSpan.FromHours(_config.TimeOffset)).ToString("g")));
                 sb.Append(string.Format("{1}Percentage: {0}%{2}\n", profitPercentage.Value, StringContants.StrongOpen, StringContants.StrongClose));
             }

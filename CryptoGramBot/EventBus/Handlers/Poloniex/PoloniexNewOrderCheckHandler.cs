@@ -40,7 +40,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
             }
             catch (Exception ex)
             {
-                _log.LogError("Error in getting new orders from poloniex\n" + ex.Message);
+                _log.LogError("Error in getting new orders from Poloniex\n" + ex.Message);
                 throw;
             }
         }

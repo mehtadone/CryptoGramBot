@@ -5,27 +5,27 @@ namespace CryptoGramBot.Helpers
     public static class StringContants
     {
         public static string BinanceCommands = $"\n{StringContants.StrongOpen}Binance commands{StringContants.StrongClose})\n";
-        public static string BinanceMoreThan30Deposits = "30 or more binance deposits available to send. Will not send them to avoid spam.";
+        public static string BinanceMoreThan30Deposits = "30 or more Binance deposits available to send. Will not send them to avoid spam.";
 
         public static string BinanceMoreThan30OpenOrders =
-            "30 or more open binance orders available to send. Will not send them to avoid spam.";
+            "30 or more open Binance orders available to send. Will not send them to avoid spam.";
 
         public static string BinanceMoreThan30Trades =
-            "There are more than 30 binance trades to send. Not going to send them to avoid spamming you.";
+            "There are more than 30 Binance trades to send. Not going to send them to avoid spamming you.";
 
-        public static string BinanceMoreThan30Withdrawals = "30 or more binance withdrawals available to send. Will not send them to avoid spam.";
+        public static string BinanceMoreThan30Withdrawals = "30 or more Binance withdrawals available to send. Will not send them to avoid spam.";
 
         public static string BittrexCommands = $"\n{StrongOpen}Bittrex commands{StrongClose})\n";
-        public static string BittrexFileUpload = "Please upload bittrex trade export";
-        public static string BittrexMoreThan30Deposits = "30 or more bittrex deposits available to send. Will not send them to avoid spam.";
+        public static string BittrexFileUpload = "Please upload Bittrex trade export";
+        public static string BittrexMoreThan30Deposits = "30 or more Bittrex deposits available to send. Will not send them to avoid spam.";
 
         public static string BittrexMoreThan30OpenOrders =
-            "30 or more open bittrex orders available to send. Will not send them to avoid spam.";
+            "30 or more open Bittrex orders available to send. Will not send them to avoid spam.";
 
         public static string BittrexMoreThan30Trades =
-            "There are more than 30 bittrex trades to send. Not going to send them to avoid spamming you.";
+            "There are more than 30 Bittrex trades to send. Not going to send them to avoid spamming you.";
 
-        public static string BittrexMoreThan30Withdrawals = "30 or more bittrex withdrawals available to send. Will not send them to avoid spam.";
+        public static string BittrexMoreThan30Withdrawals = "30 or more Bittrex withdrawals available to send. Will not send them to avoid spam.";
 
         public static string CoinigyCommands = $"\n{StringContants.StrongOpen}Coinigy commands{StringContants.StrongClose})\n";
         public static string CoinigyConnectedAccounts = "Connected accounts on Coinigy are:";
@@ -42,15 +42,15 @@ namespace CryptoGramBot.Helpers
 
         public static string PairProfitError = "Something went wrong. Probably because you entered in a dud currency or I have no trade details";
         public static string PoloCommands = $"\n{StringContants.StrongOpen}Poloniex commands{StringContants.StrongClose})\n";
-        public static string PoloniexMoreThan30Deposits = "30 or more poloniex deposits available to send. Will not send them to avoid spam.";
+        public static string PoloniexMoreThan30Deposits = "30 or more Poloniex deposits available to send. Will not send them to avoid spam.";
 
         public static string PoloniexMoreThan30OpenOrders =
-            "30 or more open poloniex orders available to send. Will not send them to avoid spam.";
+            "30 or more open Poloniex orders available to send. Will not send them to avoid spam.";
 
         public static string PoloniexMoreThan30Trades =
-                                                    "There are more than 30 poloniex trades to send. Not going to send them to avoid spamming you";
+                                                    "There are more than 30 Poloniex trades to send. Not going to send them to avoid spamming you";
 
-        public static string PoloniexMoreThan30Withdrawals = "30 or more poloniex withdrawals available to send. Will not send them to avoid spam.";
+        public static string PoloniexMoreThan30Withdrawals = "30 or more Poloniex withdrawals available to send. Will not send them to avoid spam.";
         public static string PoloniexResetTrades = "I've reset your trades with trades from polo.";
         public static string StrongClose = "</strong>";
         public static string StrongOpen = "<strong>";

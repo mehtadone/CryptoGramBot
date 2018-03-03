@@ -10,6 +10,7 @@ namespace CryptoGramBot.Helpers
         public const string CoinigyAccountBalance = "Coinigy Account Balance";
         public const string Poloniex = "Poloniex";
         public const string TotalCoinigyBalance = "Total Coinigy Balance";
+        public const string ConfigDummyValue = "INSERT HERE";
         public static readonly DateTime DateTimeUnixEpochStart = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
     }
 }

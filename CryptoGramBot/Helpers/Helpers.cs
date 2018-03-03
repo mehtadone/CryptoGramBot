@@ -42,5 +42,45 @@ namespace CryptoGramBot.Helpers
             return Convert.ToInt64((TimeZoneInfo.ConvertTimeToUtc(dateTime) -
                                    new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc)).TotalSeconds);
         }
+
+        public static string FormatCurrencyAmount(decimal amount, string ccy)
+        {
+            switch(ccy)
+            {
+                case "USD":
+                    return string.Format("${0}", amount.ToString("###0.##"));
+
+                case "EUR":
+                    return string.Format("€{0}", amount.ToString("###0.##"));
+
+                case "GBP":
+                    return string.Format("£{0}", amount.ToString("###0.##"));
+
+                case "JPY":
+                    return string.Format("¥{0}", amount.ToString("###0.##"));
+
+                case "KRW":
+                    return string.Format("₩{0}", amount.ToString("###0.##"));
+
+                default:
+                    // Default formatting, e.g. 1234.56 CCY
+                    return string.Format("{0} {1}", amount.ToString("###0.##"), ccy);
+            }
+        }
+
+        public static bool CurrenciesAreEquivalent(string ccy1, string ccy2)
+        {
+            if (ccy1 == ccy2)
+            {
+                return true;
+            }
+
+            if ((ccy1 == "USD" && ccy2 == "USDT") || (ccy1 == "USDT" && ccy2 == "USD"))
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }

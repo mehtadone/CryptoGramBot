@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using CryptoGramBot.Helpers;
-using CryptoGramBot.Services;
 using CryptoGramBot.Services.Data;
 using CryptoGramBot.Services.Exchanges;
 using Enexure.MicroBus;

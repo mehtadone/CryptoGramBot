@@ -164,8 +164,6 @@ namespace CryptoGramBot.Services.Exchanges.WebSockets.Binance
             _memoryCache.Set($"{SYMBOL_PRICE}{symbol}", value, TimeSpan.FromMinutes(CACHE_TIME_IN_MINUTES));
         }
 
-
-
         #endregion
     }
 }

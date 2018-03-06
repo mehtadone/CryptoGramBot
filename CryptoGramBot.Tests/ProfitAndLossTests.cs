@@ -80,7 +80,7 @@ namespace CryptoGramBot.Tests
                 Quantity = quanity,
                 Side = side,
                 Limit = limit,
-                TimeStamp = timeStamp
+                Timestamp = timeStamp
             };
             return trade;
         }

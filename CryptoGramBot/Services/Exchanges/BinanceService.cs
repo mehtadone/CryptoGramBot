@@ -4,6 +4,7 @@ using CryptoGramBot.Helpers;
 using CryptoGramBot.Helpers.Convertors;
 using CryptoGramBot.Models;
 using CryptoGramBot.Services.Data;
+using CryptoGramBot.Services.Pricing;
 using CryptoGramBot.Services.Exchanges.WebSockets.Binance;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,12 +19,14 @@ namespace CryptoGramBot.Services.Exchanges
         private readonly IBinanceApi _client;
         private readonly BinanceConfig _config;
         private readonly DatabaseService _databaseService;
+        private readonly CryptoCompareApiService _cryptoCompareService;
         private readonly IBinanceWebsocketService _binanceWebsocketService;
         private readonly GeneralConfig _generalConfig;
         private readonly ILogger<BinanceService> _log;
 
         public BinanceService(BinanceConfig config,
             DatabaseService databaseService,
+            CryptoCompareApiService cryptoCompareService,
             IServiceProvider serviceProvider,
             GeneralConfig generalConfig,
             IBinanceApi binanceApi,
@@ -31,6 +34,7 @@ namespace CryptoGramBot.Services.Exchanges
         {
             _config = config;
             _databaseService = databaseService;
+            _cryptoCompareService = cryptoCompareService;
             _binanceWebsocketService = serviceProvider.GetService<IBinanceWebsocketService>();
             _generalConfig = generalConfig;
             _log = log;
@@ -48,14 +52,14 @@ namespace CryptoGramBot.Services.Exchanges
 
                 if(accountInfo == null)
                 {
-                    throw new Exception("Account info not had get from binance");
+                    throw new Exception("Account info not had get from Binance");
                 }
 
                 balances = BinanceConverter.BinanceToWalletBalances(accountInfo.Balances);
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting balances from binance: " + e.Message);
+                _log.LogError("Error in getting balances from Binance: " + e.Message);
                 throw;
             }
 
@@ -94,23 +98,33 @@ namespace CryptoGramBot.Services.Exchanges
 
             var lastBalance = await _databaseService.GetBalance24HoursAgo(Constants.Binance);
 
-            var dollarAmount = await GetDollarAmount(_generalConfig.TradingCurrency, totalBtcBalance);
+            var reportingAmount = await GetReportingAmount(_generalConfig.TradingCurrency, totalBtcBalance, _generalConfig.ReportingCurrency);
 
-            var currentBalance = await _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Binance);
+            var currentBalance = await _databaseService.AddBalance(totalBtcBalance, reportingAmount, _generalConfig.ReportingCurrency, Constants.Binance);
             await _databaseService.AddWalletBalances(balances);
 
             return new BalanceInformation(currentBalance, lastBalance, Constants.Binance, balances);
         }
 
-        public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
+        public async Task<decimal> GetReportingAmount(string baseCcy, decimal baseAmount, string reportingCurrency)
         {
-            if (baseCcy == "USDT")
+            // Binance supports USDT, use this for USD reporting
+            if (reportingCurrency == "USD")
             {
-                return Math.Round(btcAmount, 3);
-            }
+                if (baseCcy == "USDT")
+                {
+                    return Math.Round(baseAmount, 3);
+                }
 
-            var price = await GetPrice("USDT", baseCcy);
-            return Math.Round(price * btcAmount, 3);
+                var price = await GetPrice("USDT", baseCcy);
+                return Math.Round(price * baseAmount, 3);
+            }
+            else
+            {
+                // ReportingCurrency not supported by Binance - have to convert it externally
+                var result = await _cryptoCompareService.GetReportingAmount(baseCcy, baseAmount, reportingCurrency);
+                return result;
+            }
         }
 
         public async Task<List<Deposit>> GetNewDeposits()
@@ -161,7 +175,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting openOrders from binance: " + e.Message);
+                _log.LogError("Error in getting openOrders from Binance: " + e.Message);
             }
 
             var newOrders = await _databaseService.AddOpenOrders(openOrders);
@@ -187,7 +201,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting withdrawals from binance: " + e.Message);
+                _log.LogError("Error in getting withdrawals from Binance: " + e.Message);
             }
 
             var newWithdrawals = await _databaseService.AddWithdrawals(list, Constants.Binance);
@@ -214,7 +228,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting trades from binance: " + e.Message);
+                _log.LogError("Error in getting trades from Binance: " + e.Message);
             }
 
             return list;
@@ -222,11 +236,24 @@ namespace CryptoGramBot.Services.Exchanges
 
         public async Task<decimal> GetPrice(string baseCcy, string termsCurrency)
         {
-            var sym = await _binanceWebsocketService.GetPriceAsync($"{termsCurrency}{baseCcy}");
-
-            if (sym != null)
+            if (Helpers.Helpers.CurrenciesAreEquivalent(baseCcy, termsCurrency))
             {
-                return sym.Value;
+                return 1;
+            }
+                
+            try
+            {
+                var sym = await _binanceWebsocketService.GetPriceAsync($"{termsCurrency}{baseCcy}");
+
+                if (sym != null)
+                {
+                    return sym.Value;
+                }
+            }
+            catch (Exception e)
+            {
+                _log.LogError($"Error in getting {baseCcy}-{termsCurrency} price from Binance: {e.Message}");
+                return decimal.Zero;
             }
 
             return decimal.Zero;

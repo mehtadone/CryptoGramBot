@@ -3,7 +3,6 @@ using System.IO;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
-using Serilog.Sinks.SystemConsole.Themes;
 using Microsoft.AspNetCore.Hosting;
 
 namespace CryptoGramBot

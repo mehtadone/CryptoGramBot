@@ -16,6 +16,6 @@ namespace CryptoGramBot.Models
         public decimal QuantityRemaining { get; set; }
         public TradeSide Side { get; set; }
         public string Terms { get; set; }
-        public DateTime TimeStamp { get; set; }
+        public DateTime Timestamp { get; set; }
     }
 }

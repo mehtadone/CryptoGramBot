@@ -82,7 +82,7 @@ namespace CryptoGramBot.Helpers.Convertors
                     Limit = completedOrder.Price,
                     Quantity = completedOrder.Quantity,
                     QuantityRemaining = 0,
-                    TimeStamp = completedOrder.Time(),
+                    Timestamp = completedOrder.Time(),
                     Side = completedOrder.IsBuyer ? TradeSide.Buy : TradeSide.Sell
                 };
 

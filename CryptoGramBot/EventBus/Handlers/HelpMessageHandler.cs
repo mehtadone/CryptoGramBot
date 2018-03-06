@@ -42,26 +42,26 @@ namespace CryptoGramBot.EventBus.Handlers
             if (_coinigyConfig.Enabled)
             {
                 sb.Append(StringContants.CoinigyCommands);
-                sb.Append(string.Format("{0} - coinigy accounts and their balance\n", TelegramCommands.CoinigyAccountList));
+                sb.Append(string.Format("{0} - Coinigy accounts and their balance\n", TelegramCommands.CoinigyAccountList));
                 sb.Append(string.Format("{0} - total balance from all acounts\n", TelegramCommands.CoinigyTotalBalance));
             }
 
             if (_bittrexConfig.Enabled)
             {
                 sb.Append(StringContants.BittrexCommands);
-                sb.Append(string.Format("{0} - upload bittrex order export\n", TelegramCommands.BittrexTradeExportUpload));
-                sb.Append(string.Format("{0} - bittrex account summary\n", TelegramCommands.BittrexBalanceInfo));
+                sb.Append(string.Format("{0} - upload Bittrex order export\n", TelegramCommands.BittrexTradeExportUpload));
+                sb.Append(string.Format("{0} - Bittrex account summary\n", TelegramCommands.BittrexBalanceInfo));
             }
             if (_poloniexConfig.Enabled)
             {
                 sb.Append(StringContants.PoloCommands);
-                sb.Append(string.Format("{0} - poloniex account summary\n", TelegramCommands.PoloniexBalanceInfo));
-                sb.Append(string.Format("{0} - reset trades database from poloniex\n", TelegramCommands.PoloniexTradeReset));
+                sb.Append(string.Format("{0} - Poloniex account summary\n", TelegramCommands.PoloniexBalanceInfo));
+                sb.Append(string.Format("{0} - reset trades database from Poloniex\n", TelegramCommands.PoloniexTradeReset));
             }
             if (_binanceConfig.Enabled)
             {
                 sb.Append(StringContants.BinanceCommands);
-                sb.Append(string.Format("{0} - binance account summary\n", TelegramCommands.BinanceBalanceInfo));
+                sb.Append(string.Format("{0} - Binance account summary\n", TelegramCommands.BinanceBalanceInfo));
             }
 
             _log.LogInformation("Sending help message");

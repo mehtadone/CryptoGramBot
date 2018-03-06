@@ -1,10 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.EventBus.Commands;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.Helpers;
-using CryptoGramBot.Services;
 using CryptoGramBot.Services.Exchanges;
 using Enexure.MicroBus;
 

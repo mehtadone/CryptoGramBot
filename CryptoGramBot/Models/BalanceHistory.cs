@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CryptoGramBot.Models
 {
@@ -8,7 +7,8 @@ namespace CryptoGramBot.Models
     {
         public decimal Balance { get; set; }
         public DateTime DateTime { get; set; }
-        public decimal DollarAmount { get; set; }
+        public decimal ReportingAmount { get; set; }
+        public string ReportingCurrency { get; set; }
 
         [Key]
         public int Key { get; set; }

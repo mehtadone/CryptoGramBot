@@ -96,7 +96,7 @@ namespace CryptoGramBot.EventBus.Handlers.Binance
                     sb.Append($"New {openOrder.Exchange} OPEN order\n");
                     sb.Append($"{StringContants.StrongOpen}{openOrder.Side} {openOrder.Base}-{openOrder.Terms}{StringContants.StrongClose}\n");
                     sb.Append($"Price: {openOrder.Price}\n");
-                    sb.Append($"Quanitity: {openOrder.Quantity}");
+                    sb.Append($"Quantity: {openOrder.Quantity}");
                     await _bus.SendAsync(new SendMessageCommand(sb));
                 }
             }

@@ -4,7 +4,6 @@ using CryptoGramBot.Configuration;
 using FluentScheduler;
 using CryptoGramBot.EventBus.Events;
 using CryptoGramBot.EventBus.Handlers;
-using CryptoGramBot.EventBus.Handlers.Binance;
 using CryptoGramBot.EventBus.Handlers.Coinigy;
 using CryptoGramBot.Helpers;
 using Enexure.MicroBus;

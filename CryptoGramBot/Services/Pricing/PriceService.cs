@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Services.Exchanges;
 
@@ -18,22 +17,22 @@ namespace CryptoGramBot.Services.Pricing
             _binanceService = binanceService;
         }
 
-        public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount, string exchange)
+        public async Task<decimal> GetReportingAmount(string baseCcy, decimal baseAmount, string reportingCurrency, string exchange)
         {
             decimal price = 0;
 
             switch (exchange)
             {
                 case Constants.Bittrex:
-                    price = await _bittrexService.GetDollarAmount(baseCcy, btcAmount);
+                    price = await _bittrexService.GetReportingAmount(baseCcy, baseAmount, reportingCurrency);
                     break;
 
                 case Constants.Poloniex:
-                    price = await _poloniexService.GetDollarAmount(baseCcy, btcAmount);
+                    price = await _poloniexService.GetReportingAmount(baseCcy, baseAmount, reportingCurrency);
                     break;
 
                 case Constants.Binance:
-                    price = await _binanceService.GetDollarAmount(baseCcy, btcAmount);
+                    price = await _binanceService.GetReportingAmount(baseCcy, baseAmount, reportingCurrency);
                     break;
             }
 

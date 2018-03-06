@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using CryptoGramBot.Models;
 using Enexure.MicroBus;
 

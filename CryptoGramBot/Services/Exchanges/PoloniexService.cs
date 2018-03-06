@@ -5,12 +5,12 @@ using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
 using CryptoGramBot.Services.Data;
+using CryptoGramBot.Services.Pricing;
 using Jojatekok.PoloniexAPI;
 using Jojatekok.PoloniexAPI.MarketTools;
 using Jojatekok.PoloniexAPI.WalletTools;
 using Microsoft.Extensions.Logging;
 using Deposit = CryptoGramBot.Models.Deposit;
-using IOrder = Jojatekok.PoloniexAPI.TradingTools.IOrder;
 using Order = Jojatekok.PoloniexAPI.TradingTools.Order;
 using Trade = CryptoGramBot.Models.Trade;
 using Withdrawal = CryptoGramBot.Models.Withdrawal;
@@ -20,6 +20,7 @@ namespace CryptoGramBot.Services.Exchanges
     public class PoloniexService : IExchangeService
     {
         private readonly DatabaseService _databaseService;
+        private readonly CryptoCompareApiService _cryptoCompareService;
         private readonly GeneralConfig _generalConfig;
         private readonly ILogger<PoloniexService> _log;
         private readonly IPoloniexClientFactory _poloniexClientFactory;
@@ -29,12 +30,14 @@ namespace CryptoGramBot.Services.Exchanges
             PoloniexConfig poloniexConfig,
             ILogger<PoloniexService> log,
             DatabaseService databaseService,
+            CryptoCompareApiService cryptoCompareService,
             GeneralConfig generalConfig,
             IPoloniexClientFactory poloniexClientFactory)
         {
             _poloniexConfig = poloniexConfig;
             _log = log;
             _databaseService = databaseService;
+            _cryptoCompareService = cryptoCompareService;
             _generalConfig = generalConfig;
             _poloniexClientFactory = poloniexClientFactory;
         }
@@ -54,7 +57,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting balances from poloniex: " + e.Message);
+                _log.LogError("Error in getting balances from Poloniex: " + e.Message);
                 throw;
             }
 
@@ -101,22 +104,32 @@ namespace CryptoGramBot.Services.Exchanges
             }
 
             var lastBalance = await _databaseService.GetBalance24HoursAgo(Constants.Poloniex);
-            var dollarAmount = await GetDollarAmount(_generalConfig.TradingCurrency, totalBtcBalance);
-            var currentBalance = await _databaseService.AddBalance(totalBtcBalance, dollarAmount, Constants.Poloniex);
+            var reportingAmount = await GetReportingAmount(_generalConfig.TradingCurrency, totalBtcBalance, _generalConfig.ReportingCurrency);
+            var currentBalance = await _databaseService.AddBalance(totalBtcBalance, reportingAmount, _generalConfig.ReportingCurrency, Constants.Poloniex);
             await _databaseService.AddWalletBalances(poloniexToWalletBalances);
 
             return new BalanceInformation(currentBalance, lastBalance, Constants.Poloniex, poloniexToWalletBalances);
         }
 
-        public async Task<decimal> GetDollarAmount(string baseCcy, decimal btcAmount)
+        public async Task<decimal> GetReportingAmount(string baseCcy, decimal baseAmount, string reportingCurrency)
         {
-            if (baseCcy == "USDT")
+            // Poloniex supports USDT, use this for USD reporting
+            if (reportingCurrency == "USD")
             {
-                return Math.Round(btcAmount, 3);
-            }
+                if (baseCcy == "USDT")
+                {
+                    return Math.Round(baseAmount, 3);
+                }
 
-            var price = await GetPrice("USDT", baseCcy);
-            return Math.Round(price * btcAmount, 3);
+                var price = await GetPrice("USDT", baseCcy);
+                return Math.Round(price * baseAmount, 3);
+            }
+            else
+            {
+                // ReportingCurrency not supported by Poloniex - have to convert it externally
+                var result = await _cryptoCompareService.GetReportingAmount(baseCcy, baseAmount, reportingCurrency);
+                return result;
+            }
         }
 
         public async Task<List<Deposit>> GetNewDeposits()
@@ -146,7 +159,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting balances from poloniex: " + e.Message);
+                _log.LogError("Error in getting balances from Poloniex: " + e.Message);
                 throw;
             }
 
@@ -184,7 +197,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting balances from poloniex: " + e.Message);
+                _log.LogError("Error in getting balances from Poloniex: " + e.Message);
                 throw;
             }
         }
@@ -193,6 +206,11 @@ namespace CryptoGramBot.Services.Exchanges
         {
             IDictionary<CurrencyPair, IMarketData> ccyPairsData;
 
+            if (Helpers.Helpers.CurrenciesAreEquivalent(baseCcy, termsCurrency))
+            {
+                return 1;
+            }
+                
             try
             {
                 using (var poloClient = _poloniexClientFactory.CreateClient(_poloniexConfig.Key, _poloniexConfig.Secret))
@@ -202,7 +220,7 @@ namespace CryptoGramBot.Services.Exchanges
             }
             catch (Exception e)
             {
-                _log.LogError("Error in getting market summary from poloniex: " + e.Message);
+                _log.LogError($"Error in getting {baseCcy}-{termsCurrency} market summary from Poloniex: {e.Message}");
                 return 0;
             }
 

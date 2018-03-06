@@ -40,7 +40,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
             }
             catch (Exception ex)
             {
-                _log.LogError("Error in getting new orders from poloniex\n" + ex.Message);
+                _log.LogError("Error in getting new orders from Poloniex\n" + ex.Message);
                 throw;
             }
         }
@@ -95,7 +95,7 @@ namespace CryptoGramBot.EventBus.Handlers.Poloniex
                     sb.Append($"New {openOrder.Exchange} OPEN order\n");
                     sb.Append($"{StringContants.StrongOpen}{openOrder.Side} {openOrder.Base}-{openOrder.Terms}{StringContants.StrongClose}\n");
                     sb.Append($"Price: {openOrder.Price}\n");
-                    sb.Append($"Quanitity: {openOrder.Quantity}");
+                    sb.Append($"Quantity: {openOrder.Quantity}");
                     await _bus.SendAsync(new SendMessageCommand(sb));
                 }
             }

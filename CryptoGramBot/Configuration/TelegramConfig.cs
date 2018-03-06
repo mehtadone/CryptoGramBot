@@ -25,7 +25,7 @@ namespace CryptoGramBot.Configuration
                 _log.LogError($"BotToken is invalid or missing in Telegram config");
             }
 
-            if (ChatId <= 0)
+            if (ChatId == 0)
             {
                 result = false;
                 _log.LogError($"ChatId is invalid or missing in Telegram config");

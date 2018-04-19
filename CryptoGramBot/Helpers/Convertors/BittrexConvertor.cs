@@ -184,14 +184,17 @@ namespace CryptoGramBot.Helpers
 
         private static Trade ConvertBittrexCsvToCompletedOrder(IReadOnlyList<string> csvCurrentRecord)
         {
+            var ccy = csvCurrentRecord[1].Split('-');
             var newOrder = new Trade()
             {
+                Exchange = Constants.Bittrex,
+                Base = ccy[0],
+                Terms = ccy[1],
+                Commission = Decimal.Parse(csvCurrentRecord[5], CultureInfo.CreateSpecificCulture("en-US")),
                 ExchangeId = csvCurrentRecord[0],
-                Exchange = csvCurrentRecord[1],
-                Quantity = Decimal.Parse(csvCurrentRecord[3]),
-                Limit = Decimal.Parse(csvCurrentRecord[4]),
-                Commission = Decimal.Parse(csvCurrentRecord[5]),
-                Cost = Decimal.Parse(csvCurrentRecord[6]) * Decimal.Parse(csvCurrentRecord[3]),
+                Limit = Decimal.Parse(csvCurrentRecord[4], CultureInfo.CreateSpecificCulture("en-US")),
+                Quantity = Decimal.Parse(csvCurrentRecord[3], CultureInfo.CreateSpecificCulture("en-US")),
+                Cost = Decimal.Parse(csvCurrentRecord[6], CultureInfo.CreateSpecificCulture("en-US")) * Decimal.Parse(csvCurrentRecord[3], CultureInfo.CreateSpecificCulture("en-US")),
                 Timestamp = DateTime.Parse(csvCurrentRecord[8], CultureInfo.CreateSpecificCulture("en-US"))
             };
 

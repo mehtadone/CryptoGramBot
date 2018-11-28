@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Bittrex.Net;
 using Bittrex.Net.Objects;
+using CryptoExchange.Net.Authentication;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Helpers;
 using CryptoGramBot.Models;
@@ -40,17 +41,20 @@ namespace CryptoGramBot.Services.Exchanges
             List<WalletBalance> bittrexBalances = new List<WalletBalance>();
             try
             {
-                using (var client = new BittrexClient(_config.Key, _config.Secret))
+                using (var client = new BittrexClient(new BittrexClientOptions()
+                {
+                    ApiCredentials = new ApiCredentials(_config.Key, _config.Secret)
+                }))
                 {
                     var response = await client.GetBalancesAsync();
 
                     if (response.Success)
                     {
-                        bittrexBalances = BittrexConvertor.BittrexToWalletBalances(response.Result);
+                        bittrexBalances = BittrexConvertor.BittrexToWalletBalances(response.Data);
                     }
                     else
                     {
-                        _log.LogWarning($"Bittrex returned an error {response.Error.ErrorCode} : {response.Error.ErrorMessage}");
+                        _log.LogWarning($"Bittrex returned an error {response.Error.Code} : {response.Error.Message}");
                     }
                 }
             }
@@ -138,17 +142,20 @@ namespace CryptoGramBot.Services.Exchanges
 
             try
             {
-                using (var client = new BittrexClient(_config.Key, _config.Secret))
+                using (var client = new BittrexClient(new BittrexClientOptions()
+                {
+                    ApiCredentials = new ApiCredentials(_config.Key, _config.Secret)
+                }))
                 {
                     var response = await client.GetDepositHistoryAsync();
 
                     if (response.Success)
                     {
-                        list = BittrexConvertor.BittrexToDeposits(response.Result);
+                        list = BittrexConvertor.BittrexToDeposits(response.Data);
                     }
                     else
                     {
-                        _log.LogWarning($"Bittrex returned an error {response.Error.ErrorCode} : {response.Error.ErrorMessage}");
+                        _log.LogWarning($"Bittrex returned an error {response.Error.Code} : {response.Error.Message}");
                     }
                 }
             }
@@ -169,17 +176,20 @@ namespace CryptoGramBot.Services.Exchanges
 
             try
             {
-                using (var client = new BittrexClient(_config.Key, _config.Secret))
+                using (var client = new BittrexClient(new BittrexClientOptions()
+                {
+                    ApiCredentials = new ApiCredentials(_config.Key, _config.Secret)
+                }))
                 {
                     var response = await client.GetOpenOrdersAsync();
 
                     if (response.Success)
                     {
-                        openOrders = BittrexConvertor.BittrexToOpenOrders(response.Result);
+                        openOrders = BittrexConvertor.BittrexToOpenOrders(response.Data);
                     }
                     else
                     {
-                        _log.LogWarning($"Bittrex returned an error {response.Error.ErrorCode} : {response.Error.ErrorMessage}");
+                        _log.LogWarning($"Bittrex returned an error {response.Error.Code} : {response.Error.Message}");
                     }
                 }
             }
@@ -199,17 +209,20 @@ namespace CryptoGramBot.Services.Exchanges
 
             try
             {
-                using (var client = new BittrexClient(_config.Key, _config.Secret))
+                using (var client = new BittrexClient(new BittrexClientOptions()
+                {
+                    ApiCredentials = new ApiCredentials(_config.Key, _config.Secret)
+                }))
                 {
                     var response = await client.GetWithdrawalHistoryAsync();
 
                     if (response.Success)
                     {
-                        list = BittrexConvertor.BittrexToWithdrawals(response.Result);
+                        list = BittrexConvertor.BittrexToWithdrawals(response.Data);
                     }
                     else
                     {
-                        _log.LogWarning($"Bittrex returned an error {response.Error.ErrorCode} : {response.Error.ErrorMessage}");
+                        _log.LogWarning($"Bittrex returned an error {response.Error.Code} : {response.Error.Message}");
                     }
                 }
             }
@@ -229,17 +242,20 @@ namespace CryptoGramBot.Services.Exchanges
 
             try
             {
-                using (var client = new BittrexClient(_config.Key, _config.Secret))
+                using (var client = new BittrexClient(new BittrexClientOptions()
+                {
+                    ApiCredentials = new ApiCredentials(_config.Key, _config.Secret)
+                }))
                 {
                     var response = await client.GetOrderHistoryAsync();
 
                     if (response.Success)
                     {
-                        list = BittrexConvertor.BittrexToTrades(response.Result, _log);
+                        list = BittrexConvertor.BittrexToTrades(response.Data, _log);
                     }
                     else
                     {
-                        _log.LogWarning($"Bittrex returned an error {response.Error.ErrorCode} : {response.Error.ErrorMessage}");
+                        _log.LogWarning($"Bittrex returned an error {response.Error.Code} : {response.Error.Message}");
                     }
                 }
             }
@@ -295,16 +311,19 @@ namespace CryptoGramBot.Services.Exchanges
 
         private async Task<BittrexPrice> GetTicker(string baseCcy, string termsCurrency)
         {
-            using (var client = new BittrexClient(_config.Key, _config.Secret))
+            using (var client = new BittrexClient(new BittrexClientOptions()
+            {
+                ApiCredentials = new ApiCredentials(_config.Key, _config.Secret)
+            }))
             {
                 var response = await client.GetTickerAsync($"{baseCcy}-{termsCurrency}");
 
                 if (response.Success)
                 {
-                    return response.Result;
+                    return response.Data;
                 }
 
-                _log.LogWarning($"Bittrex returned an error {response.Error.ErrorCode} : {response.Error.ErrorMessage}");
+                _log.LogWarning($"Bittrex returned an error {response.Error.Code} : {response.Error.Message}");
                 return null;
             }
         }

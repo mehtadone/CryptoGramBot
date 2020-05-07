@@ -2,7 +2,6 @@
 using Autofac.Extensions.DependencyInjection;
 using Binance;
 using Bittrex.Net;
-using Bittrex.Net.RateLimiter;
 using CryptoGramBot.Configuration;
 using CryptoGramBot.Data;
 using CryptoGramBot.Extensions;
@@ -26,7 +25,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Bittrex.Net.Objects;
+using CryptoExchange.Net.RateLimiter;
 
 namespace CryptoGramBot
 {
@@ -284,8 +286,14 @@ namespace CryptoGramBot
             var limiterTotal = new RateLimiterPerEndpoint(1, TimeSpan.FromSeconds(1));
             var limiterPerEndpoint = new RateLimiterPerEndpoint(1, TimeSpan.FromSeconds(1));
 
-            BittrexDefaults.AddDefaultRateLimiter(limiterTotal);
-            BittrexDefaults.AddDefaultRateLimiter(limiterPerEndpoint);
+            BittrexClient.SetDefaultOptions(new BittrexClientOptions
+            {
+                RateLimiters = new List<IRateLimiter>
+                {
+                    limiterTotal,
+                    limiterPerEndpoint
+                }
+            });
 
             startupService.Start();
         } 

@@ -52,7 +52,7 @@ namespace CryptoGramBot.Helpers
             return list;
         }
 
-        public static List<OpenOrder> BittrexToOpenOrders(BittrexOrder[] bittrexOrders)
+        public static List<OpenOrder> BittrexToOpenOrders(BittrexOpenOrdersOrder[] bittrexOrders)
         {
             var list = new List<OpenOrder>();
 
@@ -66,8 +66,8 @@ namespace CryptoGramBot.Helpers
                     Exchange = Constants.Bittrex,
                     CommissionPaid = openOrder.CommissionPaid,
                     OrderUuid = openOrder.OrderUuid.ToString(),
-                    Condition = openOrder.Condition,
-                    ConditionTarget = openOrder.ConditionTarget,
+                    Condition = openOrder.Condition.ToString(),
+                    ConditionTarget = openOrder.ConditionTarget?.ToString(),
                     CancelInitiated = openOrder.CancelInitiated,
                     ImmediateOrCancel = openOrder.ImmediateOrCancel,
                     IsConditional = openOrder.IsConditional,
@@ -76,7 +76,7 @@ namespace CryptoGramBot.Helpers
                     Price = openOrder.Price,
                     Quantity = openOrder.Quantity,
                     QuantityRemaining = openOrder.QuantityRemaining,
-                    Side = openOrder.OrderType == OrderTypeExtended.LimitBuy ? TradeSide.Buy : TradeSide.Sell
+                    Side = openOrder.OrderType == OrderSideExtended.LimitBuy ? TradeSide.Buy : TradeSide.Sell
                 };
 
                 list.Add(order);
@@ -85,7 +85,7 @@ namespace CryptoGramBot.Helpers
             return list;
         }
 
-        public static List<Trade> BittrexToTrades(BittrexOrder[] bittrexTrades, ILogger logger)
+        public static List<Trade> BittrexToTrades(BittrexOrderHistoryOrder[] bittrexTrades, ILogger logger)
         {
             var tradeList = new List<Trade>();
 
@@ -97,24 +97,24 @@ namespace CryptoGramBot.Helpers
                     Exchange = Constants.Bittrex,
                     Base = ccy[0],
                     Terms = ccy[1],
-                    Commission = completedOrder.CommissionPaid,
+                    Commission = completedOrder.Commission,
                     ExchangeId = completedOrder.OrderUuid.ToString(),
                     Limit = completedOrder.Limit,
                     Quantity = completedOrder.Quantity,
                     QuantityRemaining = completedOrder.QuantityRemaining,
                     Timestamp = completedOrder.Closed.GetValueOrDefault(),
-                    Side = completedOrder.OrderType == OrderTypeExtended.LimitBuy ? TradeSide.Buy : TradeSide.Sell
+                    Side = completedOrder.OrderType == OrderSideExtended.LimitBuy ? TradeSide.Buy : TradeSide.Sell
                 };
 
                 if (completedOrder.Closed.HasValue)
 
                     if (trade.Side == TradeSide.Buy)
                     {
-                        trade.Cost = completedOrder.Price + completedOrder.CommissionPaid;
+                        trade.Cost = completedOrder.Price + completedOrder.Commission;
                     }
                     else if (trade.Side == TradeSide.Sell)
                     {
-                        trade.Cost = completedOrder.Price - completedOrder.CommissionPaid;
+                        trade.Cost = completedOrder.Price - completedOrder.Commission;
                     }
                     else
                     {
@@ -140,12 +140,10 @@ namespace CryptoGramBot.Helpers
                         Exchange = Constants.Bittrex,
                         Timestamp = DateTime.Now,
                         Address = wallet.CryptoAddress,
-                        Available = wallet.Available,
-                        Balance = wallet.Balance,
-                        Pending = wallet.Pending,
+                        Available = wallet.Available ?? 0,
+                        Balance = wallet.Balance ?? 0,
+                        Pending = wallet.Pending ?? 0,
                         Currency = wallet.Currency,
-                        Requested = wallet.Requested,
-                        Uuid = wallet.Uuid
                     };
 
                     if (String.IsNullOrEmpty(wallet.CryptoAddress))
